@@ -20,6 +20,20 @@ let allProducts = [];
 
 const WHATSAPP_NUMBER = "91XXXXXXXXXX";
 
+// GitHub hosted product image
+const githubProducts = [
+  {
+    id: "github-camera-01",
+    name: "CCTV Security Camera",
+    category: "CCTV Cameras",
+    model: "Contact Us",
+    price: "",
+    description: "RB Tech Solution CCTV Security Camera. Contact us for product details and pricing.",
+    imageUrl: "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png",
+    active: true
+  }
+];
+
 // HTML Security
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -45,10 +59,15 @@ function loadProducts() {
 
   onSnapshot(productsQuery, snapshot => {
 
-    allProducts = snapshot.docs.map(item => ({
+    const firebaseProducts = snapshot.docs.map(item => ({
       id: item.id,
       ...item.data()
     }));
+
+    allProducts = [
+      ...githubProducts,
+      ...firebaseProducts
+    ];
 
     displayProducts();
 
@@ -56,9 +75,10 @@ function loadProducts() {
 
     console.error("Product loading error:", error);
 
-    productGrid.innerHTML = `
-      <p>Unable to load products. Please try again later.</p>
-    `;
+    // GitHub products still display if Firebase fails
+    allProducts = [...githubProducts];
+
+    displayProducts();
 
   });
 }
@@ -83,7 +103,6 @@ function displayProducts() {
       product.category === category;
 
     return matchesSearch && matchesCategory;
-
   });
 
   if (!filtered.length) {
@@ -113,9 +132,12 @@ function displayProducts() {
 
           ${
             product.imageUrl
-              ? `<img src="${escapeHTML(product.imageUrl)}"
+              ? `<img
+                  src="${escapeHTML(product.imageUrl)}"
                   alt="${escapeHTML(product.name)}"
-                  loading="lazy">`
+                  loading="lazy"
+                  onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'art-icon\\'>📹</span>'"
+                >`
               : `<span class="art-icon">📹</span>`
           }
 
@@ -150,7 +172,6 @@ function displayProducts() {
     `;
 
   }).join("");
-
 }
 
 // Product Details
@@ -184,9 +205,11 @@ productGrid.addEventListener("click", event => {
 
     ${
       product.imageUrl
-        ? `<img src="${escapeHTML(product.imageUrl)}"
+        ? `<img
+            src="${escapeHTML(product.imageUrl)}"
             alt="${escapeHTML(product.name)}"
-            style="width:100%;max-height:260px;object-fit:contain">`
+            style="width:100%;max-height:260px;object-fit:contain"
+          >`
         : ""
     }
 
@@ -210,7 +233,6 @@ productGrid.addEventListener("click", event => {
   `;
 
   productModal.classList.add("show");
-
 });
 
 // Search
@@ -234,7 +256,7 @@ productModal.addEventListener("click", event => {
 
 // Mobile Menu
 document.getElementById("menuToggle")?.addEventListener("click", () => {
-  document.getElementById("mainNav").classList.toggle("open");
+  document.getElementById("mainNav")?.classList.toggle("open");
 });
 
 // Current Year
