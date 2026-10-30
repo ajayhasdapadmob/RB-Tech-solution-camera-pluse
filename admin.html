@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RB Tech Solution - Admin Panel</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.admin-page {
+    min-height: 100vh;
+    background: #071b2b;
+    padding: 35px 15px;
+}
+
+.admin-container {
+    max-width: 950px;
+    margin: auto;
+}
+
+.admin-header {
+    color: white;
+    margin-bottom: 30px;
+}
+
+.admin-header h1 {
+    color: #22c6c8;
+}
+
+.admin-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.admin-card h2 {
+    font-size: 23px;
+    margin-bottom: 20px;
+    color: #102536;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.admin-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    background: #16b9bd;
+    color: #062333;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.admin-btn:hover {
+    background: #07999e;
+    color: white;
+}
+
+.admin-hidden {
+    display: none;
+}
+
+.product-row {
+    padding: 14px;
+    border: 1px solid #ddd;
+    margin-top: 12px;
+    border-radius: 7px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.product-row button {
+    padding: 8px 13px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.delete-btn {
+    background: #ffe1e1;
+    color: #a00;
+}
+
+.edit-btn {
+    background: #dff5f5;
+    color: #087d83;
+}
+
+#adminMessage {
+    margin-top: 15px;
+    color: #087d83;
+}
+
+@media(max-width:600px) {
+    .admin-card {
+        padding: 18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="admin-page">
+
+<div class="admin-container">
+
+<header class="admin-header">
+    <h1>RB TECH SOLUTION</h1>
+    <p>CCTV & Security Systems</p>
+    <h2>Admin Dashboard</h2>
+</header>
+
+<!-- LOGIN -->
+
+<section class="admin-card" id="loginSection">
+
+<h2>Admin Login</h2>
+
+<form id="loginForm">
+
+<input
+type="email"
+id="adminEmail"
+class="admin-input"
+placeholder="Admin Email"
+required
+>
+
+<input
+type="password"
+id="adminPassword"
+class="admin-input"
+placeholder="Password"
+required
+>
+
+<button class="admin-btn" type="submit">
+LOGIN
+</button>
+
+</form>
+
+<p id="loginMessage"></p>
+
+</section>
+
+<!-- DASHBOARD -->
+
+<section id="dashboardSection" class="admin-hidden">
+
+<div class="admin-card">
+
+<h2>Welcome to Admin Panel</h2>
+
+<p>Manage your CCTV products and security systems.</p>
+
+<button class="admin-btn" id="logoutBtn">
+LOGOUT
+</button>
+
+</div>
+
+<!-- PRODUCT FORM -->
+
+<div class="admin-card">
+
+<h2 id="formHeading">Add New Product</h2>
+
+<form id="productForm">
+
+<input type="hidden" id="productId">
+
+<input
+type="text"
+id="productName"
+class="admin-input"
+placeholder="Product Name"
+required
+>
+
+<select id="productCategory" class="admin-input" required>
+<option value="">Select Category</option>
+<option>CCTV Cameras</option>
+<option>Wireless Cameras</option>
+<option>DVR & NVR</option>
+<option>IP Cameras</option>
+<option>PTZ Cameras</option>
+<option>Video Door Phone</option>
+<option>Biometric Systems</option>
+<option>Accessories</option>
+</select>
+
+<input
+type="text"
+id="productModel"
+class="admin-input"
+placeholder="Model Number"
+>
+
+<input
+type="number"
+id="productPrice"
+class="admin-input"
+placeholder="Price (₹)"
+min="0"
+>
+
+<textarea
+id="productDescription"
+class="admin-input"
+placeholder="Product Description"
+rows="4"
+required
+></textarea>
+
+<label>Product Image</label>
+
+<input
+type="file"
+id="productImage"
+class="admin-input"
+accept="image/*"
+>
+
+<button class="admin-btn" type="submit">
+SAVE PRODUCT
+</button>
+
+</form>
+
+<p id="adminMessage"></p>
+
+</div>
+
+<!-- PRODUCT LIST -->
+
+<div class="admin-card">
+
+<h2>All Products</h2>
+
+<div id="adminProductList">
+Loading Products...
+</div>
+
+</div>
+
+</section>
+
+</div>
+</div>
+
+<script type="module" src="admin.js"></script>
+
+</body>
+</html>
