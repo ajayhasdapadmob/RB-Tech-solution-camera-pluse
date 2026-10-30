@@ -50,6 +50,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    box-sizing: border-box;
 }
 
 .admin-btn {
@@ -106,6 +107,14 @@
     color: #087d83;
 }
 
+.image-help {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin: -7px 0 15px;
+    line-height: 1.5;
+}
+
 @media(max-width:600px) {
     .admin-card {
         padding: 18px;
@@ -117,7 +126,6 @@
 <body>
 
 <div class="admin-page">
-
 <div class="admin-container">
 
 <header class="admin-header">
@@ -130,33 +138,33 @@
 
 <section class="admin-card" id="loginSection">
 
-<h2>Admin Login</h2>
+    <h2>Admin Login</h2>
 
-<form id="loginForm">
+    <form id="loginForm">
 
-<input
-type="email"
-id="adminEmail"
-class="admin-input"
-placeholder="Admin Email"
-required
->
+        <input
+            type="email"
+            id="adminEmail"
+            class="admin-input"
+            placeholder="Admin Email"
+            required
+        >
 
-<input
-type="password"
-id="adminPassword"
-class="admin-input"
-placeholder="Password"
-required
->
+        <input
+            type="password"
+            id="adminPassword"
+            class="admin-input"
+            placeholder="Password"
+            required
+        >
 
-<button class="admin-btn" type="submit">
-LOGIN
-</button>
+        <button class="admin-btn" type="submit">
+            LOGIN
+        </button>
 
-</form>
+    </form>
 
-<p id="loginMessage"></p>
+    <p id="loginMessage"></p>
 
 </section>
 
@@ -164,101 +172,109 @@ LOGIN
 
 <section id="dashboardSection" class="admin-hidden">
 
-<div class="admin-card">
+    <div class="admin-card">
 
-<h2>Welcome to Admin Panel</h2>
+        <h2>Welcome to Admin Panel</h2>
 
-<p>Manage your CCTV products and security systems.</p>
+        <p>Manage your CCTV products and security systems.</p>
 
-<button class="admin-btn" id="logoutBtn">
-LOGOUT
-</button>
+        <button class="admin-btn" id="logoutBtn" type="button">
+            LOGOUT
+        </button>
 
-</div>
+    </div>
 
-<!-- PRODUCT FORM -->
+    <!-- PRODUCT FORM -->
 
-<div class="admin-card">
+    <div class="admin-card">
 
-<h2 id="formHeading">Add New Product</h2>
+        <h2 id="formHeading">Add New Product</h2>
 
-<form id="productForm">
+        <form id="productForm">
 
-<input type="hidden" id="productId">
+            <input type="hidden" id="productId">
 
-<input
-type="text"
-id="productName"
-class="admin-input"
-placeholder="Product Name"
-required
->
+            <input
+                type="text"
+                id="productName"
+                class="admin-input"
+                placeholder="Product Name"
+                required
+            >
 
-<select id="productCategory" class="admin-input" required>
-<option value="">Select Category</option>
-<option>CCTV Cameras</option>
-<option>Wireless Cameras</option>
-<option>DVR & NVR</option>
-<option>IP Cameras</option>
-<option>PTZ Cameras</option>
-<option>Video Door Phone</option>
-<option>Biometric Systems</option>
-<option>Accessories</option>
-</select>
+            <select id="productCategory" class="admin-input" required>
+                <option value="">Select Category</option>
+                <option>CCTV Cameras</option>
+                <option>Wireless Cameras</option>
+                <option>DVR & NVR</option>
+                <option>IP Cameras</option>
+                <option>PTZ Cameras</option>
+                <option>Video Door Phone</option>
+                <option>Biometric Systems</option>
+                <option>Accessories</option>
+            </select>
 
-<input
-type="text"
-id="productModel"
-class="admin-input"
-placeholder="Model Number"
->
+            <input
+                type="text"
+                id="productModel"
+                class="admin-input"
+                placeholder="Model Number"
+            >
 
-<input
-type="number"
-id="productPrice"
-class="admin-input"
-placeholder="Price (₹)"
-min="0"
->
+            <input
+                type="number"
+                id="productPrice"
+                class="admin-input"
+                placeholder="Price (₹)"
+                min="0"
+            >
 
-<textarea
-id="productDescription"
-class="admin-input"
-placeholder="Product Description"
-rows="4"
-required
-></textarea>
+            <textarea
+                id="productDescription"
+                class="admin-input"
+                placeholder="Product Description"
+                rows="4"
+                required
+            ></textarea>
 
-<label>Product Image</label>
+            <label for="productImage">
+                <strong>Product Image URL</strong>
+            </label>
 
-<input
-type="file"
-id="productImage"
-class="admin-input"
-accept="image/*"
->
+            <input
+                type="url"
+                id="productImage"
+                name="productImage"
+                class="admin-input"
+                placeholder="Paste GitHub image URL here"
+            >
 
-<button class="admin-btn" type="submit">
-SAVE PRODUCT
-</button>
+            <small class="image-help">
+                Upload your product image to the GitHub images/products folder
+                and paste its image URL here. Firebase Storage is not used.
+            </small>
 
-</form>
+            <button class="admin-btn" type="submit">
+                SAVE PRODUCT
+            </button>
 
-<p id="adminMessage"></p>
+        </form>
 
-</div>
+        <p id="adminMessage"></p>
 
-<!-- PRODUCT LIST -->
+    </div>
 
-<div class="admin-card">
+    <!-- PRODUCT LIST -->
 
-<h2>All Products</h2>
+    <div class="admin-card">
 
-<div id="adminProductList">
-Loading Products...
-</div>
+        <h2>All Products</h2>
 
-</div>
+        <div id="adminProductList">
+            Loading Products...
+        </div>
+
+    </div>
 
 </section>
 
