@@ -2,9 +2,6 @@
 const productGrid = document.getElementById("productGrid");
 const searchInput = document.getElementById("searchInput");
 const categoryFilter = document.getElementById("categoryFilter");
-const productModal = document.getElementById("productModal");
-const modalContent = document.getElementById("modalContent");
-const modalClose = document.getElementById("modalClose");
 
 const WHATSAPP_NUMBER = "91XXXXXXXXXX";
 
@@ -15,8 +12,15 @@ const githubProducts = [
     category: "CCTV Cameras",
     model: "Contact Us",
     price: "",
-    description: "RB Tech Solution CCTV Security Camera. Contact us for product details and pricing.",
-    imageUrl: "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png",
+    description:
+      "RB Tech Solution CCTV Security Camera. Contact us for product details and pricing.",
+    imageUrl:
+      "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png",
+    images: [],
+    features: [],
+    specifications: [],
+    datasheetUrl: "",
+    manualUrl: "",
     active: true
   }
 ];
@@ -45,12 +49,16 @@ function displayProducts() {
       product.model,
       product.category,
       product.description
-    ].some(value => String(value || "").toLowerCase().includes(search));
+    ].some(value =>
+      String(value || "").toLowerCase().includes(search)
+    );
 
     const matchesCategory =
       category === "all" || product.category === category;
 
-    return matchesSearch && matchesCategory && product.active !== false;
+    return matchesSearch &&
+      matchesCategory &&
+      product.active !== false;
   });
 
   if (!filtered.length) {
@@ -63,46 +71,69 @@ function displayProducts() {
   }
 
   productGrid.innerHTML = filtered.map(product => {
-    const price = !product.price || Number(product.price) === 0
-      ? "Contact for Price"
-      : "₹" + Number(product.price).toLocaleString("en-IN");
+    const price =
+      !product.price || Number(product.price) === 0
+        ? "Contact for Price"
+        : "₹" + Number(product.price).toLocaleString("en-IN");
+
+    const detailUrl =
+      "product.html?id=" + encodeURIComponent(product.id);
 
     return `
       <article class="product-card">
-        <div class="product-art">
+
+        <a class="product-art"
+           href="${detailUrl}"
+           aria-label="View ${escapeHTML(product.name)} details">
+
           <img
             src="${escapeHTML(product.imageUrl || "")}"
             alt="${escapeHTML(product.name)}"
             loading="lazy"
             onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'art-icon\\'>📹</span>'"
           >
-        </div>
+
+        </a>
+
         <div class="product-info">
+
           <small>${escapeHTML(product.category)}</small>
+
           <h3>${escapeHTML(product.name)}</h3>
+
           <p>Model: ${escapeHTML(product.model || "Contact Us")}</p>
+
           <strong>${price}</strong>
+
           <div class="product-actions">
-            <button type="button" data-details="${escapeHTML(product.id)}">
+
+            <a
+              href="${detailUrl}"
+              class="product-detail-link"
+            >
               VIEW DETAILS →
-            </button>
+            </a>
+
           </div>
+
         </div>
       </article>`;
   }).join("");
 }
 
-// Show GitHub product immediately, without waiting for Firebase.
+// Show GitHub product immediately.
 displayProducts();
 
-// Load Firestore products separately.
+// Load products from Firestore.
 async function loadFirebaseProducts() {
   try {
-    const [{ collection, query, where, getDocs }, { db }] =
-      await Promise.all([
-        import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"),
-        import("./firebase.js")
-      ]);
+    const [
+      { collection, query, where, getDocs },
+      { db }
+    ] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js"),
+      import("./firebase.js")
+    ]);
 
     const productsQuery = query(
       collection(db, "products"),
@@ -119,7 +150,8 @@ async function loadFirebaseProducts() {
     allProducts = [
       ...githubProducts,
       ...firebaseProducts.filter(
-        product => !githubProducts.some(item => item.id === product.id)
+        product =>
+          !githubProducts.some(item => item.id === product.id)
       )
     ];
 
@@ -127,70 +159,34 @@ async function loadFirebaseProducts() {
 
   } catch (error) {
     console.error("Firebase loading error:", error);
+
     allProducts = [...githubProducts];
     displayProducts();
   }
 }
 
-productGrid?.addEventListener("click", event => {
-  const button = event.target.closest("[data-details]");
-  if (!button) return;
-
-  const product = allProducts.find(
-    item => item.id === button.dataset.details
-  );
-
-  if (!product || !modalContent || !productModal) return;
-
-  const price = !product.price || Number(product.price) === 0
-    ? "Contact for Price"
-    : "₹" + Number(product.price).toLocaleString("en-IN");
-
-  const message = encodeURIComponent(
-    `Hello RB Tech Solution, I want details about ${product.name}, Model: ${product.model || "Not specified"}.`
-  );
-
-  modalContent.innerHTML = `
-    <p class="eyebrow">${escapeHTML(product.category)}</p>
-    <img
-      src="${escapeHTML(product.imageUrl || "")}"
-      alt="${escapeHTML(product.name)}"
-      style="width:100%;max-height:260px;object-fit:contain"
-    >
-    <h2>${escapeHTML(product.name)}</h2>
-    <p><b>Model:</b> ${escapeHTML(product.model || "Contact Us")}</p>
-    <p><b>Price:</b> ${price}</p>
-    <p>${escapeHTML(product.description || "")}</p>
-    <a class="btn primary"
-       target="_blank"
-       rel="noopener"
-       href="https://wa.me/${WHATSAPP_NUMBER}?text=${message}">
-       Enquire on WhatsApp
-    </a>`;
-
-  productModal.classList.add("show");
-});
-
+// Product search and category filter.
 searchInput?.addEventListener("input", displayProducts);
 categoryFilter?.addEventListener("change", displayProducts);
 
-modalClose?.addEventListener("click", () => {
-  productModal?.classList.remove("show");
-});
-
-productModal?.addEventListener("click", event => {
-  if (event.target === productModal) {
-    productModal.classList.remove("show");
-  }
-});
-
+// Mobile navigation.
 document.getElementById("menuToggle")?.addEventListener("click", () => {
   document.getElementById("mainNav")?.classList.toggle("open");
 });
 
+// Close mobile navigation after selecting a link.
+document.querySelectorAll("#mainNav a").forEach(link => {
+  link.addEventListener("click", () => {
+    document.getElementById("mainNav")?.classList.remove("open");
+  });
+});
+
+// Footer year.
 const yearElement = document.getElementById("year");
+
 if (yearElement) {
   yearElement.textContent = new Date().getFullYear();
 }
 
+// Start loading Firestore products.
 loadFirebaseProducts();
