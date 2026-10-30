@@ -17,16 +17,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
-
-import {
   auth,
   db,
-  storage,
   authReady
 } from "./firebase.js";
 
@@ -41,10 +33,6 @@ const adminMessage = document.getElementById("adminMessage");
 
 const productList = document.getElementById("adminProductList");
 
-let editingImageUrl = "";
-let editingImagePath = "";
-
-// Escape HTML
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -55,23 +43,28 @@ function escapeHTML(value) {
   }[char]));
 }
 
-// Show message
 function showMessage(message, type = "success") {
+  if (!adminMessage) return;
+
   adminMessage.textContent = message;
   adminMessage.style.color =
     type === "error" ? "#d00000" : "#087d83";
 }
 
-// Check Admin Permission
+// ADMIN PERMISSION CHECK
 async function verifyAdmin(user) {
-  const adminRef = doc(db, "admins", user.uid);
+  if (!user) return false;
+
+  const adminRef = doc(db, "admin", user.uid);
   const adminSnapshot = await getDoc(adminRef);
 
-  return adminSnapshot.exists() &&
-    adminSnapshot.data().active === true;
+  return (
+    adminSnapshot.exists() &&
+    adminSnapshot.data().Active === true
+  );
 }
 
-// Login
+// ADMIN LOGIN
 loginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -101,13 +94,13 @@ loginForm.addEventListener("submit", async event => {
     loginMessage.textContent = "Login successful.";
 
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error);
     loginMessage.textContent =
       "Login failed: " + error.message;
   }
 });
 
-// Authentication state
+// AUTHENTICATION STATE
 onAuthStateChanged(auth, async user => {
   loginSection.classList.remove("admin-hidden");
   dashboardSection.classList.add("admin-hidden");
@@ -121,7 +114,8 @@ onAuthStateChanged(auth, async user => {
 
     if (!allowed) {
       await signOut(auth);
-      loginMessage.textContent = "Admin permission not found.";
+      loginMessage.textContent =
+        "Access denied. Admin permission not found.";
       return;
     }
 
@@ -131,13 +125,15 @@ onAuthStateChanged(auth, async user => {
     await loadProducts();
 
   } catch (error) {
-    console.error(error);
-    loginMessage.textContent = "Admin verification failed.";
+    console.error("Admin verification error:", error);
+    loginMessage.textContent =
+      "Admin verification failed: " + error.message;
+
     await signOut(auth);
   }
 });
 
-// Logout
+// LOGOUT
 document.getElementById("logoutBtn").addEventListener(
   "click",
   async () => {
@@ -151,38 +147,25 @@ document.getElementById("logoutBtn").addEventListener(
   }
 );
 
-// Upload Product Image
-async function uploadProductImage(file, productId) {
-  if (!file) return null;
+// GET PRODUCT IMAGE URL
+function getProductImageUrl() {
+  const imageInput = document.getElementById("productImage");
 
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please select a valid image.");
+  if (!imageInput) return "";
+
+  if (imageInput.type === "file") {
+    if (imageInput.files && imageInput.files.length > 0) {
+      throw new Error(
+        "Please change the image field to a URL input. Firebase Storage is not used."
+      );
+    }
+    return "";
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("Image size must be below 5 MB.");
-  }
-
-  const extension = file.name.split(".").pop().toLowerCase();
-
-  const imagePath =
-    `products/${productId}/${Date.now()}.${extension}`;
-
-  const imageRef = ref(storage, imagePath);
-
-  await uploadBytes(imageRef, file, {
-    contentType: file.type
-  });
-
-  const imageUrl = await getDownloadURL(imageRef);
-
-  return {
-    imageUrl,
-    imagePath
-  };
+  return imageInput.value.trim();
 }
 
-// Add or Update Product
+// ADD OR UPDATE PRODUCT
 productForm.addEventListener("submit", async event => {
   event.preventDefault();
 
@@ -197,12 +180,27 @@ productForm.addEventListener("submit", async event => {
   const category = document.getElementById("productCategory").value;
   const model = document.getElementById("productModel").value.trim();
   const priceValue = document.getElementById("productPrice").value;
-  const description = document.getElementById("productDescription").value.trim();
-  const imageFile = document.getElementById("productImage").files[0];
+  const description =
+    document.getElementById("productDescription").value.trim();
+
   const productId = document.getElementById("productId").value;
+
+  let imageUrl = "";
+
+  try {
+    imageUrl = getProductImageUrl();
+  } catch (error) {
+    showMessage(error.message, "error");
+    return;
+  }
 
   if (!name || !category || !description) {
     showMessage("Please fill all required fields.", "error");
+    return;
+  }
+
+  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+    showMessage("Please enter a valid image URL.", "error");
     return;
   }
 
@@ -221,15 +219,13 @@ productForm.addEventListener("submit", async event => {
   submitButton.textContent = "Saving...";
 
   try {
-    let id = productId;
-    let newImage = null;
+    if (productId) {
+      const productRef = doc(db, "products", productId);
+      const oldSnapshot = await getDoc(productRef);
 
-    if (id) {
-      if (imageFile) {
-        newImage = await uploadProductImage(imageFile, id);
+      if (!oldSnapshot.exists()) {
+        throw new Error("Product not found.");
       }
-
-      const productRef = doc(db, "products", id);
 
       const updatedData = {
         name,
@@ -240,81 +236,56 @@ productForm.addEventListener("submit", async event => {
         updatedAt: serverTimestamp()
       };
 
-      if (newImage) {
-        updatedData.imageUrl = newImage.imageUrl;
-        updatedData.imagePath = newImage.imagePath;
+      if (imageUrl) {
+        updatedData.imageUrl = imageUrl;
       }
 
       await updateDoc(productRef, updatedData);
 
-      if (newImage && editingImagePath) {
-        try {
-          await deleteObject(ref(storage, editingImagePath));
-        } catch (error) {
-          console.warn("Old image cleanup failed:", error);
-        }
-      }
-
       showMessage("Product updated successfully.");
 
     } else {
-      const productRef = await addDoc(
-        collection(db, "products"),
-        {
-          name,
-          category,
-          model,
-          price,
-          description,
-          imageUrl: "",
-          imagePath: "",
-          active: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }
-      );
-
-      id = productRef.id;
-
-      if (imageFile) {
-        newImage = await uploadProductImage(imageFile, id);
-
-        await updateDoc(productRef, {
-          imageUrl: newImage.imageUrl,
-          imagePath: newImage.imagePath
-        });
-      }
+      await addDoc(collection(db, "products"), {
+        name,
+        category,
+        model,
+        price,
+        description,
+        imageUrl,
+        active: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
 
       showMessage("New product added successfully.");
     }
 
     productForm.reset();
+
     document.getElementById("productId").value = "";
     document.getElementById("formHeading").textContent =
       "Add New Product";
 
-    editingImageUrl = "";
-    editingImagePath = "";
-
     await loadProducts();
 
   } catch (error) {
-    console.error(error);
-    showMessage(error.message || "Unable to save product.", "error");
+    console.error("Product save error:", error);
+    showMessage(
+      error.message || "Unable to save product.",
+      "error"
+    );
   } finally {
     submitButton.disabled = false;
     submitButton.textContent = "SAVE PRODUCT";
   }
 });
 
-// Load Products
+// LOAD PRODUCTS
 async function loadProducts() {
   productList.innerHTML = "Loading products...";
 
   try {
-    const snapshot = await getDocs(
-      collection(db, "products")
-    );
+    const snapshot = await getDocs(collection(db, "products"));
 
     if (snapshot.empty) {
       productList.innerHTML = "No products added yet.";
@@ -328,7 +299,6 @@ async function loadProducts() {
 
     productList.innerHTML = products.map(product => `
       <div class="product-row">
-
         <div>
           <strong>${escapeHTML(product.name)}</strong>
           <p>${escapeHTML(product.category)}</p>
@@ -336,8 +306,7 @@ async function loadProducts() {
           <br>
           <small>
             Price: ${
-              product.price === null ||
-              product.price === undefined
+              product.price === null || product.price === undefined
                 ? "Contact for price"
                 : "₹" + escapeHTML(product.price)
             }
@@ -345,32 +314,27 @@ async function loadProducts() {
         </div>
 
         <div>
-          <button
-            class="edit-btn"
-            data-edit="${escapeHTML(product.id)}"
-          >
+          <button class="edit-btn"
+            data-edit="${escapeHTML(product.id)}">
             EDIT
           </button>
 
-          <button
-            class="delete-btn"
-            data-delete="${escapeHTML(product.id)}"
-          >
+          <button class="delete-btn"
+            data-delete="${escapeHTML(product.id)}">
             DELETE
           </button>
         </div>
-
       </div>
     `).join("");
 
   } catch (error) {
-    console.error(error);
+    console.error("Load products error:", error);
     productList.textContent =
       "Unable to load products. Check Firestore permissions.";
   }
 }
 
-// Edit Product
+// EDIT AND DELETE BUTTONS
 productList.addEventListener("click", async event => {
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
@@ -384,6 +348,7 @@ productList.addEventListener("click", async event => {
   }
 });
 
+// EDIT PRODUCT
 async function editProduct(id) {
   try {
     const snapshot = await getDoc(doc(db, "products", id));
@@ -397,15 +362,19 @@ async function editProduct(id) {
 
     document.getElementById("productId").value = id;
     document.getElementById("productName").value = product.name || "";
-    document.getElementById("productCategory").value = product.category || "";
+    document.getElementById("productCategory").value =
+      product.category || "";
     document.getElementById("productModel").value = product.model || "";
     document.getElementById("productPrice").value =
       product.price ?? "";
     document.getElementById("productDescription").value =
       product.description || "";
 
-    editingImageUrl = product.imageUrl || "";
-    editingImagePath = product.imagePath || "";
+    const imageInput = document.getElementById("productImage");
+
+    if (imageInput && imageInput.type !== "file") {
+      imageInput.value = product.imageUrl || "";
+    }
 
     document.getElementById("formHeading").textContent =
       "Edit Product";
@@ -416,11 +385,12 @@ async function editProduct(id) {
     });
 
   } catch (error) {
+    console.error(error);
     showMessage(error.message, "error");
   }
 }
 
-// Delete Product
+// DELETE PRODUCT
 async function removeProduct(id) {
   if (!confirm("Are you sure you want to delete this product?")) {
     return;
@@ -431,25 +401,7 @@ async function removeProduct(id) {
       throw new Error("Admin permission required.");
     }
 
-    const productRef = doc(db, "products", id);
-    const snapshot = await getDoc(productRef);
-
-    if (!snapshot.exists()) {
-      showMessage("Product not found.", "error");
-      return;
-    }
-
-    const product = snapshot.data();
-
-    await deleteDoc(productRef);
-
-    if (product.imagePath) {
-      try {
-        await deleteObject(ref(storage, product.imagePath));
-      } catch (error) {
-        console.warn("Image cleanup failed:", error);
-      }
-    }
+    await deleteDoc(doc(db, "products", id));
 
     showMessage("Product deleted successfully.");
 
