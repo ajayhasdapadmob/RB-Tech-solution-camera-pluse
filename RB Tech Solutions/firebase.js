@@ -2,41 +2,68 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 import {
-  getAuth,
-  setPersistence,
-  browserLocalPersistence
+    getAuth,
+    setPersistence,
+    browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
-  getFirestore
+    getFirestore
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 import {
-  getStorage
+    getStorage
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
-// Firebase Configuration
+
+/* FIREBASE CONFIGURATION */
+
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+
+    apiKey: "AIzaSyDUNeWZ69E3IC50s1Vx1sPXLCwKaMvA4R4",
+
+    authDomain: "rb-tech-solution.firebaseapp.com",
+
+    projectId: "rb-tech-solution",
+
+    storageBucket: "rb-tech-solution.firebasestorage.app",
+
+    messagingSenderId: "280273384965",
+
+    appId: "1:280273384965:web:8fb65db00d084eb1010e6c",
+
+    measurementId: "G-SCH6TQ27JH"
+
 };
 
-// Initialize Firebase
+
+/* INITIALIZE FIREBASE */
+
 const app = initializeApp(firebaseConfig);
 
-// Firebase Services
+
+/* AUTHENTICATION */
+
 export const auth = getAuth(app);
+
+
+/* FIRESTORE DATABASE */
+
 export const db = getFirestore(app);
+
+
+/* FIREBASE STORAGE */
+
 export const storage = getStorage(app);
 
-// Keep admin login persistent in this browser
+
+/* LOGIN PERSISTENCE */
+
 export const authReady = setPersistence(
-  auth,
-  browserLocalPersistence
+    auth,
+    browserLocalPersistence
 );
 
+
 export default app;
+
