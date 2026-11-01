@@ -1,4 +1,3 @@
-
 import { auth, db, authReady } from "./firebase.js";
 
 import {
@@ -86,6 +85,132 @@ const sectionContent = $("sectionContent");
 
 let currentCustomer = null;
 let editingProductId = null;
+
+// ========================================
+// CUSTOMER PRODUCT IMAGE UPLOAD
+// ========================================
+
+let selectedProductImage = null;
+let uploadedProductImageUrl = "";
+
+const IMAGE_UPLOAD_API =
+  "https://rb-tech-solution-camera-pluse.vercel.app/api/upload-image";
+
+async function compressProductImage(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    throw new Error("Please select a valid image.");
+  }
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new Error("Please use JPG, PNG or WEBP image.");
+  }
+
+  const image = new Image();
+  const imageUrl = URL.createObjectURL(file);
+
+  try {
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = imageUrl;
+    });
+
+    const maxDimension = 1600;
+
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(image.width, image.height)
+    );
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = Math.round(image.width * scale);
+    canvas.height = Math.round(image.height * scale);
+
+    const context = canvas.getContext("2d");
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    let blob = await new Promise(resolve => {
+      canvas.toBlob(resolve, "image/webp", 0.82);
+    });
+
+    if (!blob) {
+      throw new Error("Unable to process image.");
+    }
+
+    if (blob.size > 2.5 * 1024 * 1024) {
+      blob = await new Promise(resolve => {
+        canvas.toBlob(resolve, "image/jpeg", 0.7);
+      });
+    }
+
+    if (!blob || blob.size > 2.5 * 1024 * 1024) {
+      throw new Error("Image is too large. Please select a smaller image.");
+    }
+
+    return blob;
+
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
+async function uploadCustomerProductImage(file) {
+  if (!currentCustomer || !auth.currentUser) {
+    throw new Error("Please login again.");
+  }
+
+  checkSubscription(currentCustomer);
+
+  const compressedImage = await compressProductImage(file);
+
+  const imageBase64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+
+    reader.onerror = () => reject(
+      new Error("Unable to read image.")
+    );
+
+    reader.readAsDataURL(compressedImage);
+  });
+
+  const idToken = await auth.currentUser.getIdToken();
+
+  const response = await fetch(IMAGE_UPLOAD_API, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${idToken}`
+    },
+
+    body: JSON.stringify({
+      customerId: currentCustomer.id,
+      fileName: file.name,
+      mimeType: compressedImage.type,
+      imageBase64
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success || !result.imageUrl) {
+    throw new Error(
+      result.error || "Image upload failed."
+    );
+  }
+
+  return result.imageUrl;
+}
 
 // ========================================
 // MESSAGES
@@ -642,7 +767,6 @@ function setProductDetailsFields(features = [], specifications = {}) {
     addCustomSpecificationRow();
   }
 }
-
 // ========================================
 // RENDER PRODUCT FORM
 // ========================================
@@ -718,21 +842,42 @@ function renderProductForm(product = null) {
         >${escapeHTML(product?.description || "")}</textarea>
       </div>
 
+      <!-- PRODUCT IMAGE UPLOAD -->
+
       <div class="form-group full-width">
-        <label for="productImage">Product Image URL (GitHub)</label>
+        <label for="productImageFile">Product Image</label>
+
         <input
-          type="url"
-          id="productImage"
-          value="${escapeHTML(product?.imageUrl || product?.image || "")}"
-          placeholder="https://example.com/image.jpg"
+          type="file"
+          id="productImageFile"
+          accept="image/jpeg,image/png,image/webp"
         >
-        <small>GitHub पर upload की गई image का पूरा URL डालें।</small>
+
+        <small>
+          मोबाइल या कंप्यूटर से JPG, PNG या WEBP फोटो चुनें।
+          अधिकतम अपलोड आकार 2.5 MB है।
+        </small>
+
+        <div id="productImagePreview" style="margin-top:12px;">
+          ${
+            product?.imageUrl || product?.image
+              ? `<img
+                  src="${escapeHTML(product.imageUrl || product.image)}"
+                  alt="Product Preview"
+                  style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;"
+                >`
+              : "<p>No image selected.</p>"
+          }
+        </div>
+
+        <p id="imageUploadMessage"></p>
       </div>
 
       <h3 class="form-subheading">Product Features</h3>
 
       <div class="form-group full-width">
         <div id="featuresFields"></div>
+
         <button type="button" id="addFeatureBtn" class="add-row">
           + Add Feature
         </button>
@@ -740,15 +885,17 @@ function renderProductForm(product = null) {
 
       <h3 class="form-subheading">Product Specifications</h3>
 
-      <div id="standardSpecifications"
+      <div
+        id="standardSpecifications"
         class="full-width"
-        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
-      </div>
+        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px"
+      ></div>
 
       <h3 class="form-subheading">Additional Specifications</h3>
 
       <div class="form-group full-width">
         <div id="customSpecifications"></div>
+
         <button type="button" id="addSpecificationBtn" class="add-row">
           + Add Specification
         </button>
@@ -756,6 +903,7 @@ function renderProductForm(product = null) {
 
       <div class="form-group full-width">
         <label for="productNote">Additional Note</label>
+
         <textarea
           id="productNote"
           maxlength="3000"
@@ -764,41 +912,66 @@ function renderProductForm(product = null) {
       </div>
 
       <div class="form-group full-width">
+
         <label class="check-row">
-          <input type="checkbox" id="productIsNew"
-            ${product?.isNew === true ? "checked" : ""}>
+          <input
+            type="checkbox"
+            id="productIsNew"
+            ${product?.isNew === true ? "checked" : ""}
+          >
           Show NEW Badge
         </label>
 
         <label class="check-row">
-          <input type="checkbox" id="productTrending"
+          <input
+            type="checkbox"
+            id="productTrending"
             ${
               product?.trending === true ||
               product?.isTrending === true ||
               product?.featured === true ? "checked" : ""
-            }>
+            }
+          >
           Show in Trending Products
         </label>
 
         <label class="check-row">
-          <input type="checkbox" id="productActive"
-            ${product?.active !== false ? "checked" : ""}>
+          <input
+            type="checkbox"
+            id="productActive"
+            ${product?.active !== false ? "checked" : ""}
+          >
           Active Product
         </label>
+
       </div>
 
       <div class="form-actions">
-        <button type="submit" id="saveProductBtn" class="save-button">
+
+        <button
+          type="submit"
+          id="saveProductBtn"
+          class="save-button"
+        >
           ${product ? "Update Product" : "Save Product"}
         </button>
 
-        <button type="button" id="clearProductBtn" class="cancel-button">
+        <button
+          type="button"
+          id="clearProductBtn"
+          class="cancel-button"
+        >
           Clear Form
         </button>
 
-        <button type="button" id="cancelProductBtn" class="cancel-button">
+        <button
+          type="button"
+          id="cancelProductBtn"
+          class="cancel-button"
+        >
           Back to Products
         </button>
+
       </div>
 
       <p id="customerProductMessage" class="full-width"></p>
@@ -806,24 +979,73 @@ function renderProductForm(product = null) {
     </form>
   `;
 
+  // Fill existing product details
+
   setProductDetailsFields(
     product?.features || [],
     product?.specifications || {}
   );
 
-  $("addFeatureBtn").addEventListener("click", () => addFeatureRow());
+  // ========================================
+  // IMAGE UPLOAD AND PREVIEW
+  // ========================================
+
+  selectedProductImage = null;
+
+  uploadedProductImageUrl =
+    product?.imageUrl || product?.image || "";
+
+  const imageInput = $("productImageFile");
+
+  if (imageInput) {
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files?.[0];
+
+      if (!file) return;
+
+      selectedProductImage = file;
+
+      const preview = $("productImagePreview");
+
+      if (preview) {
+        const previewUrl = URL.createObjectURL(file);
+
+        preview.innerHTML = `
+          <img
+            src="${previewUrl}"
+            alt="Selected Product"
+            style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;"
+          >
+        `;
+      }
+    });
+  }
+
+  // Add feature
+
+  $("addFeatureBtn").addEventListener("click", () => {
+    addFeatureRow();
+  });
+
+  // Add specification
 
   $("addSpecificationBtn").addEventListener("click", () => {
     addCustomSpecificationRow();
   });
 
+  // Clear form
+
   $("clearProductBtn").addEventListener("click", () => {
     renderProductForm();
   });
 
+  // Back to products
+
   $("cancelProductBtn").addEventListener("click", () => {
     showSection("products");
   });
+
+  // Save product
 
   $("customerProductForm").addEventListener("submit", saveProduct);
 }
@@ -845,29 +1067,57 @@ async function saveProduct(event) {
 
     const name = $("productName").value.trim();
     const category = $("productCategory").value.trim();
-    const priceText = $("productPrice").value.trim();
-    const price = priceText === "" ? "" : Number(priceText);
 
-    const description = $("productDescription").value.trim();
-    const imageUrl = $("productImage").value.trim();
+    const priceText = $("productPrice").value.trim();
+
+    const price =
+      priceText === "" ? "" : Number(priceText);
+
+    const description =
+      $("productDescription").value.trim();
+
+    let imageUrl = uploadedProductImageUrl;
+
+    // Upload selected image first
+
+    if (selectedProductImage) {
+      message.textContent = "Uploading product image...";
+      message.style.color = "#087f3c";
+
+      saveButton.disabled = true;
+      saveButton.textContent = "Uploading Image...";
+
+      imageUrl = await uploadCustomerProductImage(
+        selectedProductImage
+      );
+
+      uploadedProductImageUrl = imageUrl;
+    }
+
     const note = $("productNote").value.trim();
 
     if (!name || !category) {
-      throw new Error("Product Name and Category are required.");
+      throw new Error(
+        "Product Name and Category are required."
+      );
     }
 
     if (
       priceText !== "" &&
       (!Number.isFinite(price) || price < 0)
     ) {
-      throw new Error("Please enter a valid product price.");
+      throw new Error(
+        "Please enter a valid product price."
+      );
     }
 
     if (
       imageUrl &&
       !/^https?:\/\/\S+$/i.test(imageUrl)
     ) {
-      throw new Error("Please enter a valid HTTP or HTTPS image URL.");
+      throw new Error(
+        "Please enter a valid HTTP or HTTPS image URL."
+      );
     }
 
     const trending = $("productTrending").checked;
@@ -877,11 +1127,14 @@ async function saveProduct(event) {
 
       name,
       category,
+
       model: $("productModel").value.trim(),
+
       price,
       description,
 
       features: getProductFeatures(),
+
       specifications: getProductSpecifications(),
 
       note,
@@ -894,19 +1147,17 @@ async function saveProduct(event) {
 
       active: $("productActive").checked,
 
+      imageUrl: imageUrl || "",
+      image: imageUrl || "",
+
       updatedAt: serverTimestamp()
     };
-
-    if (imageUrl) {
-      productData.imageUrl = imageUrl;
-    } else {
-      productData.imageUrl = "";
-    }
 
     saveButton.disabled = true;
     saveButton.textContent = "Saving...";
 
     if (editingProductId) {
+
       const productRef = doc(
         db,
         "customerProducts",
@@ -919,14 +1170,19 @@ async function saveProduct(event) {
         !existingProduct.exists() ||
         existingProduct.data().customerId !== currentCustomer.id
       ) {
-        throw new Error("You cannot edit this product.");
+        throw new Error(
+          "You cannot edit this product."
+        );
       }
 
       await updateDoc(productRef, productData);
 
-      showDashboardMessage("Product updated successfully.");
+      showDashboardMessage(
+        "Product updated successfully."
+      );
 
     } else {
+
       productData.createdAt = serverTimestamp();
 
       await addDoc(
@@ -934,10 +1190,16 @@ async function saveProduct(event) {
         productData
       );
 
-      showDashboardMessage("Product added successfully.");
+      showDashboardMessage(
+        "Product added successfully."
+      );
     }
 
     editingProductId = null;
+
+    selectedProductImage = null;
+
+    uploadedProductImageUrl = "";
 
     await showSection("products");
 
@@ -945,19 +1207,21 @@ async function saveProduct(event) {
     console.error("Save product error:", error);
 
     if (message) {
-      message.textContent = error.message || "Unable to save product.";
+      message.textContent =
+        error.message || "Unable to save product.";
+
       message.style.color = "#dc2626";
     }
 
     if (saveButton) {
       saveButton.disabled = false;
+
       saveButton.textContent = editingProductId
         ? "Update Product"
         : "Save Product";
     }
   }
 }
-
 // ========================================
 // DELETE PRODUCT
 // ========================================
@@ -972,7 +1236,12 @@ async function removeProduct(productId) {
   try {
     checkSubscription(currentCustomer);
 
-    const productRef = doc(db, "customerProducts", productId);
+    const productRef = doc(
+      db,
+      "customerProducts",
+      productId
+    );
+
     const productSnapshot = await getDoc(productRef);
 
     if (
@@ -1016,10 +1285,17 @@ async function showProducts() {
 
       const badges = [];
 
-      if (product.isNew === true) badges.push("NEW");
-      if (trending) badges.push("TRENDING");
+      if (product.isNew === true) {
+        badges.push("NEW");
+      }
 
-      badges.push(product.active === false ? "INACTIVE" : "ACTIVE");
+      if (trending) {
+        badges.push("TRENDING");
+      }
+
+      badges.push(
+        product.active === false ? "INACTIVE" : "ACTIVE"
+      );
 
       return `
         <article class="customer-product-card">
@@ -1035,31 +1311,48 @@ async function showProducts() {
 
           <h3>${escapeHTML(product.name || "Unnamed Product")}</h3>
 
-          <p>Category: ${escapeHTML(product.category || "Not set")}</p>
+          <p>
+            Category:
+            ${escapeHTML(product.category || "Not set")}
+          </p>
 
-          <p>Model: ${escapeHTML(product.model || "N/A")}</p>
+          <p>
+            Model:
+            ${escapeHTML(product.model || "N/A")}
+          </p>
 
-          <p>Price: ${
-            product.price === "" || product.price == null
-              ? "Not set"
-              : "₹" + Number(product.price).toLocaleString("en-IN")
-          }</p>
+          <p>
+            Price:
+            ${
+              product.price === "" || product.price == null
+                ? "Not set"
+                : "₹" + Number(product.price).toLocaleString("en-IN")
+            }
+          </p>
 
           <p>${escapeHTML(product.description || "")}</p>
 
-          <p><strong>${escapeHTML(badges.join(" • "))}</strong></p>
+          <p>
+            <strong>${escapeHTML(badges.join(" • "))}</strong>
+          </p>
 
           <div class="product-actions">
+
             <button
               type="button"
               data-edit-product="${escapeHTML(product.id)}"
-            >Edit</button>
+            >
+              Edit
+            </button>
 
             <button
               type="button"
               class="delete-button"
               data-delete-product="${escapeHTML(product.id)}"
-            >Delete</button>
+            >
+              Delete
+            </button>
+
           </div>
 
         </article>
@@ -1101,7 +1394,9 @@ async function showProducts() {
             item => item.id === button.dataset.editProduct
           );
 
-          if (product) renderProductForm(product);
+          if (product) {
+            renderProductForm(product);
+          }
         });
       });
 
@@ -1141,17 +1436,25 @@ async function showSection(section) {
     sectionContent.innerHTML = `
       <h2>Dashboard Overview</h2>
       <p>Welcome to your business dashboard.</p>
-      <p>Business: ${escapeHTML(currentCustomer.businessName || "")}</p>
-      <p>Website: /${escapeHTML(currentCustomer.slug || "")}/</p>
+      <p>
+        Business:
+        ${escapeHTML(currentCustomer.businessName || "")}
+      </p>
+      <p>
+        Website:
+        /${escapeHTML(currentCustomer.slug || "")}/
+      </p>
     `;
 
     try {
       const products = await loadProducts();
+
       const productCount = $("productCount");
 
       if (productCount) {
         productCount.textContent = products.length;
       }
+
     } catch (error) {
       console.error("Overview product count error:", error);
     }
@@ -1171,16 +1474,33 @@ async function showSection(section) {
   else if (section === "subscription") {
     const expiry = currentCustomer.subscriptionExpiry;
 
-    const expiryText = expiry && typeof expiry.toDate === "function"
-      ? expiry.toDate().toLocaleDateString("en-IN")
-      : "Not set";
+    const expiryText =
+      expiry && typeof expiry.toDate === "function"
+        ? expiry.toDate().toLocaleDateString("en-IN")
+        : "Not set";
 
     sectionContent.innerHTML = `
       <h2>Subscription Details</h2>
-      <p>Plan: ${escapeHTML(currentCustomer.plan || "Not set")}</p>
-      <p>Amount: ₹${Number(currentCustomer.subscriptionAmount || 0)}</p>
-      <p>Expiry Date: ${escapeHTML(expiryText)}</p>
-      <p>Status: ${escapeHTML(currentCustomer.status || "Unknown")}</p>
+
+      <p>
+        Plan:
+        ${escapeHTML(currentCustomer.plan || "Not set")}
+      </p>
+
+      <p>
+        Amount:
+        ₹${Number(currentCustomer.subscriptionAmount || 0)}
+      </p>
+
+      <p>
+        Expiry Date:
+        ${escapeHTML(expiryText)}
+      </p>
+
+      <p>
+        Status:
+        ${escapeHTML(currentCustomer.status || "Unknown")}
+      </p>
     `;
   }
 }
@@ -1216,9 +1536,14 @@ if (loginForm) {
     const submitButton =
       loginForm.querySelector('button[type="submit"]');
 
-    if (submitButton) submitButton.disabled = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
 
-    showLoginMessage("Checking your account...", "#64748b");
+    showLoginMessage(
+      "Checking your account...",
+      "#64748b"
+    );
 
     try {
       await authReady;
@@ -1241,7 +1566,9 @@ if (loginForm) {
         "Login failed. Please check your email and password."
       );
 
-      if (submitButton) submitButton.disabled = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
     }
   });
 }
@@ -1257,12 +1584,18 @@ if (logoutBtn) {
 
       showLogin();
 
-      if (loginForm) loginForm.reset();
+      if (loginForm) {
+        loginForm.reset();
+      }
 
-      showLoginMessage("You have logged out.", "#087f3c");
+      showLoginMessage(
+        "You have logged out.",
+        "#087f3c"
+      );
 
     } catch (error) {
       console.error("Logout error:", error);
+
       alert("Logout failed. Please try again.");
     }
   });
@@ -1287,7 +1620,9 @@ async function initializeCustomerAdmin() {
       const submitButton =
         loginForm?.querySelector('button[type="submit"]');
 
-      if (submitButton) submitButton.disabled = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
 
     } catch (error) {
       console.error("Customer verification error:", error);
@@ -1309,5 +1644,8 @@ async function initializeCustomerAdmin() {
 
 initializeCustomerAdmin().catch(error => {
   console.error("Customer Admin initialization error:", error);
-  showLoginMessage("Unable to initialize Customer Admin.");
+
+  showLoginMessage(
+    "Unable to initialize Customer Admin."
+  );
 });
