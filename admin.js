@@ -1,3 +1,6 @@
+
+import { auth, db, authReady } from "./firebase.js";
+
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -15,22 +18,87 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import {
-  auth,
-  db,
-  authReady
-} from "./firebase.js";
+// ========================================
+// ALL STANDARD SPECIFICATIONS
+// ========================================
 
-const loginSection = document.getElementById("loginSection");
-const dashboardSection = document.getElementById("dashboardSection");
+const STANDARD_SPECIFICATIONS = [
+  "Angle of View",
+  "Image sensor",
+  "Lens",
+  "Aperture",
+  "Compression",
+  "Video Format",
+  "Video resolution",
+  "Smart Features",
+  "Record Type",
+  "Parking Mode",
+  "Mobile App",
+  "Connectivity",
+  "Microphone",
+  "Speaker",
+  "SD Card",
+  "Photo Format",
+  "Housing Type",
+  "Power Source",
+  "Working temperature",
+  "Storage temperature",
+  "Size",
+  "Certificates"
+];
 
-const loginForm = document.getElementById("loginForm");
-const productForm = document.getElementById("productForm");
+// ========================================
+// ELEMENTS
+// ========================================
 
-const loginMessage = document.getElementById("loginMessage");
-const adminMessage = document.getElementById("adminMessage");
+const $ = id => document.getElementById(id);
 
-const productList = document.getElementById("adminProductList");
+const loginSection = $("loginSection");
+const dashboardSection = $("dashboardSection");
+const loginForm = $("loginForm");
+const adminEmail = $("adminEmail");
+const adminPassword = $("adminPassword");
+const loginMessage = $("loginMessage");
+const logoutBtn = $("logoutBtn");
+const adminMessage = $("adminMessage");
+
+const productForm = $("productForm");
+const productId = $("productId");
+const productName = $("productName");
+const productCategory = $("productCategory");
+const productModel = $("productModel");
+const productPrice = $("productPrice");
+const productDescription = $("productDescription");
+const productImage = $("productImage");
+const productNote = $("productNote");
+
+const productIsNew = $("productIsNew");
+const productTrending = $("productTrending");
+const productActive = $("productActive");
+
+const featuresFields = $("featuresFields");
+const standardSpecifications = $("standardSpecifications");
+const customSpecifications = $("customSpecifications");
+
+const addFeatureBtn = $("addFeatureBtn");
+const addSpecificationBtn = $("addSpecificationBtn");
+const cancelEditBtn = $("cancelEditBtn");
+
+const productMessage = $("productMessage");
+const adminProductList = $("adminProductList");
+const saveProductBtn = $("saveProductBtn");
+const formHeading = $("formHeading");
+
+// ========================================
+// HELPERS
+// ========================================
+
+function showMessage(element, message, isError = false) {
+  if (!element) return;
+
+  element.textContent = message;
+  element.style.color = isError ? "#dc2626" : "#087f3c";
+}
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -38,376 +106,599 @@ function escapeHTML(value) {
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
-    "'": "&#39;"
-  }[char]));
+    "'": "&#039;"
+  })[char]);
 }
 
-function showMessage(message, type = "success") {
-  if (!adminMessage) return;
+function normalizeFeatures(value) {
+  if (Array.isArray(value)) return value;
 
-  adminMessage.textContent = message;
-  adminMessage.style.color =
-    type === "error" ? "#d00000" : "#087d83";
+  if (typeof value === "string") {
+    return value.split("\n").map(x => x.trim()).filter(Boolean);
+  }
+
+  return [];
 }
 
-// ADMIN PERMISSION CHECK
-async function verifyAdmin(user) {
+function normalizeSpecifications(value) {
+  if (Array.isArray(value)) {
+    const result = {};
+
+    value.forEach(item => {
+      const key = item.name || item.key || "";
+
+      if (key) {
+        result[key] = item.value || "";
+      }
+    });
+
+    return result;
+  }
+
+  if (value && typeof value === "object") return value;
+
+  if (typeof value === "string" && value.trim()) {
+    const result = {};
+
+    value.split("\n").forEach(line => {
+      const index = line.indexOf(":");
+
+      if (index > -1) {
+        result[line.slice(0, index).trim()] =
+          line.slice(index + 1).trim();
+      }
+    });
+
+    return result;
+  }
+
+  return {};
+}
+
+// ========================================
+// BUILD ALL 22 STANDARD SPECIFICATION BOXES
+// ========================================
+
+function buildStandardSpecifications(values = {}) {
+  standardSpecifications.innerHTML = "";
+
+  STANDARD_SPECIFICATIONS.forEach((specName, index) => {
+    const group = document.createElement("div");
+    group.className = "form-group";
+
+    const label = document.createElement("label");
+    label.htmlFor = `standardSpec${index}`;
+    label.textContent = specName;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = `standardSpec${index}`;
+    input.className = "standard-spec-input";
+    input.dataset.specName = specName;
+    input.placeholder = `Enter ${specName}`;
+    input.value = values[specName] ?? "";
+
+    group.append(label, input);
+    standardSpecifications.appendChild(group);
+  });
+}
+
+// ========================================
+// REMOVE CONFIRMATION
+// ========================================
+
+function confirmRemove(message) {
+  return window.confirm(message);
+}
+
+// ========================================
+// FEATURE INPUTS
+// ========================================
+
+function addFeatureRow(value = "") {
+  const row = document.createElement("div");
+  row.className = "dynamic-row";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "feature-input";
+  input.placeholder = "Enter product feature";
+  input.value = value;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-row";
+  removeBtn.textContent = "Remove";
+
+  removeBtn.addEventListener("click", () => {
+    if (!confirmRemove("Are you sure you want to remove this feature?")) {
+      return;
+    }
+
+    row.remove();
+  });
+
+  row.append(input, removeBtn);
+  featuresFields.appendChild(row);
+}
+
+addFeatureBtn.addEventListener("click", () => addFeatureRow());
+
+function getProductFeatures() {
+  return [...featuresFields.querySelectorAll(".feature-input")]
+    .map(input => input.value.trim())
+    .filter(Boolean);
+}
+
+// ========================================
+// CUSTOM SPECIFICATION INPUTS
+// ========================================
+
+function addCustomSpecificationRow(key = "", value = "") {
+  const row = document.createElement("div");
+  row.className = "spec-row";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className = "custom-spec-key";
+  nameInput.placeholder = "Specification Name";
+  nameInput.value = key;
+
+  const valueInput = document.createElement("input");
+  valueInput.type = "text";
+  valueInput.className = "custom-spec-value";
+  valueInput.placeholder = "Specification Value";
+  valueInput.value = value;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-row";
+  removeBtn.textContent = "Remove";
+
+  removeBtn.addEventListener("click", () => {
+    if (!confirmRemove("Are you sure you want to remove this specification?")) {
+      return;
+    }
+
+    row.remove();
+  });
+
+  row.append(nameInput, valueInput, removeBtn);
+  customSpecifications.appendChild(row);
+}
+
+addSpecificationBtn.addEventListener("click", () => {
+  addCustomSpecificationRow();
+});
+
+// ========================================
+// COLLECT SPECIFICATIONS
+// ========================================
+
+function getProductSpecifications() {
+  const specifications = {};
+
+  standardSpecifications
+    .querySelectorAll(".standard-spec-input")
+    .forEach(input => {
+      specifications[input.dataset.specName] = input.value.trim();
+    });
+
+  customSpecifications.querySelectorAll(".spec-row").forEach(row => {
+    const key = row.querySelector(".custom-spec-key").value.trim();
+    const value = row.querySelector(".custom-spec-value").value.trim();
+
+    if (key) {
+      specifications[key] = value;
+    }
+  });
+
+  return specifications;
+}
+
+// ========================================
+// FILL ALL FIELDS DURING EDIT
+// ========================================
+
+function setProductDetailsFields(features = [], specifications = {}) {
+  const featureList = normalizeFeatures(features);
+  const specValues = normalizeSpecifications(specifications);
+
+  featuresFields.innerHTML = "";
+  customSpecifications.innerHTML = "";
+
+  if (featureList.length) {
+    featureList.forEach(feature => addFeatureRow(feature));
+  } else {
+    addFeatureRow();
+  }
+
+  buildStandardSpecifications(specValues);
+
+  const standardNames = new Set(STANDARD_SPECIFICATIONS);
+
+  const customEntries = Object.entries(specValues)
+    .filter(([key]) => !standardNames.has(key));
+
+  if (customEntries.length) {
+    customEntries.forEach(([key, value]) => {
+      addCustomSpecificationRow(key, value);
+    });
+  } else {
+    addCustomSpecificationRow();
+  }
+}
+
+// Initial fields
+setProductDetailsFields();
+
+// ========================================
+// CLEAR FORM
+// ========================================
+
+function clearProductForm() {
+  productForm.reset();
+  productId.value = "";
+  productActive.checked = true;
+
+  setProductDetailsFields([], {});
+
+  formHeading.textContent = "Add New Product";
+  saveProductBtn.textContent = "Save Product";
+
+  showMessage(productMessage, "");
+}
+
+cancelEditBtn.addEventListener("click", clearProductForm);
+
+// ========================================
+// ADMIN PERMISSION
+// ========================================
+
+async function checkAdminPermission(user) {
   if (!user) return false;
 
-  const adminRef = doc(db, "admin", user.uid);
-  const adminSnapshot = await getDoc(adminRef);
+  try {
+    const adminRef = doc(db, "admin", user.uid);
+    const adminSnap = await getDoc(adminRef);
 
-  return (
-    adminSnapshot.exists() &&
-    adminSnapshot.data().Active === true
-  );
+    return adminSnap.exists() &&
+      adminSnap.data().Active === true;
+
+  } catch (error) {
+    console.error("Admin permission error:", error);
+    return false;
+  }
 }
 
-// ADMIN LOGIN
+// ========================================
+// LOGIN
+// ========================================
+
 loginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  loginMessage.textContent = "Checking login...";
-
-  const email = document.getElementById("adminEmail").value.trim();
-  const password = document.getElementById("adminPassword").value;
+  showMessage(loginMessage, "Logging in...");
 
   try {
-    await authReady;
-
-    const result = await signInWithEmailAndPassword(
+    await signInWithEmailAndPassword(
       auth,
-      email,
-      password
+      adminEmail.value.trim(),
+      adminPassword.value
     );
 
-    const allowed = await verifyAdmin(result.user);
-
-    if (!allowed) {
-      await signOut(auth);
-      loginMessage.textContent =
-        "Access denied. You are not an authorized admin.";
-      return;
-    }
-
-    loginMessage.textContent = "Login successful.";
+    showMessage(loginMessage, "Login successful. Checking permission...");
 
   } catch (error) {
     console.error("Login error:", error);
-    loginMessage.textContent =
-      "Login failed: " + error.message;
+    showMessage(loginMessage, error.message, true);
   }
 });
 
-// AUTHENTICATION STATE
-onAuthStateChanged(auth, async user => {
-  loginSection.classList.remove("admin-hidden");
-  dashboardSection.classList.add("admin-hidden");
+// ========================================
+// LOGOUT
+// ========================================
 
-  if (!user) return;
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    clearProductForm();
+
+  } catch (error) {
+    console.error("Logout error:", error);
+    showMessage(adminMessage, error.message, true);
+  }
+});
+
+// ========================================
+// AUTH STATE
+// ========================================
+
+onAuthStateChanged(auth, async user => {
+  loginSection.classList.remove("hidden");
+  dashboardSection.classList.add("hidden");
+
+  if (!user) {
+    showMessage(loginMessage, "");
+    return;
+  }
+
+  showMessage(loginMessage, "Checking admin permission...");
 
   try {
-    await authReady;
+    if (authReady) await authReady;
 
-    const allowed = await verifyAdmin(user);
+    const allowed = await checkAdminPermission(user);
 
     if (!allowed) {
+      showMessage(
+        loginMessage,
+        "Access denied. This account is not an active admin.",
+        true
+      );
+
       await signOut(auth);
-      loginMessage.textContent =
-        "Access denied. Admin permission not found.";
       return;
     }
 
-    loginSection.classList.add("admin-hidden");
-    dashboardSection.classList.remove("admin-hidden");
+    loginSection.classList.add("hidden");
+    dashboardSection.classList.remove("hidden");
 
-    await loadProducts();
+    showMessage(adminMessage, "Admin login successful.");
+
+    await loadAdminProducts();
 
   } catch (error) {
-    console.error("Admin verification error:", error);
-    loginMessage.textContent =
-      "Admin verification failed: " + error.message;
+    console.error("Authentication error:", error);
 
+    showMessage(loginMessage, error.message, true);
     await signOut(auth);
   }
 });
 
-// LOGOUT
-document.getElementById("logoutBtn").addEventListener(
-  "click",
-  async () => {
-    try {
-      await signOut(auth);
-      productForm.reset();
-      loginMessage.textContent = "Logged out successfully.";
-    } catch (error) {
-      showMessage(error.message, "error");
-    }
-  }
-);
+// ========================================
+// SAVE PRODUCT
+// ========================================
 
-// GET PRODUCT IMAGE URL
-function getProductImageUrl() {
-  const imageInput = document.getElementById("productImage");
-
-  if (!imageInput) return "";
-
-  if (imageInput.type === "file") {
-    if (imageInput.files && imageInput.files.length > 0) {
-      throw new Error(
-        "Please change the image field to a URL input. Firebase Storage is not used."
-      );
-    }
-    return "";
-  }
-
-  return imageInput.value.trim();
-}
-
-// ADD OR UPDATE PRODUCT
 productForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  const user = auth.currentUser;
-
-  if (!user || !(await verifyAdmin(user))) {
-    showMessage("Admin permission required.", "error");
+  if (!auth.currentUser) {
+    showMessage(productMessage, "Please login first.", true);
     return;
   }
 
-  const name = document.getElementById("productName").value.trim();
-  const category = document.getElementById("productCategory").value;
-  const model = document.getElementById("productModel").value.trim();
-  const priceValue = document.getElementById("productPrice").value;
-  const description =
-    document.getElementById("productDescription").value.trim();
+  const name = productName.value.trim();
+  const category = productCategory.value.trim();
 
-  const productId = document.getElementById("productId").value;
+  if (!name || !category) {
+    showMessage(
+      productMessage,
+      "Product Name and Category are required.",
+      true
+    );
+    return;
+  }
 
-  let imageUrl = "";
+  const trending = productTrending.checked;
+
+  const productData = {
+    name,
+    category,
+    model: productModel.value.trim(),
+    price: productPrice.value.trim(),
+    description: productDescription.value.trim(),
+
+    features: getProductFeatures(),
+    specifications: getProductSpecifications(),
+
+    note: productNote.value.trim(),
+
+    isNew: productIsNew.checked,
+
+    trending,
+    isTrending: trending,
+    featured: trending,
+
+    active: productActive.checked,
+    updatedAt: serverTimestamp()
+  };
+
+  const imageUrl = productImage.value.trim();
+
+  if (imageUrl) {
+    productData.imageUrl = imageUrl;
+  }
+
+  saveProductBtn.disabled = true;
+  saveProductBtn.textContent = "Saving...";
 
   try {
-    imageUrl = getProductImageUrl();
-  } catch (error) {
-    showMessage(error.message, "error");
-    return;
-  }
-
-  if (!name || !category || !description) {
-    showMessage("Please fill all required fields.", "error");
-    return;
-  }
-
-  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
-    showMessage("Please enter a valid image URL.", "error");
-    return;
-  }
-
-  const price = priceValue === "" ? null : Number(priceValue);
-
-  if (price !== null && (!Number.isFinite(price) || price < 0)) {
-    showMessage("Please enter a valid price.", "error");
-    return;
-  }
-
-  const submitButton = productForm.querySelector(
-    'button[type="submit"]'
-  );
-
-  submitButton.disabled = true;
-  submitButton.textContent = "Saving...";
-
-  try {
-    if (productId) {
-      const productRef = doc(db, "products", productId);
-      const oldSnapshot = await getDoc(productRef);
-
-      if (!oldSnapshot.exists()) {
-        throw new Error("Product not found.");
-      }
-
-      const updatedData = {
-        name,
-        category,
-        model,
-        price,
-        description,
-        updatedAt: serverTimestamp()
-      };
-
-      if (imageUrl) {
-        updatedData.imageUrl = imageUrl;
-      }
-
-      await updateDoc(productRef, updatedData);
-
-      showMessage("Product updated successfully.");
+    if (productId.value) {
+      await updateDoc(
+        doc(db, "products", productId.value),
+        productData
+      );
 
     } else {
-      await addDoc(collection(db, "products"), {
-        name,
-        category,
-        model,
-        price,
-        description,
-        imageUrl,
-        active: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+      productData.createdAt = serverTimestamp();
 
-      showMessage("New product added successfully.");
+      await addDoc(
+        collection(db, "products"),
+        productData
+      );
     }
 
-    productForm.reset();
+    clearProductForm();
+    await loadAdminProducts();
 
-    document.getElementById("productId").value = "";
-    document.getElementById("formHeading").textContent =
-      "Add New Product";
-
-    await loadProducts();
+    showMessage(productMessage, "Product saved successfully.");
 
   } catch (error) {
-    console.error("Product save error:", error);
-    showMessage(
-      error.message || "Unable to save product.",
-      "error"
-    );
+    console.error("Save product error:", error);
+    showMessage(productMessage, error.message, true);
+
   } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = "SAVE PRODUCT";
+    saveProductBtn.disabled = false;
+    saveProductBtn.textContent = productId.value
+      ? "Update Product"
+      : "Save Product";
   }
 });
 
+// ========================================
 // LOAD PRODUCTS
-async function loadProducts() {
-  productList.innerHTML = "Loading products...";
+// ========================================
+
+async function loadAdminProducts() {
+  adminProductList.textContent = "Loading products...";
 
   try {
     const snapshot = await getDocs(collection(db, "products"));
 
+    adminProductList.innerHTML = "";
+
     if (snapshot.empty) {
-      productList.innerHTML = "No products added yet.";
+      adminProductList.textContent = "No products added yet.";
       return;
     }
 
-    const products = snapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
+    snapshot.forEach(productDoc => {
+      const product = productDoc.data();
+      const id = productDoc.id;
 
-    productList.innerHTML = products.map(product => `
-      <div class="product-row">
-        <div>
-          <strong>${escapeHTML(product.name)}</strong>
-          <p>${escapeHTML(product.category)}</p>
-          <small>Model: ${escapeHTML(product.model || "Not specified")}</small>
-          <br>
-          <small>
-            Price: ${
-              product.price === null || product.price === undefined
-                ? "Contact for price"
-                : "₹" + escapeHTML(product.price)
-            }
-          </small>
-        </div>
+      const item = document.createElement("div");
+      item.className = "product-item";
 
-        <div>
-          <button class="edit-btn"
-            data-edit="${escapeHTML(product.id)}">
-            EDIT
-          </button>
+      const info = document.createElement("div");
 
-          <button class="delete-btn"
-            data-delete="${escapeHTML(product.id)}">
-            DELETE
-          </button>
-        </div>
-      </div>
-    `).join("");
+      const name = document.createElement("strong");
+      name.textContent = product.name || "Unnamed Product";
 
-  } catch (error) {
-    console.error("Load products error:", error);
-    productList.textContent =
-      "Unable to load products. Check Firestore permissions.";
-  }
-}
+      const details = document.createElement("p");
+      details.textContent =
+        `${product.category || "No Category"} | Model: ${product.model || "N/A"} | Price: ${product.price || "N/A"}`;
 
-// EDIT AND DELETE BUTTONS
-productList.addEventListener("click", async event => {
-  const editButton = event.target.closest("[data-edit]");
-  const deleteButton = event.target.closest("[data-delete]");
+      const badges = document.createElement("p");
+      const badgeList = [];
 
-  if (editButton) {
-    await editProduct(editButton.dataset.edit);
-  }
+      if (product.isNew === true) badgeList.push("NEW");
 
-  if (deleteButton) {
-    await removeProduct(deleteButton.dataset.delete);
-  }
-});
+      if (
+        product.trending === true ||
+        product.isTrending === true ||
+        product.featured === true
+      ) {
+        badgeList.push("TRENDING");
+      }
 
-// EDIT PRODUCT
-async function editProduct(id) {
-  try {
-    const snapshot = await getDoc(doc(db, "products", id));
+      badgeList.push(product.active === false ? "INACTIVE" : "ACTIVE");
 
-    if (!snapshot.exists()) {
-      showMessage("Product not found.", "error");
-      return;
-    }
+      badges.textContent = badgeList.join(" • ");
 
-    const product = snapshot.data();
+      info.append(name, details, badges);
 
-    document.getElementById("productId").value = id;
-    document.getElementById("productName").value = product.name || "";
-    document.getElementById("productCategory").value =
-      product.category || "";
-    document.getElementById("productModel").value = product.model || "";
-    document.getElementById("productPrice").value =
-      product.price ?? "";
-    document.getElementById("productDescription").value =
-      product.description || "";
+      const actions = document.createElement("div");
+      actions.className = "product-actions";
 
-    const imageInput = document.getElementById("productImage");
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "blue";
+      editBtn.textContent = "Edit";
 
-    if (imageInput && imageInput.type !== "file") {
-      imageInput.value = product.imageUrl || "";
-    }
+      editBtn.addEventListener("click", () => {
+        editProduct(id, product);
+      });
 
-    document.getElementById("formHeading").textContent =
-      "Edit Product";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "danger";
+      deleteBtn.textContent = "Delete";
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+      deleteBtn.addEventListener("click", () => {
+        deleteProduct(id, product.name || "this product");
+      });
+
+      actions.append(editBtn, deleteBtn);
+
+      item.append(info, actions);
+      adminProductList.appendChild(item);
     });
 
   } catch (error) {
-    console.error(error);
-    showMessage(error.message, "error");
+    console.error("Load products error:", error);
+
+    adminProductList.textContent =
+      "Could not load products: " + error.message;
   }
 }
 
+// ========================================
+// EDIT PRODUCT
+// ========================================
+
+function editProduct(id, product) {
+  productId.value = id;
+
+  productName.value = product.name || "";
+  productCategory.value = product.category || "";
+  productModel.value = product.model || "";
+  productPrice.value = product.price || "";
+  productDescription.value = product.description || "";
+
+  productImage.value = product.imageUrl || product.image || "";
+  productNote.value = product.note || product.notes || "";
+
+  productIsNew.checked = product.isNew === true;
+
+  productTrending.checked =
+    product.trending === true ||
+    product.isTrending === true ||
+    product.featured === true;
+
+  productActive.checked = product.active !== false;
+
+  setProductDetailsFields(
+    product.features || [],
+    product.specifications || {}
+  );
+
+  formHeading.textContent = "Edit Product";
+  saveProductBtn.textContent = "Update Product";
+
+  showMessage(
+    productMessage,
+    "Editing: " + (product.name || "Product")
+  );
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ========================================
 // DELETE PRODUCT
-async function removeProduct(id) {
-  if (!confirm("Are you sure you want to delete this product?")) {
-    return;
-  }
+// ========================================
+
+async function deleteProduct(id, name) {
+  const confirmed = window.confirm(
+    `Are you sure you want to permanently delete "${name}"?`
+  );
+
+  if (!confirmed) return;
 
   try {
-    if (!auth.currentUser || !(await verifyAdmin(auth.currentUser))) {
-      throw new Error("Admin permission required.");
-    }
-
     await deleteDoc(doc(db, "products", id));
 
-    showMessage("Product deleted successfully.");
+    showMessage(adminMessage, "Product deleted successfully.");
 
-    await loadProducts();
+    if (productId.value === id) {
+      clearProductForm();
+    }
+
+    await loadAdminProducts();
 
   } catch (error) {
-    console.error(error);
-    showMessage(error.message, "error");
+    console.error("Delete product error:", error);
+
+    showMessage(adminMessage, error.message, true);
   }
 }
