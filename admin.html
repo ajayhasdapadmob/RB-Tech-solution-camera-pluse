@@ -2,286 +2,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>RB Tech Solution - Admin Panel</title>
-
-<link rel="stylesheet" href="style.css">
-
-<style>
-.admin-page {
-    min-height: 100vh;
-    background: #071b2b;
-    padding: 35px 15px;
-}
-
-.admin-container {
-    max-width: 950px;
-    margin: auto;
-}
-
-.admin-header {
-    color: white;
-    margin-bottom: 30px;
-}
-
-.admin-header h1 {
-    color: #22c6c8;
-}
-
-.admin-card {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-}
-
-.admin-card h2 {
-    font-size: 23px;
-    margin-bottom: 20px;
-    color: #102536;
-}
-
-.admin-input {
-    width: 100%;
-    padding: 13px;
-    margin-bottom: 14px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
-.admin-btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    background: #16b9bd;
-    color: #062333;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.admin-btn:hover {
-    background: #07999e;
-    color: white;
-}
-
-.admin-hidden {
-    display: none;
-}
-
-.product-row {
-    padding: 14px;
-    border: 1px solid #ddd;
-    margin-top: 12px;
-    border-radius: 7px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.product-row button {
-    padding: 8px 13px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.delete-btn {
-    background: #ffe1e1;
-    color: #a00;
-}
-
-.edit-btn {
-    background: #dff5f5;
-    color: #087d83;
-}
-
-#adminMessage {
-    margin-top: 15px;
-    color: #087d83;
-}
-
-.image-help {
-    display: block;
-    font-size: 13px;
-    color: #555;
-    margin: -7px 0 15px;
-    line-height: 1.5;
-}
-
-@media(max-width:600px) {
-    .admin-card {
-        padding: 18px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RB Tech Solution - Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px; background: #f1f5f9;
+      color: #172033; font-family: Arial, sans-serif;
     }
-}
-</style>
+    .container { max-width: 1100px; margin: auto; }
+    h1, h2, h3 { color: #0b2940; }
+    .panel {
+      background: white; padding: 22px; margin: 18px 0;
+      border-radius: 12px; box-shadow: 0 3px 14px #0000000d;
+    }
+    .form-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+    .form-group { margin-bottom: 15px; min-width: 0; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 700; margin-bottom: 7px; }
+    input, select, textarea {
+      width: 100%; padding: 12px; border: 1px solid #cbd5e1;
+      border-radius: 7px; font-size: 15px; background: white;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button {
+      border: 0; padding: 11px 16px; border-radius: 7px;
+      cursor: pointer; font-weight: 700; color: white;
+      background: #087f3c;
+    }
+    button:hover { opacity: .9; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .secondary { background: #475569; }
+    .danger { background: #dc2626; }
+    .blue { background: #075985; }
+    .dynamic-row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 9px; margin-bottom: 10px; align-items: center;
+    }
+    .spec-row {
+      display: grid; grid-template-columns: 1fr 1fr auto;
+      gap: 9px; margin-bottom: 10px; align-items: center;
+    }
+    .remove-row { background: #dc2626; white-space: nowrap; }
+    .add-button { margin: 5px 0 15px; }
+    .checks {
+      display: flex; flex-wrap: wrap; gap: 20px; margin: 18px 0;
+    }
+    .checks label {
+      display: flex; align-items: center; gap: 8px; font-weight: 600;
+    }
+    .checks input { width: auto; }
+    .product-item {
+      border: 1px solid #e2e8f0; border-radius: 9px; padding: 14px;
+      margin: 12px 0; display: flex; justify-content: space-between;
+      gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .product-item p { margin: 5px 0; color: #64748b; }
+    .product-actions { display: flex; gap: 8px; }
+    .status { margin-top: 10px; font-weight: 600; }
+    .hint { color: #64748b; font-size: 13px; margin: 5px 0 12px; }
+    .spec-section {
+      padding: 15px; background: #f8fafc;
+      border: 1px solid #e2e8f0; border-radius: 9px;
+      margin: 12px 0;
+    }
+    .hidden { display: none !important; }
+    @media(max-width:650px) {
+      body { padding: 10px; }
+      .panel { padding: 15px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      .spec-row { grid-template-columns: 1fr; }
+      .product-item { align-items: flex-start; }
+    }
+  </style>
 </head>
-
 <body>
+<main class="container">
+  <h1>RB Tech Solution</h1>
+  <p>Product Admin Panel</p>
 
-<div class="admin-page">
-<div class="admin-container">
-
-<header class="admin-header">
-    <h1>RB TECH SOLUTION</h1>
-    <p>CCTV & Security Systems</p>
-    <h2>Admin Dashboard</h2>
-</header>
-
-<!-- LOGIN -->
-
-<section class="admin-card" id="loginSection">
-
+  <section id="loginSection" class="panel">
     <h2>Admin Login</h2>
-
     <form id="loginForm">
-
-        <input
-            type="email"
-            id="adminEmail"
-            class="admin-input"
-            placeholder="Admin Email"
-            required
-        >
-
-        <input
-            type="password"
-            id="adminPassword"
-            class="admin-input"
-            placeholder="Password"
-            required
-        >
-
-        <button class="admin-btn" type="submit">
-            LOGIN
-        </button>
-
+      <div class="form-group">
+        <label for="adminEmail">Email</label>
+        <input id="adminEmail" type="email" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">Password</label>
+        <input id="adminPassword" type="password" required autocomplete="current-password">
+      </div>
+      <button type="submit">Login</button>
+      <p id="loginMessage" class="status" aria-live="polite"></p>
     </form>
+  </section>
 
-    <p id="loginMessage"></p>
-
-</section>
-
-<!-- DASHBOARD -->
-
-<section id="dashboardSection" class="admin-hidden">
-
-    <div class="admin-card">
-
-        <h2>Welcome to Admin Panel</h2>
-
-        <p>Manage your CCTV products and security systems.</p>
-
-        <button class="admin-btn" id="logoutBtn" type="button">
-            LOGOUT
-        </button>
-
+  <section id="dashboardSection" class="hidden">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+        <h2>Product Management</h2>
+        <button id="logoutBtn" type="button" class="danger">Logout</button>
+      </div>
+      <p id="adminMessage" class="status" aria-live="polite"></p>
     </div>
 
-    <!-- PRODUCT FORM -->
+    <section class="panel">
+      <h2 id="formHeading">Add New Product</h2>
+      <form id="productForm">
+        <input type="hidden" id="productId">
 
-    <div class="admin-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="productName">Product Name *</label>
+            <input id="productName" required placeholder="Enter product name">
+          </div>
 
-        <h2 id="formHeading">Add New Product</h2>
-
-        <form id="productForm">
-
-            <input type="hidden" id="productId">
-
-            <input
-                type="text"
-                id="productName"
-                class="admin-input"
-                placeholder="Product Name"
-                required
-            >
-
-            <select id="productCategory" class="admin-input" required>
-                <option value="">Select Category</option>
-                <option>CCTV Cameras</option>
-                <option>Wireless Cameras</option>
-                <option>DVR & NVR</option>
-                <option>IP Cameras</option>
-                <option>PTZ Cameras</option>
-                <option>Video Door Phone</option>
-                <option>Biometric Systems</option>
-                <option>Accessories</option>
+          <div class="form-group">
+            <label for="productCategory">Category *</label>
+            <select id="productCategory" required>
+              <option value="">Select Category</option>
+              <option>CCTV Cameras</option>
+              <option>Wireless Cameras</option>
+              <option>IP Cameras</option>
+              <option>PTZ Cameras</option>
+              <option>DVR &amp; NVR</option>
+              <option>Video Door Phone</option>
+              <option>Biometric Systems</option>
+              <option>Networking</option>
+              <option>Storage</option>
+              <option>Accessories</option>
             </select>
+          </div>
 
-            <input
-                type="text"
-                id="productModel"
-                class="admin-input"
-                placeholder="Model Number"
-            >
+          <div class="form-group">
+            <label for="productModel">Model Number</label>
+            <input id="productModel" placeholder="Enter model number">
+          </div>
 
-            <input
-                type="number"
-                id="productPrice"
-                class="admin-input"
-                placeholder="Price (₹)"
-                min="0"
-            >
+          <div class="form-group">
+            <label for="productPrice">Price</label>
+            <input id="productPrice" placeholder="Enter price">
+          </div>
 
-            <textarea
-                id="productDescription"
-                class="admin-input"
-                placeholder="Product Description"
-                rows="4"
-                required
-            ></textarea>
+          <div class="form-group full">
+            <label for="productDescription">Product Description</label>
+            <textarea id="productDescription" placeholder="Write product description"></textarea>
+          </div>
 
-            <label for="productImage">
-                <strong>Product Image URL</strong>
-            </label>
-
-            <input
-                type="url"
-                id="productImage"
-                name="productImage"
-                class="admin-input"
-                placeholder="Paste GitHub image URL here"
-            >
-
-            <small class="image-help">
-                Upload your product image to the GitHub images/products folder
-                and paste its image URL here. Firebase Storage is not used.
-            </small>
-
-            <button class="admin-btn" type="submit">
-                SAVE PRODUCT
-            </button>
-
-        </form>
-
-        <p id="adminMessage"></p>
-
-    </div>
-
-    <!-- PRODUCT LIST -->
-
-    <div class="admin-card">
-
-        <h2>All Products</h2>
-
-        <div id="adminProductList">
-            Loading Products...
+          <div class="form-group full">
+            <label for="productImage">Product Image URL (GitHub)</label>
+            <input id="productImage" type="url" placeholder="https://...">
+            <p class="hint">GitHub पर upload की गई image का पूरा URL डालें।</p>
+          </div>
         </div>
 
-    </div>
+        <hr>
+        <h3>Product Features</h3>
+        <p class="hint">हर Feature अलग बॉक्स में लिखें।</p>
+        <div id="featuresFields"></div>
+        <button type="button" id="addFeatureBtn" class="blue add-button">+ Add Feature</button>
 
-</section>
+        <hr>
+        <h3>Product Specifications</h3>
+        <p class="hint">सभी 22 Specifications नीचे पहले से मौजूद हैं। हर एक की Value भरें। कोई जानकारी न हो तो खाली छोड़ें।</p>
 
-</div>
-</div>
+        <div id="standardSpecifications" class="spec-section"></div>
 
-<script type="module" src="admin.js"></script>
+        <h3>Additional Specifications</h3>
+        <p class="hint">जरूरत पड़ने पर अपनी नई Specification भी जोड़ें।</p>
+        <div id="customSpecifications"></div>
+        <button type="button" id="addSpecificationBtn" class="blue add-button">+ Add Specification</button>
 
+        <hr>
+        <div class="form-group">
+          <label for="productNote">Additional Note</label>
+          <textarea id="productNote" placeholder="Write additional note"></textarea>
+        </div>
+
+        <div class="checks">
+          <label><input type="checkbox" id="productIsNew"> Show NEW Badge</label>
+          <label><input type="checkbox" id="productTrending"> Show in Trending Products</label>
+          <label><input type="checkbox" id="productActive" checked> Active Product</label>
+        </div>
+
+        <button type="submit" id="saveProductBtn">Save Product</button>
+        <button type="button" id="cancelEditBtn" class="secondary">Clear Form</button>
+        <p id="productMessage" class="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>All Products</h2>
+      <div id="adminProductList">Loading products...</div>
+    </section>
+  </section>
+</main>
+
+<script type="module" src="./admin.js"></script>
 </body>
 </html>
