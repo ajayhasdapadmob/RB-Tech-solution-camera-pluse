@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b2b">
+
+  <title>RB Tech Solution | Master Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #102536;
+    }
+
+    header {
+      background: #071b2b;
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      color: #b9d2df;
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: auto;
+      padding: 22px;
+    }
+
+    .notice {
+      background: #e0f2fe;
+      border-left: 4px solid #0284c7;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card, .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 14px #0000000c;
+    }
+
+    .stat-card span {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .stat-card h2 {
+      margin: 10px 0 0;
+      font-size: 28px;
+      color: #087f3c;
+    }
+
+    .panel {
+      margin-bottom: 22px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 19px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 14px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    button {
+      border: 0;
+      padding: 12px 17px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .primary {
+      background: #087f3c;
+      color: white;
+    }
+
+    .secondary {
+      background: #e2e8f0;
+      color: #102536;
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 17px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 13px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8fafc;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    #message {
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: #64748b;
+      padding: 20px;
+      font-size: 13px;
+    }
+
+    @media(max-width: 800px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media(max-width: 550px) {
+      .container {
+        padding: 13px;
+      }
+
+      .stats, .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <h1>RB Tech Solution</h1>
+    <p>Master Admin Control Panel</p>
+  </div>
+
+  <button class="danger" id="logoutBtn" type="button">
+    Logout
+  </button>
+</header>
+
+<main class="container">
+
+  <div class="notice">
+    <strong>Master Admin Dashboard</strong><br>
+    यहाँ से आप सभी Customer Accounts, Websites,
+    Products और Subscriptions Manage कर सकेंगे।
+  </div>
+
+  <section class="stats">
+    <div class="stat-card">
+      <span>Total Customers</span>
+      <h2 id="totalCustomers">0</h2>
+    </div>
+
+    <div class="stat-card">
+      <span>Active Customers</span>
+      <h2 id="activeCustomers">0</h2>
+    </div>
+
+    <div class="stat-card">
+      <span>Expired Subscriptions</span>
+      <h2 id="expiredCustomers">0</h2>
+    </div>
+
+    <div class="stat-card">
+      <span>Total Enquiries</span>
+      <h2 id="totalEnquiries">0</h2>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Add New Customer</h2>
+
+    <form id="customerForm">
+
+      <div class="form-grid">
+
+        <div>
+          <label for="businessName">Business Name *</label>
+          <input id="businessName" required
+                 placeholder="Customer Business Name">
+        </div>
+
+        <div>
+          <label for="ownerName">Owner Name *</label>
+          <input id="ownerName" required
+                 placeholder="Owner Name">
+        </div>
+
+        <div>
+          <label for="customerEmail">Email Address *</label>
+          <input id="customerEmail" type="email" required
+                 placeholder="customer@example.com">
+        </div>
+
+        <div>
+          <label for="customerPhone">Phone Number *</label>
+          <input id="customerPhone" required
+                 placeholder="Customer Phone Number">
+        </div>
+
+        <div>
+          <label for="customerSlug">Website Link Name *</label>
+          <input id="customerSlug" required
+                 pattern="[a-z0-9-]+"
+                 placeholder="customer1">
+        </div>
+
+        <div>
+          <label for="subscriptionPlan">Subscription Plan *</label>
+          <select id="subscriptionPlan" required>
+            <option value="">Select Plan</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="subscriptionAmount">Subscription Amount (₹)</label>
+          <input id="subscriptionAmount" type="number"
+                 min="0" placeholder="Enter amount">
+        </div>
+
+        <div>
+          <label for="subscriptionStart">Subscription Start Date</label>
+          <input id="subscriptionStart" type="date">
+        </div>
+
+        <div>
+          <label for="customerWhatsApp">WhatsApp Number</label>
+          <input id="customerWhatsApp"
+                 placeholder="91XXXXXXXXXX">
+        </div>
+
+        <div>
+          <label for="customerStatus">Account Status</label>
+          <select id="customerStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div style="margin-top:15px">
+        <label for="customerAddress">Business Address</label>
+        <textarea id="customerAddress"
+                  placeholder="Customer Business Address"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit">
+          Create Customer
+        </button>
+
+        <button class="secondary" type="reset">
+          Clear Form
+        </button>
+      </div>
+
+      <div id="message" aria-live="polite"></div>
+
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Customer Management</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Business Name</th>
+            <th>Owner</th>
+            <th>Website</th>
+            <th>Plan</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="customerTableBody">
+          <tr>
+            <td colspan="7">Customer records will appear here.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  © <span id="year">2026</span> RB Tech Solution
+  | Master Admin Panel
+</footer>
+
+<script>
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
+</script>
+
+<script type="module" src="./master-admin.js"></script>
+
+</body>
+</html>
