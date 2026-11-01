@@ -37,8 +37,8 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: "Login required." });
     }
 
-    const decoded = await admin.auth().verifyIdToken(idToken);
-    const db = initFirebase();
+   const db = initFirebase();
+const decoded = await admin.auth().verifyIdToken(idToken);
 
     const { customerId, fileName, mimeType, imageBase64 } = req.body || {};
 
