@@ -12,7 +12,12 @@ import {
   query,
   where,
   limit,
-  getDocs
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 // ELEMENTS
@@ -33,23 +38,22 @@ const subscriptionStatus = document.getElementById("subscriptionStatus");
 const sectionContent = document.getElementById("sectionContent");
 
 let currentCustomer = null;
+let editingProductId = null;
 
-// MESSAGE
+// MESSAGES
 function showLoginMessage(message, color = "#b91c1c") {
   if (!loginMessage) return;
-
   loginMessage.textContent = message;
   loginMessage.style.color = color;
 }
 
 function showDashboardMessage(message, color = "#087f3c") {
   if (!dashboardMessage) return;
-
   dashboardMessage.textContent = message;
   dashboardMessage.style.color = color;
 }
 
-// SHOW LOGIN
+// LOGIN SCREEN
 function showLogin() {
   loginSection.hidden = false;
   dashboardSection.hidden = true;
@@ -57,14 +61,14 @@ function showLogin() {
   currentCustomer = null;
 }
 
-// SHOW DASHBOARD
+// DASHBOARD SCREEN
 function showDashboard() {
   loginSection.hidden = true;
   dashboardSection.hidden = false;
   logoutBtn.hidden = false;
 }
 
-// FIND CUSTOMER BY AUTH UID
+// FIND CUSTOMER BY UID
 async function getCustomerByUid(uid) {
   const customersRef = collection(db, "customers");
 
@@ -90,18 +94,20 @@ async function getCustomerByUid(uid) {
   };
 }
 
-// CHECK CUSTOMER STATUS AND SUBSCRIPTION
+// CHECK SUBSCRIPTION
 function checkSubscription(customer) {
   if (customer.status !== "active") {
     throw new Error("Your Customer Account is inactive.");
   }
 
-  if (!customer.subscriptionExpiry) {
-    throw new Error("Subscription expiry date is not set.");
+  if (
+    !customer.subscriptionExpiry ||
+    typeof customer.subscriptionExpiry.toDate !== "function"
+  ) {
+    throw new Error("Subscription expiry date is not set correctly.");
   }
 
-  const expiryDate =
-    customer.subscriptionExpiry.toDate();
+  const expiryDate = customer.subscriptionExpiry.toDate();
 
   if (Date.now() > expiryDate.getTime()) {
     throw new Error(
@@ -138,12 +144,308 @@ async function loadCustomer(user) {
     "Customer account verified successfully."
   );
 
-  showSection("overview");
+  await showSection("overview");
+}
+
+// SAFE HTML
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
+// PRODUCT COLLECTION
+function getProductsCollection() {
+  return collection(db, "customerProducts");
+}
+
+// LOAD CUSTOMER PRODUCTS
+async function loadProducts() {
+  if (!currentCustomer) return [];
+
+  const productsQuery = query(
+    getProductsCollection(),
+    where("customerId", "==", currentCustomer.id)
+  );
+
+  const snapshot = await getDocs(productsQuery);
+
+  return snapshot.docs.map(item => ({
+    id: item.id,
+    ...item.data()
+  }));
+}
+
+// PRODUCT FORM
+function renderProductForm(product = null) {
+  editingProductId = product ? product.id : null;
+
+  sectionContent.innerHTML = `
+    <h2>${product ? "Edit Product" : "Add New Product"}</h2>
+
+    <form id="productForm">
+
+      <label>Product Name</label>
+      <input
+        type="text"
+        id="productName"
+        required
+        maxlength="100"
+        value="${escapeHTML(product?.name || "")}"
+        placeholder="Enter product name"
+      >
+
+      <label>Product Price (₹)</label>
+      <input
+        type="number"
+        id="productPrice"
+        required
+        min="0"
+        step="0.01"
+        value="${escapeHTML(product?.price ?? "")}"
+        placeholder="Enter price"
+      >
+
+      <label>Product Description</label>
+      <textarea
+        id="productDescription"
+        maxlength="2000"
+        placeholder="Enter product details"
+      >${escapeHTML(product?.description || "")}</textarea>
+
+      <label>Product Photo URL (GitHub Image Link)</label>
+      <input
+        type="url"
+        id="productImage"
+        value="${escapeHTML(product?.imageUrl || "")}"
+        placeholder="https://example.com/image.jpg"
+      >
+
+      <button type="submit">
+        ${product ? "Update Product" : "Save Product"}
+      </button>
+
+      <button type="button" id="cancelProductBtn">
+        Cancel
+      </button>
+
+    </form>
+  `;
+
+  document
+    .getElementById("cancelProductBtn")
+    .addEventListener("click", () => showSection("products"));
+
+  document
+    .getElementById("productForm")
+    .addEventListener("submit", saveProduct);
+}
+
+// SAVE OR UPDATE PRODUCT
+async function saveProduct(event) {
+  event.preventDefault();
+
+  if (!currentCustomer) return;
+
+  try {
+    checkSubscription(currentCustomer);
+
+    const name = document.getElementById("productName").value.trim();
+    const price = Number(document.getElementById("productPrice").value);
+    const description =
+      document.getElementById("productDescription").value.trim();
+    const imageUrl =
+      document.getElementById("productImage").value.trim();
+
+    if (!name || !Number.isFinite(price) || price < 0) {
+      alert("Please enter a valid product name and price.");
+      return;
+    }
+
+    if (imageUrl) {
+      const imageIsValid =
+        /^https?:\/\/\S+$/i.test(imageUrl);
+
+      if (!imageIsValid) {
+        alert("Please enter a valid HTTP or HTTPS image URL.");
+        return;
+      }
+    }
+
+    const productData = {
+      customerId: currentCustomer.id,
+      name,
+      price,
+      description,
+      imageUrl,
+      updatedAt: serverTimestamp()
+    };
+
+    if (editingProductId) {
+      await updateDoc(
+        doc(db, "customerProducts", editingProductId),
+        productData
+      );
+
+      alert("Product updated successfully.");
+
+    } else {
+      productData.createdAt = serverTimestamp();
+
+      await addDoc(
+        getProductsCollection(),
+        productData
+      );
+
+      alert("Product added successfully.");
+    }
+
+    editingProductId = null;
+    await showSection("products");
+
+  } catch (error) {
+    console.error("Save product error:", error);
+    alert("Unable to save product. Please check your connection and account access.");
+  }
+}
+
+// DELETE PRODUCT
+async function removeProduct(productId) {
+  if (!currentCustomer) return;
+
+  const confirmed = confirm(
+    "Are you sure you want to delete this product?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    checkSubscription(currentCustomer);
+
+    await deleteDoc(
+      doc(db, "customerProducts", productId)
+    );
+
+    alert("Product deleted successfully.");
+
+    await showSection("products");
+
+  } catch (error) {
+    console.error("Delete product error:", error);
+    alert("Unable to delete product. Please try again.");
+  }
+}
+
+// SHOW PRODUCTS
+async function showProducts() {
+  sectionContent.innerHTML = `
+    <h2>Product Management</h2>
+    <p>Loading your products...</p>
+  `;
+
+  try {
+    const products = await loadProducts();
+
+    const cards = products.map(product => `
+      <article class="product-card">
+
+        ${
+          product.imageUrl
+            ? `<img
+                src="${escapeHTML(product.imageUrl)}"
+                alt="${escapeHTML(product.name)}"
+                style="width:160px;height:120px;object-fit:contain"
+              >`
+            : ""
+        }
+
+        <h3>${escapeHTML(product.name)}</h3>
+
+        <p>Price: ₹${Number(product.price || 0).toLocaleString("en-IN")}</p>
+
+        <p>${escapeHTML(product.description || "")}</p>
+
+        <button
+          type="button"
+          data-edit-product="${escapeHTML(product.id)}"
+        >
+          Edit
+        </button>
+
+        <button
+          type="button"
+          data-delete-product="${escapeHTML(product.id)}"
+        >
+          Delete
+        </button>
+
+      </article>
+    `).join("");
+
+    sectionContent.innerHTML = `
+      <h2>Product Management</h2>
+
+      <button type="button" id="addProductBtn">
+        + Add New Product
+      </button>
+
+      <p>Total Products: ${products.length}</p>
+
+      <div class="products">
+        ${
+          cards ||
+          "<p>No products added yet. Click Add New Product to begin.</p>"
+        }
+      </div>
+    `;
+
+    const productCount = document.getElementById("productCount");
+
+    if (productCount) {
+      productCount.textContent = products.length;
+    }
+
+    document
+      .getElementById("addProductBtn")
+      .addEventListener("click", () => renderProductForm());
+
+    sectionContent
+      .querySelectorAll("[data-edit-product]")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          const product = products.find(
+            item => item.id === button.dataset.editProduct
+          );
+
+          if (product) renderProductForm(product);
+        });
+      });
+
+    sectionContent
+      .querySelectorAll("[data-delete-product]")
+      .forEach(button => {
+        button.addEventListener("click", () => {
+          removeProduct(button.dataset.deleteProduct);
+        });
+      });
+
+  } catch (error) {
+    console.error("Load products error:", error);
+
+    sectionContent.innerHTML = `
+      <h2>Product Management</h2>
+      <p>Unable to load products. Please check your account access.</p>
+    `;
+  }
 }
 
 // DASHBOARD SECTIONS
-function showSection(section) {
-  if (!sectionContent) return;
+async function showSection(section) {
+  if (!sectionContent || !currentCustomer) return;
 
   document.querySelectorAll("[data-section]").forEach(button => {
     button.classList.toggle(
@@ -156,27 +458,24 @@ function showSection(section) {
     sectionContent.innerHTML = `
       <h2>Dashboard Overview</h2>
       <p>Welcome to your business dashboard.</p>
-      <p>Business: ${escapeHTML(currentCustomer?.businessName || "")}</p>
-      <p>Website: /${escapeHTML(currentCustomer?.slug || "")}/</p>
+      <p>Business: ${escapeHTML(currentCustomer.businessName || "")}</p>
+      <p>Website: /${escapeHTML(currentCustomer.slug || "")}/</p>
     `;
   }
 
   else if (section === "products") {
-    sectionContent.innerHTML = `
-      <h2>Products</h2>
-      <p>Your product management feature will be connected next.</p>
-    `;
+    await showProducts();
   }
 
   else if (section === "enquiries") {
     sectionContent.innerHTML = `
       <h2>Enquiries</h2>
-      <p>Your customer enquiries will appear here after secure database setup.</p>
+      <p>Enquiry management will be connected in the next step.</p>
     `;
   }
 
   else if (section === "subscription") {
-    const expiry = currentCustomer?.subscriptionExpiry;
+    const expiry = currentCustomer.subscriptionExpiry;
 
     const expiryText = expiry
       ? expiry.toDate().toLocaleDateString("en-IN")
@@ -184,29 +483,18 @@ function showSection(section) {
 
     sectionContent.innerHTML = `
       <h2>Subscription Details</h2>
-      <p>Plan: ${escapeHTML(currentCustomer?.plan || "Not set")}</p>
-      <p>Amount: ₹${Number(currentCustomer?.subscriptionAmount || 0)}</p>
+      <p>Plan: ${escapeHTML(currentCustomer.plan || "Not set")}</p>
+      <p>Amount: ₹${Number(currentCustomer.subscriptionAmount || 0)}</p>
       <p>Expiry Date: ${escapeHTML(expiryText)}</p>
+      <p>Status: ${escapeHTML(currentCustomer.status || "Unknown")}</p>
     `;
   }
-}
-
-// SAFE HTML TEXT
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[character]);
 }
 
 // SECTION BUTTONS
 document.querySelectorAll("[data-section]").forEach(button => {
   button.addEventListener("click", () => {
     if (!currentCustomer) return;
-
     showSection(button.dataset.section);
   });
 });
@@ -262,7 +550,9 @@ if (logoutBtn) {
     try {
       await signOut(auth);
       showLogin();
-      loginForm.reset();
+
+      if (loginForm) loginForm.reset();
+
       showLoginMessage("You have logged out.", "#087f3c");
 
     } catch (error) {
