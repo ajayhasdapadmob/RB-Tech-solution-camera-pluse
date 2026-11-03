@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b2b">
+  <title>Customer Dashboard | RB Tech Solution</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+
+    header {
+      background: #071b2b;
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h2 { margin: 0; }
+
+    .container {
+      max-width: 1100px;
+      margin: 25px auto;
+      padding: 0 15px;
+    }
+
+    .welcome {
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px #0000000c;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #0000000c;
+      margin-bottom: 18px;
+    }
+
+    .card h3 { margin-top: 0; color: #075b30; }
+
+    .detail {
+      margin: 10px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .btn {
+      display: inline-block;
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 16px;
+      background: #087f3c;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-dark { background: #071b2b; }
+    .btn-red { background: #dc2626; }
+
+    .section-title {
+      margin: 28px 0 14px;
+    }
+
+    .item {
+      border: 1px solid #e2e8f0;
+      padding: 13px;
+      border-radius: 8px;
+      margin: 10px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .muted { color: #64748b; }
+
+    #pageMessage {
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 7px;
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    @media(max-width: 600px) {
+      header { align-items: flex-start; }
+      .container { margin-top: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h2>RB Tech Solution</h2>
+  <button class="btn btn-red" id="logoutBtn">Logout</button>
+</header>
+
+<main class="container">
+
+  <div id="pageMessage">Loading your dashboard...</div>
+
+  <section class="welcome">
+    <h2>Customer Dashboard</h2>
+    <p>Welcome, <strong id="businessName">Loading...</strong></p>
+    <a href="./customer-admin.html" class="btn">
+      Open Customer Admin Panel
+    </a>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h3>Business Details</h3>
+      <p class="detail">Business: <strong id="businessDetail">—</strong></p>
+      <p class="detail">Owner: <strong id="ownerName">—</strong></p>
+      <p class="detail">Email: <strong id="email">—</strong></p>
+      <p class="detail">Phone: <strong id="phone">—</strong></p>
+    </div>
+
+    <div class="card">
+      <h3>Subscription Details</h3>
+      <p class="detail">Plan: <strong id="plan">—</strong></p>
+      <p class="detail">Status: <strong id="status">—</strong></p>
+      <p class="detail">Amount: <strong id="amount">—</strong></p>
+      <p class="detail">Expiry: <strong id="expiry">—</strong></p>
+    </div>
+  </section>
+
+  <h2 class="section-title">My Products</h2>
+  <section class="card">
+    <div id="productsList" class="muted">Loading products...</div>
+  </section>
+
+  <h2 class="section-title">My Enquiries</h2>
+  <section class="card">
+    <div id="enquiriesList" class="muted">Loading enquiries...</div>
+  </section>
+
+</main>
+
+<script type="module" src="./customer-dashboard.js"></script>
+
+</body>
+</html>
