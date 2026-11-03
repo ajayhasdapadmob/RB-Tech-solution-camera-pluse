@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Product Inquiry | RB Tech Solution</title>
+  <meta name="description" content="Contact RB Tech Solution for CCTV cameras, security systems and product inquiries.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    :root {
+      --navy: #071b2b;
+      --cyan: #22c6c8;
+      --light: #f3f8fa;
+      --text: #243746;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--light);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .inquiry-header {
+      background: var(--navy);
+      padding: 17px 6%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      color: white;
+      font-size: 23px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .brand span {
+      color: var(--cyan);
+    }
+
+    .back-home {
+      color: white;
+      text-decoration: none;
+      border: 1px solid var(--cyan);
+      padding: 10px 17px;
+      border-radius: 7px;
+    }
+
+    .back-home:hover {
+      background: var(--cyan);
+      color: var(--navy);
+    }
+
+    .inquiry-hero {
+      background: linear-gradient(120deg, #071b2b, #10465a);
+      color: white;
+      text-align: center;
+      padding: 55px 20px 75px;
+    }
+
+    .inquiry-hero h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 13px;
+    }
+
+    .inquiry-hero p {
+      max-width: 650px;
+      margin: auto;
+      line-height: 1.7;
+      color: #d8edf0;
+    }
+
+    .inquiry-wrapper {
+      width: min(1000px, 92%);
+      margin: -35px auto 55px;
+      position: relative;
+    }
+
+    .inquiry-card {
+      background: white;
+      border-radius: 15px;
+      padding: 32px;
+      box-shadow: 0 12px 40px rgba(7, 27, 43, 0.12);
+    }
+
+    .form-heading {
+      margin-bottom: 25px;
+    }
+
+    .form-heading h2 {
+      color: var(--navy);
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+
+    .form-heading p {
+      color: #687985;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 19px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #d7e1e6;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+      color: #243746;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(34, 198, 200, 0.13);
+    }
+
+    .form-group textarea {
+      min-height: 125px;
+      resize: vertical;
+    }
+
+    .required {
+      color: #e33b3b;
+    }
+
+    .privacy-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 23px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #596c78;
+    }
+
+    .privacy-row input {
+      margin-top: 3px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: var(--cyan);
+      color: var(--navy);
+      padding: 15px 20px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: #12aeb1;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .form-status {
+      margin-top: 15px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .contact-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .contact-box {
+      background: #f1f8fa;
+      border: 1px solid #e0edef;
+      padding: 17px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .contact-box strong {
+      display: block;
+      color: var(--navy);
+      margin-bottom: 7px;
+    }
+
+    .contact-box a {
+      color: #087f87;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .inquiry-footer {
+      background: var(--navy);
+      color: #d8e5eb;
+      text-align: center;
+      padding: 22px 15px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 650px) {
+      .inquiry-card {
+        padding: 22px 17px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+
+      .contact-details {
+        grid-template-columns: 1fr;
+      }
+
+      .inquiry-hero {
+        padding: 42px 18px 65px;
+      }
+
+      .brand {
+        font-size: 19px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="inquiry-header">
+    <a class="brand" href="index.html">
+      RB <span>TECH SOLUTION</span>
+    </a>
+
+    <a class="back-home" href="index.html">← Back to Home</a>
+  </header>
+
+  <section class="inquiry-hero">
+    <h1>Product Inquiry</h1>
+    <p>
+      Looking for CCTV cameras or security solutions?
+      Share your requirements and our team will get in touch with you.
+    </p>
+  </section>
+
+  <main class="inquiry-wrapper">
+    <section class="inquiry-card">
+
+      <div class="form-heading">
+        <h2>Send Your Inquiry</h2>
+        <p>Fill in the details below. Fields marked with * are required.</p>
+      </div>
+
+      <form id="websiteInquiryForm">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="websiteInquiryName">Full Name <span class="required">*</span></label>
+            <input id="websiteInquiryName" name="name" type="text"
+              placeholder="Enter your full name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="websiteInquiryMobile">Mobile Number <span class="required">*</span></label>
+            <input id="websiteInquiryMobile" name="mobile" type="tel"
+              placeholder="Enter mobile number" required>
+          </div>
+
+          <div class="form-group">
+            <label for="websiteInquiryEmail">Email Address</label>
+            <input id="websiteInquiryEmail" name="email" type="email"
+              placeholder="Enter your email">
+          </div>
+
+          <div class="form-group">
+            <label for="websiteInquiryCompany">Company / Business Name</label>
+            <input id="websiteInquiryCompany" name="company" type="text"
+              placeholder="Enter company name">
+          </div>
+
+          <div class="form-group">
+            <label for="contactCountry">Country</label>
+            <input id="contactCountry" name="country" type="text"
+              placeholder="Enter country" value="India">
+          </div>
+
+          <div class="form-group">
+            <label for="contactState">State</label>
+            <input id="contactState" name="state" type="text"
+              placeholder="Enter state">
+          </div>
+
+          <div class="form-group">
+            <label for="contactCity">City</label>
+            <input id="contactCity" name="city" type="text"
+              placeholder="Enter city">
+          </div>
+
+          <div class="form-group">
+            <label for="contactPincode">PIN Code</label>
+            <input id="contactPincode" name="pincode" type="text"
+              inputmode="numeric" placeholder="Enter PIN code">
+          </div>
+
+          <div class="form-group full">
+            <label for="websiteInquiryProduct">Product / Service <span class="required">*</span></label>
+            <select id="websiteInquiryProduct" name="product" required>
+              <option value="">Select product or service</option>
+              <option value="CCTV Cameras">CCTV Cameras</option>
+              <option value="IP Cameras">IP Cameras</option>
+              <option value="DVR">DVR</option>
+              <option value="NVR">NVR</option>
+              <option value="Video Door Phone">Video Door Phone</option>
+              <option value="CCTV Installation">CCTV Installation</option>
+              <option value="Maintenance / Repair">Maintenance / Repair</option>
+              <option value="Other">Other Inquiry</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label for="websiteInquiryMessage">Your Requirement <span class="required">*</span></label>
+            <textarea id="websiteInquiryMessage" name="message"
+              placeholder="Describe your requirement..." required></textarea>
+          </div>
+
+        </div>
+
+        <div class="privacy-row">
+          <input type="checkbox" id="contactPrivacy" required>
+          <label for="contactPrivacy">
+            I agree to be contacted by RB Tech Solution regarding my inquiry.
+          </label>
+        </div>
+
+        <button type="submit" class="submit-btn" id="websiteInquirySubmit">
+          Submit Inquiry →
+        </button>
+
+        <div id="websiteInquiryStatus" class="form-status" role="status"></div>
+
+      </form>
+
+      <div class="contact-details">
+
+        <div class="contact-box">
+          <strong>📞 Phone / WhatsApp</strong>
+          <a href="https://wa.me/919663116089" target="_blank">
+            +91 96631 16089
+          </a>
+        </div>
+
+        <div class="contact-box">
+          <strong>✉️ Email</strong>
+          <a href="mailto:ajayhasda623@gmail.com">
+            ajayhasda623@gmail.com
+          </a>
+        </div>
+
+        <div class="contact-box">
+          <strong>📍 Location</strong>
+          <span>Mangalore, Karnataka, India</span>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="inquiry-footer">
+    © 2026 RB Tech Solution. All Rights Reserved.
+  </footer>
+
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
