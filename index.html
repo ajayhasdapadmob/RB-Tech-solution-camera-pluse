@@ -1,180 +1,341 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>RB Tech Solution | CCTV & Security Systems</title>
 
-  <meta name="description"
-    content="RB Tech Solution provides CCTV cameras, IP cameras, DVR, NVR, video door phones, biometric systems and complete security solutions.">
-
-  <meta name="keywords"
-    content="RB Tech Solution, CCTV Camera, Security Camera, IP Camera, DVR, NVR, Video Door Phone, Biometric">
-
+  <meta name="description" content="RB Tech Solution provides CCTV cameras, IP cameras, DVR, NVR, video door phones, biometric systems and complete security solutions.">
+  <meta name="keywords" content="RB Tech Solution, CCTV Camera, Security Camera, IP Camera, DVR, NVR, Video Door Phone, Biometric">
   <meta name="author" content="RB Tech Solution">
-
   <meta name="theme-color" content="#087f3c">
 
-  <link rel="canonical"
-    href="https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/">
-
+  <link rel="canonical" href="https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/">
   <link rel="stylesheet" href="style.css">
-
   <link rel="icon" href="images/logo.png">
 
+  <!-- CONTACT POPUP CSS -->
+  <style>
+    .contact-popup {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0, 0, 0, .78);
+      padding: 20px;
+      overflow-y: auto;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .contact-popup.active {
+      display: flex;
+    }
+
+    .contact-popup-box {
+      position: relative;
+      background: #fff;
+      color: #26352b;
+      width: 100%;
+      max-width: 1000px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 35px;
+      border-radius: 12px;
+      box-shadow: 0 15px 55px rgba(0,0,0,.3);
+    }
+
+    .contact-popup-header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 0 35px;
+    }
+
+    .contact-popup-header h2 {
+      color: #075b30;
+      font-size: 30px;
+      margin: 5px 0 10px;
+    }
+
+    .contact-popup-header p {
+      color: #555;
+      margin: 0;
+    }
+
+    .contact-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      border: 0;
+      background: #075b30;
+      color: white;
+      font-size: 27px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .contact-close:hover {
+      background: #dc2626;
+    }
+
+    .contact-popup-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+      align-items: start;
+    }
+
+    .contact-form-box,
+    .contact-details-box {
+      background: #f8faf8;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid #e1e9e2;
+    }
+
+    .contact-form-box h3,
+    .contact-details-box h3 {
+      color: #075b30;
+      margin: 0 0 20px;
+    }
+
+    .contact-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .contact-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .contact-field label {
+      font-weight: 600;
+      color: #26352b;
+    }
+
+    .contact-field input,
+    .contact-field select,
+    .contact-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 12px;
+      border: 1px solid #ccd6ce;
+      border-radius: 5px;
+      font: inherit;
+      background: #fff;
+      color: #26352b;
+    }
+
+    .contact-field input:focus,
+    .contact-field select:focus,
+    .contact-field textarea:focus {
+      outline: 2px solid #08a045;
+      border-color: #08a045;
+    }
+
+    .contact-field textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .contact-full {
+      grid-column: 1 / -1;
+    }
+
+    .contact-captcha {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px;
+      background: #edf5ee;
+      border-radius: 6px;
+    }
+
+    .contact-captcha button {
+      padding: 9px 12px;
+      border: 0;
+      background: #075b30;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .contact-privacy {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .contact-privacy input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    .contact-submit {
+      background: #087f3c;
+      color: #fff;
+      border: 0;
+      border-radius: 5px;
+      padding: 13px 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .contact-submit:hover {
+      background: #075b30;
+    }
+
+    .contact-submit:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    #websiteInquiryStatus {
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    .contact-detail-item {
+      margin-bottom: 18px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .contact-detail-item strong {
+      display: block;
+      color: #075b30;
+      margin-bottom: 3px;
+    }
+
+    .contact-detail-item a {
+      color: #087f3c;
+      text-decoration: none;
+    }
+
+    @media(max-width: 768px) {
+      .contact-popup {
+        padding: 10px;
+        align-items: flex-start;
+      }
+
+      .contact-popup-box {
+        padding: 55px 16px 20px;
+        max-height: 96vh;
+      }
+
+      .contact-popup-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-full {
+        grid-column: auto;
+      }
+
+      .contact-popup-header h2 {
+        font-size: 23px;
+      }
+
+      .contact-form-box,
+      .contact-details-box {
+        padding: 17px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
   <!-- TOP STRIP -->
-
   <div class="top-strip">
     <a href="#about">About Us</a>
     <a href="#careers">Working With Us</a>
-    <a href="#contact">Live Chat</a>
-    <a href="https://wa.me/919663116089" target="_blank" rel="noopener">
-      WhatsApp
-    </a>
+    <a href="#" class="open-contact">Live Chat</a>
+    <a href="https://wa.me/919663116089" target="_blank" rel="noopener">WhatsApp</a>
     <span>English</span>
   </div>
 
-
   <!-- HEADER -->
-
   <header class="site-header">
-
     <div class="header-inner">
 
       <a href="#home" class="brand">
-        <img src="images/logo.png"
-          alt="RB Tech Solution Logo"
+        <img src="images/logo.png" alt="RB Tech Solution Logo"
           onerror="this.style.display='none'">
-
         <div>
           <h1>RB TECH SOLUTION</h1>
           <span>CCTV & SECURITY SYSTEMS</span>
         </div>
       </a>
 
-      <button id="menuToggle"
-        type="button"
-        aria-label="Open navigation menu"
-        aria-expanded="false">
-        ☰
-      </button>
-
+      <button id="menuToggle" type="button"
+        aria-label="Open navigation menu" aria-expanded="false">☰</button>
 
       <nav id="mainNav">
 
         <a href="#home">Home</a>
 
-
-        <!-- PRODUCTS MENU -->
-
+        <!-- PRODUCTS -->
         <div class="nav-dropdown">
-
-          <a href="#products" class="dropdown-toggle">
-            Products ▾
-          </a>
-
+          <a href="#products" class="dropdown-toggle">Products ▾</a>
           <div class="mega-menu">
 
             <div>
               <h3>Camera Solutions</h3>
-
-              <a href="#products" data-category="IP Cameras">
-                Network Camera / IP Camera
-              </a>
-
-              <a href="#products" data-category="CCTV Cameras">
-                Analog HD Camera
-              </a>
-
-              <a href="#products" data-category="Wireless Cameras">
-                Wireless Cameras
-              </a>
-
-              <a href="#products" data-category="PTZ Cameras">
-                Speed Dome / PTZ
-              </a>
+              <a href="#products" data-category="IP Cameras">Network Camera / IP Camera</a>
+              <a href="#products" data-category="CCTV Cameras">Analog HD Camera</a>
+              <a href="#products" data-category="Wireless Cameras">Wireless Cameras</a>
+              <a href="#products" data-category="PTZ Cameras">Speed Dome / PTZ</a>
             </div>
-
 
             <div>
               <h3>Recording & Access</h3>
-
-              <a href="#products" data-category="DVR & NVR">
-                DVR & NVR
-              </a>
-
-              <a href="#products" data-category="Video Door Phone">
-                Video Door Phones
-              </a>
-
-              <a href="#products" data-category="Biometric Systems">
-                Time & Attendance
-              </a>
-
-              <a href="#products" data-category="Accessories">
-                Accessories
-              </a>
+              <a href="#products" data-category="DVR & NVR">DVR & NVR</a>
+              <a href="#products" data-category="Video Door Phone">Video Door Phones</a>
+              <a href="#products" data-category="Biometric Systems">Time & Attendance</a>
+              <a href="#products" data-category="Accessories">Accessories</a>
             </div>
-
 
             <div>
               <h3>Other Products</h3>
-
-              <a href="#products" data-category="Networking">
-                Networking & Switches
-              </a>
-
-              <a href="#products" data-category="Storage">
-                Storage & Memory
-              </a>
-
-              <a href="#products">
-                View All Products →
-              </a>
+              <a href="#products" data-category="Networking">Networking & Switches</a>
+              <a href="#products" data-category="Storage">Storage & Memory</a>
+              <a href="#products">View All Products →</a>
             </div>
 
           </div>
-
         </div>
 
-
-        <!-- MARKETING MENU -->
-
+        <!-- MARKETING -->
         <div class="nav-dropdown">
-
-          <a href="#marketing" class="dropdown-toggle">
-            Marketing ▾
-          </a>
-
+          <a href="#marketing" class="dropdown-toggle">Marketing ▾</a>
           <div class="dropdown-menu">
-
             <a href="#marketing">Company News</a>
             <a href="#marketing">Product Brochures</a>
             <a href="#marketing">Videos</a>
             <a href="#marketing">Gallery</a>
-
           </div>
-
         </div>
 
-
-        <!-- SOLUTIONS MENU -->
-
+        <!-- SOLUTIONS -->
         <div class="nav-dropdown">
-
-          <a href="#solutions" class="dropdown-toggle">
-            Solutions ▾
-          </a>
-
+          <a href="#solutions" class="dropdown-toggle">Solutions ▾</a>
           <div class="dropdown-menu">
-
             <a href="#solutions">Banking</a>
             <a href="#solutions">Campus</a>
             <a href="#solutions">Hospitality & Healthcare</a>
@@ -183,60 +344,35 @@
             <a href="#solutions">Safe City</a>
             <a href="#solutions">Smart Traffic</a>
             <a href="#solutions">Transport</a>
-
           </div>
-
         </div>
 
-
-        <!-- SUPPORT MENU -->
-
+        <!-- SUPPORT -->
         <div class="nav-dropdown">
-
-          <a href="#support" class="dropdown-toggle">
-            Support ▾
-          </a>
-
+          <a href="#support" class="dropdown-toggle">Support ▾</a>
           <div class="dropdown-menu">
-
             <a href="#support">Technical Support</a>
             <a href="#support">Warranty Support</a>
             <a href="#support">Downloads</a>
-            <a href="#contact">Contact Support</a>
-
+            <a href="#" class="open-contact">Contact Support</a>
           </div>
-
         </div>
 
-
-        <a href="#training">Training</a>
-
+        <a href="inquiry.html">Inquiry</a>
         <a href="#partner">Partner Connect</a>
-
-        <a href="#contact">Contact Us</a>
+        <a href="#" class="open-contact">Contact Us</a>
 
       </nav>
-
     </div>
-
   </header>
 
-
-  <!-- HERO SECTION -->
-
+  <!-- HERO -->
   <section class="hero-section" id="home">
-
     <div class="hero-content">
-
       <div class="hero-text">
+        <span class="hero-tag">YOUR TRUSTED SECURITY PARTNER</span>
 
-        <span class="hero-tag">
-          YOUR TRUSTED SECURITY PARTNER
-        </span>
-
-        <h1>
-          Smart Security Solutions For A Safer Tomorrow
-        </h1>
+        <h1>Smart Security Solutions For A Safer Tomorrow</h1>
 
         <p>
           Protect your home, business and organization with
@@ -245,442 +381,219 @@
         </p>
 
         <div class="hero-buttons">
-
-          <a href="#products">
-            Explore Products
-          </a>
-
-          <a href="#contact">
-            Contact Us
-          </a>
-
+          <a href="#products">Explore Products</a>
+          <a href="#" class="open-contact">Contact Us</a>
         </div>
-
       </div>
-
     </div>
 
-
     <div class="hero-visual">
-
       <div class="hero-image-box">
-
-        <img
-          src="images/products/jaise%20camera-01.jpg.png"
-          alt="RB Tech Solution CCTV Camera"
-          class="hero-static-image">
+        <img src="images/products/jaise%20camera-01.jpg.png"
+          alt="RB Tech Solution CCTV Camera" class="hero-static-image">
 
         <div class="hero-image-label">
           Advanced CCTV & Security Products
         </div>
-
       </div>
-
     </div>
-
   </section>
 
-
   <!-- TRUST STRIP -->
-
   <div class="trust-strip">
-
     <div class="trust-grid">
-
-      <div>
-        <h3>Security</h3>
-        <p>Reliable Protection</p>
-      </div>
-
-      <div>
-        <h3>Technology</h3>
-        <p>Modern Solutions</p>
-      </div>
-
-      <div>
-        <h3>Quality</h3>
-        <p>Trusted Products</p>
-      </div>
-
-      <div>
-        <h3>Support</h3>
-        <p>Customer Assistance</p>
-      </div>
-
+      <div><h3>Security</h3><p>Reliable Protection</p></div>
+      <div><h3>Technology</h3><p>Modern Solutions</p></div>
+      <div><h3>Quality</h3><p>Trusted Products</p></div>
+      <div><h3>Support</h3><p>Customer Assistance</p></div>
     </div>
-
   </div>
 
-
-  <!-- WE OFFER -->
-
+  <!-- ABOUT -->
   <section id="about">
-
     <div class="section-heading">
-
       <h2>What We Offer</h2>
-
-      <p>
-        Complete CCTV, surveillance and security solutions
-        for homes, offices, shops and industries.
-      </p>
-
+      <p>Complete CCTV, surveillance and security solutions for homes, offices, shops and industries.</p>
     </div>
-
     <div class="offer-content">
-
       <p>
         RB Tech Solution provides a range of security products
         designed to help protect people, property and businesses.
         Explore our product categories below.
       </p>
-
     </div>
-
   </section>
 
-
   <!-- TRENDING PRODUCTS -->
-
   <section id="trending">
-
     <div class="section-heading">
-
       <h2>Trending Products</h2>
-
-      <p>
-        Discover featured and popular security products.
-      </p>
-
+      <p>Discover featured and popular security products.</p>
     </div>
 
     <div id="trendingGrid">
-
       <p>Loading trending products...</p>
-
     </div>
 
-    <div style="text-align:center; margin-top:25px;">
-
+    <div style="text-align:center;margin-top:25px;">
       <a href="#products"
         style="display:inline-block;padding:12px 25px;background:#08a045;color:white;border-radius:6px;font-weight:bold;">
         SHOW ALL PRODUCTS
       </a>
-
     </div>
-
   </section>
 
-
   <!-- PRODUCT CATEGORIES -->
-
   <section id="productCategories">
-
     <div class="section-heading">
-
       <h2>Product Categories</h2>
-
-      <p>
-        Find the right security products for your requirements.
-      </p>
-
+      <p>Find the right security products for your requirements.</p>
     </div>
 
-
     <div class="category-grid">
-
-      <button class="category-card"
-        type="button" data-category="IP Cameras">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="IP Camera">
+      <button class="category-card" type="button" data-category="IP Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="IP Camera">
         <h3>Network Cameras</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="DVR & NVR">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="NVR">
+      <button class="category-card" type="button" data-category="DVR & NVR">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="NVR">
         <h3>NVR & DVR</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="CCTV Cameras">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Analog CCTV">
+      <button class="category-card" type="button" data-category="CCTV Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Analog CCTV">
         <h3>Analog HD Cameras</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Wireless Cameras">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Wireless Camera">
+      <button class="category-card" type="button" data-category="Wireless Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Wireless Camera">
         <h3>Wireless Cameras</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="PTZ Cameras">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="PTZ Camera">
+      <button class="category-card" type="button" data-category="PTZ Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="PTZ Camera">
         <h3>Speed Dome / PTZ</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Video Door Phone">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Video Door Phone">
+      <button class="category-card" type="button" data-category="Video Door Phone">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Video Door Phone">
         <h3>Video Door Phones</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Biometric Systems">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Biometric">
+      <button class="category-card" type="button" data-category="Biometric Systems">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Biometric">
         <h3>Time & Attendance</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Networking">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Networking">
+      <button class="category-card" type="button" data-category="Networking">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Networking">
         <h3>Networking & Switches</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Storage">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Storage">
+      <button class="category-card" type="button" data-category="Storage">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Storage">
         <h3>Storage & Memory</h3>
       </button>
 
-
-      <button class="category-card"
-        type="button" data-category="Accessories">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="Accessories">
+      <button class="category-card" type="button" data-category="Accessories">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Accessories">
         <h3>Accessories</h3>
       </button>
-
     </div>
-
   </section>
 
-
-  <!-- OUR PRODUCTS -->
-
+  <!-- PRODUCTS -->
   <section id="products">
-
     <div class="section-heading">
-
       <h2>Our Products</h2>
-
-      <p>
-        Explore our CCTV and security product collection.
-      </p>
-
+      <p>Explore our CCTV and security product collection.</p>
     </div>
 
-
     <div class="product-toolbar">
-
-      <input
-        type="search"
-        id="searchInput"
+      <input type="search" id="searchInput"
         placeholder="Search products, model or category..."
         aria-label="Search products">
 
-      <select id="categoryFilter"
-        aria-label="Filter by product category">
-
+      <select id="categoryFilter" aria-label="Filter by product category">
         <option value="">All Categories</option>
-
         <option value="CCTV Cameras">CCTV Cameras</option>
-
         <option value="Wireless Cameras">Wireless Cameras</option>
-
         <option value="DVR & NVR">DVR & NVR</option>
-
         <option value="IP Cameras">IP Cameras</option>
-
         <option value="PTZ Cameras">PTZ Cameras</option>
-
         <option value="Video Door Phone">Video Door Phone</option>
-
         <option value="Biometric Systems">Biometric Systems</option>
-
         <option value="Networking">Networking</option>
-
         <option value="Storage">Storage</option>
-
         <option value="Accessories">Accessories</option>
-
       </select>
-
     </div>
-
 
     <div id="productGrid">
-
       <p>Loading products...</p>
-
     </div>
-
   </section>
-
 
   <!-- SOLUTIONS -->
-
   <section id="solutions">
-
     <div class="section-heading">
-
       <h2>Solutions For Every Industry</h2>
-
-      <p>
-        Security solutions designed for different environments
-        and business requirements.
-      </p>
-
+      <p>Security solutions designed for different environments and business requirements.</p>
     </div>
-
 
     <div class="solutions-grid">
-
-      <a href="#contact" class="solution-card">
-        <h3>Banking</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Campus</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Hospitality & Healthcare</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Industrial</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Law Enforcement</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Real Estate</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Retail</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Safe City</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Smart Traffic</h3>
-      </a>
-
-      <a href="#contact" class="solution-card">
-        <h3>Transport</h3>
-      </a>
-
+      <a href="#" class="solution-card open-contact"><h3>Banking</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Campus</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Hospitality & Healthcare</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Industrial</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Law Enforcement</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Real Estate</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Retail</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Safe City</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Smart Traffic</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Transport</h3></a>
     </div>
-
   </section>
 
-
-  <!-- MARKETING / PRINT & PRESS -->
-
+  <!-- MARKETING -->
   <section id="marketing">
-
     <div class="section-heading">
-
       <h2>Print & Press</h2>
-
-      <p>
-        Explore company information, product brochures,
-        videos and latest updates.
-      </p>
-
+      <p>Explore company information, product brochures, videos and latest updates.</p>
     </div>
-
 
     <div class="marketing-grid">
-
-      <a href="#contact" class="marketing-card">
-
-        <img
-          src="images/products/jaise%20camera-01.jpg.png"
-          alt="Company News">
-
+      <a href="#" class="marketing-card open-contact">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Company News">
         <h3>Company News</h3>
-
       </a>
-
 
       <a href="#products" class="marketing-card">
-
-        <img
-          src="images/products/jaise%20camera-01.jpg.png"
-          alt="Product Brochures">
-
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Product Brochures">
         <h3>Product Brochures</h3>
-
       </a>
 
-
-      <a href="#contact" class="marketing-card">
-
-        <img
-          src="images/products/jaise%20camera-01.jpg.png"
-          alt="Videos">
-
+      <a href="#" class="marketing-card open-contact">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Videos">
         <h3>Videos</h3>
-
       </a>
 
-
-      <a href="#contact" class="marketing-card">
-
-        <img
-          src="images/products/jaise%20camera-01.jpg.png"
-          alt="Gallery">
-
+      <a href="#" class="marketing-card open-contact">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Gallery">
         <h3>Gallery</h3>
-
       </a>
-
     </div>
-
   </section>
 
-
   <!-- SUPPORT -->
-
   <section id="support">
-
     <div class="section-heading">
-
       <h2>Customer Support</h2>
-
-      <p>
-        We are here to help you with product and service enquiries.
-      </p>
-
+      <p>We are here to help you with product and service enquiries.</p>
     </div>
 
-
     <div class="support-grid">
-
       <div class="support-card">
         <h3>Technical Support</h3>
         <p>Get assistance with CCTV and security products.</p>
@@ -700,353 +613,414 @@
         <h3>Product Assistance</h3>
         <p>Get help choosing the right security solution.</p>
       </div>
-
     </div>
-
   </section>
-
-
-  <!-- TRAINING -->
-
-  <section id="training">
-
-    <div class="section-heading">
-
-      <h2>Training & Learning</h2>
-
-      <p>
-        Learn about CCTV installation, networking,
-        surveillance systems and security technology.
-      </p>
-
-      <a href="#contact">Enquire About Training</a>
-
-    </div>
-
-  </section>
-
 
   <!-- PARTNER CONNECT -->
-
   <section id="partner">
-
     <div class="section-heading">
-
       <h2>Partner Connect</h2>
-
       <p>
         Interested in working with RB Tech Solution?
         Contact us to discuss business and partnership opportunities.
       </p>
-
-      <a href="#contact">Become a Partner</a>
-
+      <a href="inquiry.html">Become a Partner</a>
     </div>
-
   </section>
-
 
   <!-- CAREERS -->
-
   <section id="careers">
-
     <div class="section-heading">
-
       <h2>Working With Us</h2>
-
-      <p>
-        Interested in working with our team?
-        Contact us to discuss available opportunities.
-      </p>
-
-      <a href="#contact">Contact Us</a>
-
+      <p>Interested in working with our team? Contact us to discuss available opportunities.</p>
+      <a href="inquiry.html">Contact Us</a>
     </div>
-
   </section>
 
-
-  <!-- CONTACT -->
-
-  <section id="contact">
-
-    <div class="section-heading">
-
-      <h2>Contact RB Tech Solution</h2>
-
-      <p>
-        Tell us what you need. Our team will assist you
-        with product and security solution enquiries.
-      </p>
-
-    </div>
-
-
-    <div class="contact-container">
-
-      <input
-        type="text"
-        id="enquiryName"
-        placeholder="Your Name"
-        required>
-
-      <input
-        type="text"
-        id="enquiryProduct"
-        placeholder="Product / Service (Optional)">
-
-      <textarea
-        id="enquiryMessage"
-        placeholder="Write your message..."
-        required></textarea>
-
-      <button type="button" id="enquiryWhatsApp">
-        Send Enquiry on WhatsApp
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <!-- NEWSLETTER / CONTACT CTA -->
-
+  <!-- CTA -->
   <section class="newsletter-section">
-
     <h2>Need a Security Solution?</h2>
-
-    <p>
-      Contact RB Tech Solution for CCTV cameras
-      and complete security solutions.
-    </p>
-
-    <a href="#contact">Contact Us Today</a>
-
+    <p>Contact RB Tech Solution for CCTV cameras and complete security solutions.</p>
+    <a href="inquiry.html">Send Inquiry Today</a>
   </section>
-
 
   <!-- FOOTER -->
-
   <footer class="site-footer">
-
     <div class="footer-grid">
 
-
       <div>
-
         <h3>RB TECH SOLUTION</h3>
-
         <p>
-          CCTV & Security Systems.
-          Providing security products and surveillance
-          solutions for homes, offices and businesses.
+          CCTV & Security Systems. Providing security products
+          and surveillance solutions for homes, offices and businesses.
         </p>
-
         <p style="margin-top:12px;">
           Phone / WhatsApp:
-          <a href="https://wa.me/919663116089"
-            target="_blank" rel="noopener">
+          <a href="https://wa.me/919663116089" target="_blank" rel="noopener">
             +91 96631 16089
           </a>
         </p>
-
+        <p>Email: <a href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a></p>
+        <p>Address: Mangalore, Karnataka, India</p>
       </div>
 
-
       <div>
-
         <h3>Products</h3>
-
         <a href="#products">CCTV Cameras</a>
         <a href="#products">IP Cameras</a>
         <a href="#products">DVR & NVR</a>
         <a href="#products">Wireless Cameras</a>
         <a href="#products">Video Door Phones</a>
         <a href="#products">Accessories</a>
-
       </div>
 
-
       <div>
-
         <h3>Solutions</h3>
-
         <a href="#solutions">Banking</a>
         <a href="#solutions">Campus</a>
         <a href="#solutions">Healthcare</a>
         <a href="#solutions">Industrial</a>
         <a href="#solutions">Retail</a>
         <a href="#solutions">Safe City</a>
-
       </div>
 
-
       <div>
-
         <h3>Quick Links</h3>
-
         <a href="#about">About Us</a>
         <a href="#marketing">Marketing</a>
         <a href="#support">Support</a>
-        <a href="#training">Training</a>
+        <a href="inquiry.html">Inquiry</a>
         <a href="#partner">Partner Connect</a>
-        <a href="#contact">Contact Us</a>
-
+        <a href="#" class="open-contact">Contact Us</a>
       </div>
 
     </div>
 
-
     <div class="footer-bottom">
-
-      <p>
-        © <span id="footerYear">2026</span>
-        RB Tech Solution. All Rights Reserved.
-      </p>
-
+      <p>© <span id="footerYear">2026</span> RB Tech Solution. All Rights Reserved.</p>
     </div>
-
   </footer>
 
-
   <!-- WHATSAPP FLOATING BUTTON -->
-
   <a class="whatsapp-float"
     href="https://wa.me/919663116089"
-    target="_blank"
-    rel="noopener"
-    aria-label="Contact RB Tech Solution on WhatsApp">
-
-    ☎
-
-  </a>
-
+    target="_blank" rel="noopener"
+    aria-label="Contact RB Tech Solution on WhatsApp">☎</a>
 
   <!-- PRODUCT DETAILS MODAL -->
-
-  <div id="productModal" role="dialog" aria-modal="true"
-    aria-label="Product details">
-
+  <div id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
     <div id="modalContent">
-
-      <button id="modalClose"
-        type="button"
-        aria-label="Close product details">
-        ×
-      </button>
-
+      <button id="modalClose" type="button" aria-label="Close product details">×</button>
     </div>
-
   </div>
 
+  <!-- CONTACT POPUP FORM -->
+  <div id="contactPopup" class="contact-popup"
+    role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
 
-  <!-- MOBILE MENU AND DROPDOWN SCRIPT -->
+    <div class="contact-popup-box">
 
+      <button type="button" id="closeContactPopup"
+        class="contact-close" aria-label="Close Contact Form">×</button>
+
+      <div class="contact-popup-header">
+        <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
+        <p>We would love to hear from you. Please write to us.</p>
+      </div>
+
+      <div class="contact-popup-layout">
+
+        <!-- CONTACT FORM -->
+        <div class="contact-form-box">
+          <h3>Write To Us</h3>
+
+          <form id="websiteInquiryForm">
+
+            <div class="contact-form-grid">
+
+              <div class="contact-field">
+                <label for="websiteInquiryName">Name *</label>
+                <input type="text" id="websiteInquiryName"
+                  placeholder="Enter your name" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="websiteInquiryEmail">E-mail *</label>
+                <input type="email" id="websiteInquiryEmail"
+                  placeholder="Enter your e-mail" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="websiteInquiryMobile">Contact No. *</label>
+                <input type="tel" id="websiteInquiryMobile"
+                  placeholder="Enter contact number"
+                  pattern="[0-9+ ()-]{7,20}" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="websiteInquiryProduct">Query Type *</label>
+                <select id="websiteInquiryProduct" required>
+                  <option value="">Select Query Type</option>
+                  <option value="Product Enquiry">Product Enquiry</option>
+                  <option value="CCTV Installation">CCTV Installation</option>
+                  <option value="Technical Support">Technical Support</option>
+                  <option value="Warranty Support">Warranty Support</option>
+                  <option value="Business Partnership">Business Partnership</option>
+                  <option value="Other Enquiry">Other Enquiry</option>
+                </select>
+              </div>
+
+              <div class="contact-field">
+                <label for="contactCountry">Country *</label>
+                <input type="text" id="contactCountry"
+                  value="India" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="contactState">State *</label>
+                <input type="text" id="contactState"
+                  placeholder="Enter state" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="contactCity">City *</label>
+                <input type="text" id="contactCity"
+                  placeholder="Enter city" required>
+              </div>
+
+              <div class="contact-field">
+                <label for="contactPincode">Pincode *</label>
+                <input type="text" id="contactPincode"
+                  placeholder="Enter pincode"
+                  pattern="[0-9]{4,10}" required>
+              </div>
+
+              <div class="contact-field contact-full">
+                <label for="websiteInquiryMessage">Query *</label>
+                <textarea id="websiteInquiryMessage"
+                  placeholder="Write your query here..."
+                  required></textarea>
+              </div>
+
+              <!-- CAPTCHA -->
+              <div class="contact-field contact-full">
+                <label>Security Verification *</label>
+
+                <div class="contact-captcha">
+                  <strong id="contactCaptchaQuestion">Loading...</strong>
+
+                  <input type="number" id="contactCaptchaAnswer"
+                    placeholder="Answer" required
+                    style="max-width:130px;">
+
+                  <button type="button" id="contactCaptchaRefresh">
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <!-- PRIVACY CONSENT -->
+              <div class="contact-field contact-full">
+                <label class="contact-privacy">
+                  <input type="checkbox" id="contactPrivacy" required>
+                  <span>
+                    I agree that RB Tech Solution may use my submitted
+                    information to respond to my enquiry.
+                  </span>
+                </label>
+              </div>
+
+              <div class="contact-field contact-full">
+                <button type="submit" id="websiteInquirySubmit"
+                  class="contact-submit">
+                  SUBMIT
+                </button>
+
+                <p id="websiteInquiryStatus" aria-live="polite"></p>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <!-- CONTACT DETAILS -->
+        <div class="contact-details-box">
+          <h3>Contact Details</h3>
+
+          <div class="contact-detail-item">
+            <strong>Company</strong>
+            RB Tech Solution
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Contact Person</strong>
+            Ajay Hasda
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Phone / WhatsApp</strong>
+            <a href="https://wa.me/919663116089"
+              target="_blank" rel="noopener">
+              +91 96631 16089
+            </a>
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>E-mail</strong>
+            <a href="mailto:ajayhasda623@gmail.com">
+              ajayhasda623@gmail.com
+            </a>
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Address</strong>
+            Mangalore, Karnataka, India
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Business Hours</strong>
+            Please contact us by phone or WhatsApp for assistance.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT POPUP + CAPTCHA JAVASCRIPT -->
   <script>
+    (function () {
+      const popup = document.getElementById("contactPopup");
+      const closeButton = document.getElementById("closeContactPopup");
+      const question = document.getElementById("contactCaptchaQuestion");
+      const answer = document.getElementById("contactCaptchaAnswer");
+      const refresh = document.getElementById("contactCaptchaRefresh");
+      const form = document.getElementById("websiteInquiryForm");
 
+      if (!popup || !closeButton || !form) return;
+
+      let previousFocus = null;
+      let correctAnswer = 0;
+
+      function openPopup(event) {
+        if (event) event.preventDefault();
+
+        previousFocus = document.activeElement;
+        popup.classList.add("active");
+        document.body.style.overflow = "hidden";
+
+        setTimeout(() => {
+          document.getElementById("websiteInquiryName")?.focus();
+        }, 50);
+      }
+
+      function closePopup() {
+        popup.classList.remove("active");
+        document.body.style.overflow = "";
+
+        if (previousFocus && typeof previousFocus.focus === "function") {
+          previousFocus.focus();
+        }
+      }
+
+      document.querySelectorAll(".open-contact").forEach(link => {
+        link.addEventListener("click", openPopup);
+      });
+
+      closeButton.addEventListener("click", closePopup);
+
+      popup.addEventListener("click", function (event) {
+        if (event.target === popup) closePopup();
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && popup.classList.contains("active")) {
+          closePopup();
+        }
+      });
+
+      function generateCaptcha() {
+        const first = Math.floor(Math.random() * 9) + 1;
+        const second = Math.floor(Math.random() * 9) + 1;
+
+        correctAnswer = first + second;
+
+        if (question) {
+          question.textContent = first + " + " + second + " = ?";
+        }
+
+        if (answer) {
+          answer.value = "";
+        }
+      }
+
+      refresh?.addEventListener("click", generateCaptcha);
+
+      form.addEventListener("submit", function (event) {
+        if (Number(answer?.value) !== correctAnswer) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          alert("Incorrect security answer. Please try again.");
+          generateCaptcha();
+          answer?.focus();
+        }
+      });
+
+      generateCaptcha();
+    })();
+  </script>
+
+  <!-- MOBILE MENU -->
+  <script>
     const menuToggle = document.getElementById("menuToggle");
     const mainNav = document.getElementById("mainNav");
 
     menuToggle?.addEventListener("click", function () {
-
       const isOpen = mainNav.classList.toggle("active");
-
       menuToggle.setAttribute("aria-expanded", String(isOpen));
-
       menuToggle.textContent = isOpen ? "✕" : "☰";
-
     });
 
-
-    // Mobile dropdown open/close
-
     document.querySelectorAll(".dropdown-toggle").forEach(link => {
-
       link.addEventListener("click", function (event) {
-
         if (window.innerWidth <= 768) {
-
           event.preventDefault();
 
           const parent = this.closest(".nav-dropdown");
-
-          const menu = parent.querySelector(
-            ".mega-menu, .dropdown-menu"
-          );
-
+          const menu = parent.querySelector(".mega-menu, .dropdown-menu");
           if (!menu) return;
 
           const isOpen = menu.style.display === "block";
 
           document.querySelectorAll(
             "#mainNav .mega-menu, #mainNav .dropdown-menu"
-          ).forEach(item => {
-            item.style.display = "none";
-          });
+          ).forEach(item => item.style.display = "none");
 
           menu.style.display = isOpen ? "none" : "block";
-
         }
-
       });
-
     });
 
-
-    // Close menu after normal navigation
-
-    document.querySelectorAll("#mainNav > a").forEach(link => {
-
+    document.querySelectorAll("#mainNav a").forEach(link => {
       link.addEventListener("click", () => {
-
-        if (window.innerWidth <= 768) {
-
+        if (
+          window.innerWidth <= 768 &&
+          !link.classList.contains("dropdown-toggle")
+        ) {
           mainNav.classList.remove("active");
-
           menuToggle.setAttribute("aria-expanded", "false");
-
           menuToggle.textContent = "☰";
-
         }
-
       });
-
     });
-
-
-    // Close mobile menu after category selection
-
-    document.querySelectorAll("#mainNav [data-category]").forEach(link => {
-
-      link.addEventListener("click", () => {
-
-        if (window.innerWidth <= 768) {
-
-          mainNav.classList.remove("active");
-
-          menuToggle.setAttribute("aria-expanded", "false");
-
-          menuToggle.textContent = "☰";
-
-        }
-
-      });
-
-    });
-
-
-    // Current year
 
     document.getElementById("footerYear").textContent =
       new Date().getFullYear();
-
   </script>
 
-
-  <!-- FIREBASE PRODUCT APP -->
-
+  <!-- EXISTING APP JAVASCRIPT -->
   <script type="module" src="app.js"></script>
 
 </body>
-
 </html>
