@@ -1,13 +1,12 @@
 
-import { db } from "./firebase.js";
-
 import {
   collection,
   getDocs,
   addDoc,
+  query,
+  where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
    No Firebase Storage required
