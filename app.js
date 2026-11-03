@@ -1,3 +1,4 @@
+import { db } from "./firebase.js";
 
 import {
   collection,
@@ -7,8 +8,10 @@ import {
   where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
+   Master Products + Customer Products
    No Firebase Storage required
 ========================================= */
 
@@ -865,7 +868,6 @@ document.addEventListener("keydown", event => {
 
 /* =========================================
    GENERAL WEBSITE INQUIRY FORM
-   CONTACT POPUP + INQUIRY PAGE
 ========================================= */
 
 const websiteInquiryForm =
@@ -965,7 +967,6 @@ websiteInquiryForm?.addEventListener("submit", async event => {
 
 /* =========================================
    OLD CONTACT WHATSAPP FORM SUPPORT
-   Runs only if those old elements exist
 ========================================= */
 
 enquiryWhatsApp?.addEventListener("click", () => {
@@ -995,6 +996,8 @@ categoryFilter?.addEventListener("change", filterProducts);
 
 /* =========================================
    FIRESTORE PRODUCTS
+   1. Master Admin products
+   2. Customer Admin products
 ========================================= */
 
 async function loadProducts() {
@@ -1002,29 +1005,100 @@ async function loadProducts() {
     productGrid.innerHTML = "<p>Loading products...</p>";
   }
 
-  try {
-    const snapshot = await getDocs(collection(db, "products"));
+  if (trendingGrid) {
+    trendingGrid.innerHTML = "<p>Loading trending products...</p>";
+  }
 
-    allProducts = snapshot.docs
-      .map(document => ({
-        id: document.id,
-        ...document.data()
-      }))
-      .filter(product => product.active !== false);
+  const results = await Promise.allSettled([
+    getDocs(
+      query(
+        collection(db, "products"),
+        where("active", "==", true)
+      )
+    ),
 
-    displayProducts();
-    displayTrendingProducts();
-    setupTrendingCarousel();
-    createOfferCategoryCards();
-    startHeroSlideshow();
+    getDocs(
+      query(
+        collection(db, "customerProducts"),
+        where("active", "==", true)
+      )
+    )
+  ]);
 
-  } catch (error) {
-    console.error("Product loading error:", error);
+  const loadedProducts = [];
+  const errors = [];
 
-    if (productGrid) {
-      productGrid.innerHTML =
-        "<p>Unable to load products. Please try again later.</p>";
-    }
+  /* MASTER ADMIN PRODUCTS */
+
+  if (results[0].status === "fulfilled") {
+    results[0].value.forEach(documentSnapshot => {
+      loadedProducts.push({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data(),
+        _source: "master"
+      });
+    });
+  } else {
+    console.error(
+      "Master products loading error:",
+      results[0].reason
+    );
+
+    errors.push("Master products");
+  }
+
+  /* CUSTOMER ADMIN PRODUCTS */
+
+  if (results[1].status === "fulfilled") {
+    results[1].value.forEach(documentSnapshot => {
+      loadedProducts.push({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data(),
+        _source: "customer"
+      });
+    });
+  } else {
+    console.error(
+      "Customer products loading error:",
+      results[1].reason
+    );
+
+    errors.push("Customer products");
+  }
+
+  /* COMBINE BOTH COLLECTIONS */
+
+  allProducts = loadedProducts.filter(product =>
+    product.active === true
+  );
+
+  /* DISPLAY PRODUCTS */
+
+  displayProducts();
+  displayTrendingProducts();
+  setupTrendingCarousel();
+  createOfferCategoryCards();
+  startHeroSlideshow();
+
+  /* SHOW ERROR ONLY IF BOTH COLLECTIONS FAILED */
+
+  if (errors.length === 2 && productGrid) {
+    productGrid.innerHTML =
+      "<p class='no-products'>Unable to load products. Please check Firestore permissions and try again.</p>";
+  }
+
+  console.log("Total products loaded:", allProducts.length);
+  console.log(
+    "Master products:",
+    allProducts.filter(product => product._source === "master").length
+  );
+  console.log(
+    "Customer products:",
+    allProducts.filter(product => product._source === "customer").length
+  );
+
+  if (errors.length) {
+    console.warn("Some product collections could not load:", errors);
   }
 }
 
