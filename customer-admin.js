@@ -25,41 +25,18 @@ import {
 // ========================================
 
 const PRODUCT_CATEGORIES = [
-  "CCTV Cameras",
-  "Wireless Cameras",
-  "IP Cameras",
-  "PTZ Cameras",
-  "DVR & NVR",
-  "Video Door Phone",
-  "Biometric Systems",
-  "Networking",
-  "Storage",
-  "Accessories"
+  "CCTV Cameras", "Wireless Cameras", "IP Cameras", "PTZ Cameras",
+  "DVR & NVR", "Video Door Phone", "Biometric Systems",
+  "Networking", "Storage", "Accessories"
 ];
 
 const STANDARD_SPECIFICATIONS = [
-  "Angle of View",
-  "Image sensor",
-  "Lens",
-  "Aperture",
-  "Compression",
-  "Video Format",
-  "Video resolution",
-  "Smart Features",
-  "Record Type",
-  "Parking Mode",
-  "Mobile App",
-  "Connectivity",
-  "Microphone",
-  "Speaker",
-  "SD Card",
-  "Photo Format",
-  "Housing Type",
-  "Power Source",
-  "Working temperature",
-  "Storage temperature",
-  "Size",
-  "Certificates"
+  "Angle of View", "Image sensor", "Lens", "Aperture",
+  "Compression", "Video Format", "Video resolution",
+  "Smart Features", "Record Type", "Parking Mode",
+  "Mobile App", "Connectivity", "Microphone", "Speaker",
+  "SD Card", "Photo Format", "Housing Type", "Power Source",
+  "Working temperature", "Storage temperature", "Size", "Certificates"
 ];
 
 // ========================================
@@ -116,34 +93,23 @@ async function compressProductImage(file) {
     });
 
     const maxDimension = 1600;
-
     const scale = Math.min(
       1,
       maxDimension / Math.max(image.width, image.height)
     );
 
     const canvas = document.createElement("canvas");
-
     canvas.width = Math.round(image.width * scale);
     canvas.height = Math.round(image.height * scale);
 
     const context = canvas.getContext("2d");
-
-    context.drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
     let blob = await new Promise(resolve => {
       canvas.toBlob(resolve, "image/webp", 0.82);
     });
 
-    if (!blob) {
-      throw new Error("Unable to process image.");
-    }
+    if (!blob) throw new Error("Unable to process image.");
 
     if (blob.size > 2.5 * 1024 * 1024) {
       blob = await new Promise(resolve => {
@@ -156,7 +122,6 @@ async function compressProductImage(file) {
     }
 
     return blob;
-
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
@@ -173,13 +138,8 @@ async function uploadCustomerProductImage(file) {
 
   const imageBase64 = await new Promise((resolve, reject) => {
     const reader = new FileReader();
-
     reader.onload = () => resolve(reader.result);
-
-    reader.onerror = () => reject(
-      new Error("Unable to read image.")
-    );
-
+    reader.onerror = () => reject(new Error("Unable to read image."));
     reader.readAsDataURL(compressedImage);
   });
 
@@ -187,12 +147,10 @@ async function uploadCustomerProductImage(file) {
 
   const response = await fetch(IMAGE_UPLOAD_API, {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${idToken}`
     },
-
     body: JSON.stringify({
       customerId: currentCustomer.id,
       fileName: file.name,
@@ -204,9 +162,7 @@ async function uploadCustomerProductImage(file) {
   const result = await response.json();
 
   if (!response.ok || !result.success || !result.imageUrl) {
-    throw new Error(
-      result.error || "Image upload failed."
-    );
+    throw new Error(result.error || "Image upload failed.");
   }
 
   return result.imageUrl;
@@ -218,14 +174,12 @@ async function uploadCustomerProductImage(file) {
 
 function showLoginMessage(message, color = "#b91c1c") {
   if (!loginMessage) return;
-
   loginMessage.textContent = message;
   loginMessage.style.color = color;
 }
 
 function showDashboardMessage(message, color = "#087f3c") {
   if (!dashboardMessage) return;
-
   dashboardMessage.textContent = message;
   dashboardMessage.style.color = color;
 }
@@ -276,13 +230,10 @@ function normalizeFeatures(value) {
 function normalizeSpecifications(value) {
   if (Array.isArray(value)) {
     const result = {};
-
     value.forEach(item => {
       const key = item.name || item.key || "";
-
       if (key) result[key] = item.value || "";
     });
-
     return result;
   }
 
@@ -290,16 +241,13 @@ function normalizeSpecifications(value) {
 
   if (typeof value === "string" && value.trim()) {
     const result = {};
-
     value.split("\n").forEach(line => {
       const index = line.indexOf(":");
-
       if (index > -1) {
         result[line.slice(0, index).trim()] =
           line.slice(index + 1).trim();
       }
     });
-
     return result;
   }
 
@@ -312,7 +260,6 @@ function normalizeSpecifications(value) {
 
 async function getCustomerByUid(uid) {
   const customersRef = collection(db, "customers");
-
   const customerQuery = query(
     customersRef,
     where("uid", "==", uid),
@@ -366,7 +313,6 @@ async function loadCustomer(user) {
   }
 
   checkSubscription(customer);
-
   currentCustomer = customer;
 
   if (customerName) {
@@ -383,7 +329,6 @@ async function loadCustomer(user) {
   }
 
   showDashboard();
-
   showDashboardMessage("Customer account verified successfully.");
 
   await showSection("overview");
@@ -414,21 +359,13 @@ async function loadProducts() {
     ...item.data()
   }));
 }
+      </div>
+    </form>
+  `;
 
-// ========================================
-// PRODUCT FORM STYLES
-// ========================================
-
-function addProductFormStyles() {
-  if ($("customerProductFormStyles")) return;
-
-  const style = document.createElement("style");
-  style.id = "customerProductFormStyles";
-
-  style.textContent = `
-    .customer-product-form {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+  // The remaining form setup, save/edit/delete logic and dashboard
+  // functions continue in Part 3 and Part 4.
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
       margin-top: 18px;
     }
@@ -788,14 +725,9 @@ function renderProductForm(product = null) {
 
       <div class="form-group">
         <label for="productName">Product Name *</label>
-        <input
-          type="text"
-          id="productName"
-          required
-          maxlength="100"
+        <input type="text" id="productName" required maxlength="100"
           value="${escapeHTML(product?.name || "")}"
-          placeholder="Enter product name"
-        >
+          placeholder="Enter product name">
       </div>
 
       <div class="form-group">
@@ -803,99 +735,66 @@ function renderProductForm(product = null) {
         <select id="productCategory" required>
           <option value="">Select Category</option>
           ${PRODUCT_CATEGORIES.map(category => `
-            <option
-              value="${escapeHTML(category)}"
-              ${selectedCategory === category ? "selected" : ""}
-            >${escapeHTML(category)}</option>
+            <option value="${escapeHTML(category)}"
+              ${selectedCategory === category ? "selected" : ""}>
+              ${escapeHTML(category)}
+            </option>
           `).join("")}
         </select>
       </div>
 
       <div class="form-group">
         <label for="productModel">Model Number</label>
-        <input
-          type="text"
-          id="productModel"
+        <input type="text" id="productModel"
           value="${escapeHTML(product?.model || "")}"
-          placeholder="Enter model number"
-        >
+          placeholder="Enter model number">
       </div>
 
       <div class="form-group">
         <label for="productPrice">Price (₹)</label>
-        <input
-          type="number"
-          id="productPrice"
-          min="0"
-          step="0.01"
+        <input type="number" id="productPrice" min="0" step="0.01"
           value="${escapeHTML(product?.price ?? "")}"
-          placeholder="Enter price"
-        >
+          placeholder="Enter price">
       </div>
 
       <div class="form-group full-width">
         <label for="productDescription">Product Description</label>
-        <textarea
-          id="productDescription"
-          maxlength="5000"
-          placeholder="Enter product description"
-        >${escapeHTML(product?.description || "")}</textarea>
+        <textarea id="productDescription" maxlength="5000"
+          placeholder="Enter product description">${escapeHTML(product?.description || "")}</textarea>
       </div>
-
-      <!-- PRODUCT IMAGE UPLOAD -->
 
       <div class="form-group full-width">
         <label for="productImageFile">Product Image</label>
-
-        <input
-          type="file"
-          id="productImageFile"
-          accept="image/jpeg,image/png,image/webp"
-        >
-
-        <small>
-          मोबाइल या कंप्यूटर से JPG, PNG या WEBP फोटो चुनें।
-          अधिकतम अपलोड आकार 2.5 MB है।
-        </small>
-
+        <input type="file" id="productImageFile"
+          accept="image/jpeg,image/png,image/webp">
+        <small>JPG, PNG या WEBP फोटो चुनें। अधिकतम आकार 2.5 MB है।</small>
         <div id="productImagePreview" style="margin-top:12px;">
           ${
             product?.imageUrl || product?.image
-              ? `<img
-                  src="${escapeHTML(product.imageUrl || product.image)}"
+              ? `<img src="${escapeHTML(product.imageUrl || product.image)}"
                   alt="Product Preview"
-                  style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;"
-                >`
+                  style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;">`
               : "<p>No image selected.</p>"
           }
         </div>
-
         <p id="imageUploadMessage"></p>
       </div>
 
       <h3 class="form-subheading">Product Features</h3>
-
       <div class="form-group full-width">
         <div id="featuresFields"></div>
-
         <button type="button" id="addFeatureBtn" class="add-row">
           + Add Feature
         </button>
       </div>
 
       <h3 class="form-subheading">Product Specifications</h3>
-
-      <div
-        id="standardSpecifications"
-        class="full-width"
-        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px"
-      ></div>
+      <div id="standardSpecifications" class="full-width"
+        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px"></div>
 
       <h3 class="form-subheading">Additional Specifications</h3>
-
       <div class="form-group full-width">
         <div id="customSpecifications"></div>
-
         <button type="button" id="addSpecificationBtn" class="add-row">
           + Add Specification
         </button>
@@ -903,104 +802,63 @@ function renderProductForm(product = null) {
 
       <div class="form-group full-width">
         <label for="productNote">Additional Note</label>
-
-        <textarea
-          id="productNote"
-          maxlength="3000"
-          placeholder="Enter additional note"
-        >${escapeHTML(product?.note || product?.notes || "")}</textarea>
+        <textarea id="productNote" maxlength="3000"
+          placeholder="Enter additional note">${escapeHTML(product?.note || product?.notes || "")}</textarea>
       </div>
 
       <div class="form-group full-width">
-
         <label class="check-row">
-          <input
-            type="checkbox"
-            id="productIsNew"
-            ${product?.isNew === true ? "checked" : ""}
-          >
+          <input type="checkbox" id="productIsNew"
+            ${product?.isNew === true ? "checked" : ""}>
           Show NEW Badge
         </label>
 
         <label class="check-row">
-          <input
-            type="checkbox"
-            id="productTrending"
+          <input type="checkbox" id="productTrending"
             ${
               product?.trending === true ||
               product?.isTrending === true ||
               product?.featured === true ? "checked" : ""
-            }
-          >
+            }>
           Show in Trending Products
         </label>
 
         <label class="check-row">
-          <input
-            type="checkbox"
-            id="productActive"
-            ${product?.active !== false ? "checked" : ""}
-          >
+          <input type="checkbox" id="productActive"
+            ${product?.active !== false ? "checked" : ""}>
           Active Product
         </label>
-
       </div>
 
       <div class="form-actions">
-
-        <button
-          type="submit"
-          id="saveProductBtn"
-          class="save-button"
-        >
+        <button type="submit" id="saveProductBtn" class="save-button">
           ${product ? "Update Product" : "Save Product"}
         </button>
-
-        <button
-          type="button"
-          id="clearProductBtn"
-          class="cancel-button"
-        >
+        <button type="button" id="clearProductBtn" class="cancel-button">
           Clear Form
         </button>
-
-        <button
-          type="button"
-          id="cancelProductBtn"
-          class="cancel-button"
-        >
+        <button type="button" id="cancelProductBtn" class="cancel-button">
           Back to Products
         </button>
-
       </div>
 
       <p id="customerProductMessage" class="full-width"></p>
-
     </form>
   `;
-
-  // Fill existing product details
 
   setProductDetailsFields(
     product?.features || [],
     product?.specifications || {}
   );
 
-  // ========================================
-  // IMAGE UPLOAD AND PREVIEW
-  // ========================================
-
   selectedProductImage = null;
-
-  uploadedProductImageUrl =
-    product?.imageUrl || product?.image || "";
+  uploadedProductImageUrl = product?.imageUrl || product?.image || "";
 
   const imageInput = $("productImageFile");
 
   if (imageInput) {
     imageInput.addEventListener("change", () => {
       const file = imageInput.files?.[0];
-
       if (!file) return;
 
       selectedProductImage = file;
@@ -1009,43 +867,18 @@ function renderProductForm(product = null) {
 
       if (preview) {
         const previewUrl = URL.createObjectURL(file);
-
         preview.innerHTML = `
-          <img
-            src="${previewUrl}"
-            alt="Selected Product"
-            style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;"
-          >
+          <img src="${previewUrl}" alt="Selected Product"
+            style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;">
         `;
       }
     });
   }
 
-  // Add feature
-
-  $("addFeatureBtn").addEventListener("click", () => {
-    addFeatureRow();
-  });
-
-  // Add specification
-
-  $("addSpecificationBtn").addEventListener("click", () => {
-    addCustomSpecificationRow();
-  });
-
-  // Clear form
-
-  $("clearProductBtn").addEventListener("click", () => {
-    renderProductForm();
-  });
-
-  // Back to products
-
-  $("cancelProductBtn").addEventListener("click", () => {
-    showSection("products");
-  });
-
-  // Save product
+  $("addFeatureBtn").addEventListener("click", () => addFeatureRow());
+  $("addSpecificationBtn").addEventListener("click", () => addCustomSpecificationRow());
+  $("clearProductBtn").addEventListener("click", () => renderProductForm());
+  $("cancelProductBtn").addEventListener("click", () => showSection("products"));
 
   $("customerProductForm").addEventListener("submit", saveProduct);
 }
@@ -1067,18 +900,11 @@ async function saveProduct(event) {
 
     const name = $("productName").value.trim();
     const category = $("productCategory").value.trim();
-
     const priceText = $("productPrice").value.trim();
-
-    const price =
-      priceText === "" ? "" : Number(priceText);
-
-    const description =
-      $("productDescription").value.trim();
+    const price = priceText === "" ? "" : Number(priceText);
+    const description = $("productDescription").value.trim();
 
     let imageUrl = uploadedProductImageUrl;
-
-    // Upload selected image first
 
     if (selectedProductImage) {
       message.textContent = "Uploading product image...";
@@ -1087,69 +913,46 @@ async function saveProduct(event) {
       saveButton.disabled = true;
       saveButton.textContent = "Uploading Image...";
 
-      imageUrl = await uploadCustomerProductImage(
-        selectedProductImage
-      );
-
+      imageUrl = await uploadCustomerProductImage(selectedProductImage);
       uploadedProductImageUrl = imageUrl;
     }
 
     const note = $("productNote").value.trim();
 
     if (!name || !category) {
-      throw new Error(
-        "Product Name and Category are required."
-      );
+      throw new Error("Product Name and Category are required.");
     }
 
     if (
       priceText !== "" &&
       (!Number.isFinite(price) || price < 0)
     ) {
-      throw new Error(
-        "Please enter a valid product price."
-      );
+      throw new Error("Please enter a valid product price.");
     }
 
-    if (
-      imageUrl &&
-      !/^https?:\/\/\S+$/i.test(imageUrl)
-    ) {
-      throw new Error(
-        "Please enter a valid HTTP or HTTPS image URL."
-      );
+    if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) {
+      throw new Error("Please enter a valid HTTP or HTTPS image URL.");
     }
 
     const trending = $("productTrending").checked;
 
     const productData = {
       customerId: currentCustomer.id,
-
       name,
       category,
-
       model: $("productModel").value.trim(),
-
       price,
       description,
-
       features: getProductFeatures(),
-
       specifications: getProductSpecifications(),
-
       note,
-
       isNew: $("productIsNew").checked,
-
       trending,
       isTrending: trending,
       featured: trending,
-
       active: $("productActive").checked,
-
       imageUrl: imageUrl || "",
       image: imageUrl || "",
-
       updatedAt: serverTimestamp()
     };
 
@@ -1157,48 +960,28 @@ async function saveProduct(event) {
     saveButton.textContent = "Saving...";
 
     if (editingProductId) {
-
-      const productRef = doc(
-        db,
-        "customerProducts",
-        editingProductId
-      );
-
+      const productRef = doc(db, "customerProducts", editingProductId);
       const existingProduct = await getDoc(productRef);
 
       if (
         !existingProduct.exists() ||
         existingProduct.data().customerId !== currentCustomer.id
       ) {
-        throw new Error(
-          "You cannot edit this product."
-        );
+        throw new Error("You cannot edit this product.");
       }
 
       await updateDoc(productRef, productData);
-
-      showDashboardMessage(
-        "Product updated successfully."
-      );
+      showDashboardMessage("Product updated successfully.");
 
     } else {
-
       productData.createdAt = serverTimestamp();
 
-      await addDoc(
-        getProductsCollection(),
-        productData
-      );
-
-      showDashboardMessage(
-        "Product added successfully."
-      );
+      await addDoc(getProductsCollection(), productData);
+      showDashboardMessage("Product added successfully.");
     }
 
     editingProductId = null;
-
     selectedProductImage = null;
-
     uploadedProductImageUrl = "";
 
     await showSection("products");
@@ -1207,21 +990,19 @@ async function saveProduct(event) {
     console.error("Save product error:", error);
 
     if (message) {
-      message.textContent =
-        error.message || "Unable to save product.";
-
+      message.textContent = error.message || "Unable to save product.";
       message.style.color = "#dc2626";
     }
 
     if (saveButton) {
       saveButton.disabled = false;
-
       saveButton.textContent = editingProductId
         ? "Update Product"
         : "Save Product";
     }
   }
 }
+
 // ========================================
 // DELETE PRODUCT
 // ========================================
@@ -1236,12 +1017,7 @@ async function removeProduct(productId) {
   try {
     checkSubscription(currentCustomer);
 
-    const productRef = doc(
-      db,
-      "customerProducts",
-      productId
-    );
-
+    const productRef = doc(db, "customerProducts", productId);
     const productSnapshot = await getDoc(productRef);
 
     if (
@@ -1254,398 +1030,10 @@ async function removeProduct(productId) {
     await deleteDoc(productRef);
 
     showDashboardMessage("Product deleted successfully.");
-
     await showSection("products");
 
   } catch (error) {
     console.error("Delete product error:", error);
-
     alert(error.message || "Unable to delete product.");
   }
 }
-
-// ========================================
-// SHOW CUSTOMER PRODUCTS
-// ========================================
-
-async function showProducts() {
-  sectionContent.innerHTML = `
-    <h2>Product Management</h2>
-    <p>Loading your products...</p>
-  `;
-
-  try {
-    const products = await loadProducts();
-
-    const cards = products.map(product => {
-      const trending =
-        product.trending === true ||
-        product.isTrending === true ||
-        product.featured === true;
-
-      const badges = [];
-
-      if (product.isNew === true) {
-        badges.push("NEW");
-      }
-
-      if (trending) {
-        badges.push("TRENDING");
-      }
-
-      badges.push(
-        product.active === false ? "INACTIVE" : "ACTIVE"
-      );
-
-      return `
-        <article class="customer-product-card">
-
-          ${
-            product.imageUrl || product.image
-              ? `<img
-                  src="${escapeHTML(product.imageUrl || product.image)}"
-                  alt="${escapeHTML(product.name)}"
-                >`
-              : ""
-          }
-
-          <h3>${escapeHTML(product.name || "Unnamed Product")}</h3>
-
-          <p>
-            Category:
-            ${escapeHTML(product.category || "Not set")}
-          </p>
-
-          <p>
-            Model:
-            ${escapeHTML(product.model || "N/A")}
-          </p>
-
-          <p>
-            Price:
-            ${
-              product.price === "" || product.price == null
-                ? "Not set"
-                : "₹" + Number(product.price).toLocaleString("en-IN")
-            }
-          </p>
-
-          <p>${escapeHTML(product.description || "")}</p>
-
-          <p>
-            <strong>${escapeHTML(badges.join(" • "))}</strong>
-          </p>
-
-          <div class="product-actions">
-
-            <button
-              type="button"
-              data-edit-product="${escapeHTML(product.id)}"
-            >
-              Edit
-            </button>
-
-            <button
-              type="button"
-              class="delete-button"
-              data-delete-product="${escapeHTML(product.id)}"
-            >
-              Delete
-            </button>
-
-          </div>
-
-        </article>
-      `;
-    }).join("");
-
-    sectionContent.innerHTML = `
-      <h2>Product Management</h2>
-
-      <button type="button" id="addProductBtn">
-        + Add New Product
-      </button>
-
-      <p>Total Products: ${products.length}</p>
-
-      <div class="products">
-        ${
-          cards ||
-          "<p>No products added yet. Click Add New Product to begin.</p>"
-        }
-      </div>
-    `;
-
-    const productCount = $("productCount");
-
-    if (productCount) {
-      productCount.textContent = products.length;
-    }
-
-    $("addProductBtn").addEventListener("click", () => {
-      renderProductForm();
-    });
-
-    sectionContent
-      .querySelectorAll("[data-edit-product]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          const product = products.find(
-            item => item.id === button.dataset.editProduct
-          );
-
-          if (product) {
-            renderProductForm(product);
-          }
-        });
-      });
-
-    sectionContent
-      .querySelectorAll("[data-delete-product]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          removeProduct(button.dataset.deleteProduct);
-        });
-      });
-
-  } catch (error) {
-    console.error("Load products error:", error);
-
-    sectionContent.innerHTML = `
-      <h2>Product Management</h2>
-      <p>Unable to load products. Please check your account access.</p>
-    `;
-  }
-}
-
-// ========================================
-// DASHBOARD SECTIONS
-// ========================================
-
-async function showSection(section) {
-  if (!sectionContent || !currentCustomer) return;
-
-  document.querySelectorAll("[data-section]").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.section === section
-    );
-  });
-
-  if (section === "overview") {
-    sectionContent.innerHTML = `
-      <h2>Dashboard Overview</h2>
-      <p>Welcome to your business dashboard.</p>
-      <p>
-        Business:
-        ${escapeHTML(currentCustomer.businessName || "")}
-      </p>
-      <p>
-        Website:
-        /${escapeHTML(currentCustomer.slug || "")}/
-      </p>
-    `;
-
-    try {
-      const products = await loadProducts();
-
-      const productCount = $("productCount");
-
-      if (productCount) {
-        productCount.textContent = products.length;
-      }
-
-    } catch (error) {
-      console.error("Overview product count error:", error);
-    }
-  }
-
-  else if (section === "products") {
-    await showProducts();
-  }
-
-  else if (section === "enquiries") {
-    sectionContent.innerHTML = `
-      <h2>Enquiries</h2>
-      <p>Enquiry management will be connected in the next step.</p>
-    `;
-  }
-
-  else if (section === "subscription") {
-    const expiry = currentCustomer.subscriptionExpiry;
-
-    const expiryText =
-      expiry && typeof expiry.toDate === "function"
-        ? expiry.toDate().toLocaleDateString("en-IN")
-        : "Not set";
-
-    sectionContent.innerHTML = `
-      <h2>Subscription Details</h2>
-
-      <p>
-        Plan:
-        ${escapeHTML(currentCustomer.plan || "Not set")}
-      </p>
-
-      <p>
-        Amount:
-        ₹${Number(currentCustomer.subscriptionAmount || 0)}
-      </p>
-
-      <p>
-        Expiry Date:
-        ${escapeHTML(expiryText)}
-      </p>
-
-      <p>
-        Status:
-        ${escapeHTML(currentCustomer.status || "Unknown")}
-      </p>
-    `;
-  }
-}
-
-// ========================================
-// SECTION BUTTONS
-// ========================================
-
-document.querySelectorAll("[data-section]").forEach(button => {
-  button.addEventListener("click", () => {
-    if (!currentCustomer) return;
-
-    showSection(button.dataset.section);
-  });
-});
-
-// ========================================
-// CUSTOMER LOGIN
-// ========================================
-
-if (loginForm) {
-  loginForm.addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!email || !password) {
-      showLoginMessage("Please enter email and password.");
-      return;
-    }
-
-    const submitButton =
-      loginForm.querySelector('button[type="submit"]');
-
-    if (submitButton) {
-      submitButton.disabled = true;
-    }
-
-    showLoginMessage(
-      "Checking your account...",
-      "#64748b"
-    );
-
-    try {
-      await authReady;
-
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      showLoginMessage(
-        "Login successful. Loading your account...",
-        "#087f3c"
-      );
-
-    } catch (error) {
-      console.error("Customer login error:", error);
-
-      showLoginMessage(
-        "Login failed. Please check your email and password."
-      );
-
-      if (submitButton) {
-        submitButton.disabled = false;
-      }
-    }
-  });
-}
-
-// ========================================
-// LOGOUT
-// ========================================
-
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-
-      showLogin();
-
-      if (loginForm) {
-        loginForm.reset();
-      }
-
-      showLoginMessage(
-        "You have logged out.",
-        "#087f3c"
-      );
-
-    } catch (error) {
-      console.error("Logout error:", error);
-
-      alert("Logout failed. Please try again.");
-    }
-  });
-}
-
-// ========================================
-// AUTH STATE
-// ========================================
-
-async function initializeCustomerAdmin() {
-  await authReady;
-
-  onAuthStateChanged(auth, async user => {
-    if (!user) {
-      showLogin();
-      return;
-    }
-
-    try {
-      await loadCustomer(user);
-
-      const submitButton =
-        loginForm?.querySelector('button[type="submit"]');
-
-      if (submitButton) {
-        submitButton.disabled = false;
-      }
-
-    } catch (error) {
-      console.error("Customer verification error:", error);
-
-      showLogin();
-
-      await signOut(auth);
-
-      showLoginMessage(
-        error.message || "Customer account verification failed."
-      );
-    }
-  });
-}
-
-// ========================================
-// START
-// ========================================
-
-initializeCustomerAdmin().catch(error => {
-  console.error("Customer Admin initialization error:", error);
-
-  showLoginMessage(
-    "Unable to initialize Customer Admin."
-  );
-});
