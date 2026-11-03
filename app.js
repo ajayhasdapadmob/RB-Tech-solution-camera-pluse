@@ -11,7 +11,6 @@ import {
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
    No Firebase Storage required
-   No CAPTCHA
 ========================================= */
 
 const WHATSAPP_NUMBER = "919663116089";
@@ -43,6 +42,8 @@ const categoryFilter = document.getElementById("categoryFilter");
 const productModal = document.getElementById("productModal");
 const modalClose = document.getElementById("modalClose");
 const modalContent = document.getElementById("modalContent");
+
+/* CONTACT FORM ELEMENTS */
 
 const enquiryName = document.getElementById("enquiryName");
 const enquiryProduct = document.getElementById("enquiryProduct");
@@ -164,19 +165,13 @@ function createProductCard(product, index) {
       ` : ""}
 
       <div class="product-actions">
-        <button
-          class="view-details-btn"
-          type="button"
-          data-product-index="${index}"
-        >
+        <button class="view-details-btn"
+          type="button" data-product-index="${index}">
           View Details
         </button>
 
-        <button
-          class="enquire-btn"
-          type="button"
-          data-enquire-index="${index}"
-        >
+        <button class="enquire-btn"
+          type="button" data-enquire-index="${index}">
           Enquire
         </button>
       </div>
@@ -465,24 +460,10 @@ function getProductSpecifications(product) {
 }
 
 /* =========================================
-   REQUEST FOR INFORMATION - COUNTRY LIST
-========================================= */
-
-const RFI_COUNTRIES = `
-India|Australia|Bahrain|Bangladesh|Belgium|Bhutan|Cambodia|Canada|Chile|China|Congo|Cyprus|Czech Republic|Denmark|Doha-Qatar|Dubai|Hong Kong|Japan|Italy|United States|Afghanistan|Albania|Algeria|Andorra|Angola|Antigua and Barbuda|Argentina|Armenia|Austria|Azerbaijan|Bahamas|Barbados|Belarus|Belize|Benin|Bolivia|Bosnia and Herzegovina|Botswana|Brazil|Brunei|Bulgaria|Burkina Faso|Burundi|Côte d'Ivoire|Cabo Verde|Cameroon|Central African Republic|Chad|Colombia|Comoros|Congo (Congo-Brazzaville)|Costa Rica|Croatia|Cuba|Czechia (Czech Republic)|Democratic Republic of the Congo|Djibouti|Dominica|Dominican Republic|Ecuador|Egypt|El Salvador|Equatorial Guinea|Eritrea|Estonia|Eswatini (fmr. Swaziland)|Ethiopia|Fiji|Finland|France|Gabon|Gambia|Georgia|Germany|Ghana|Greece|Grenada|Guatemala|Guinea|Guinea-Bissau|Guyana|Haiti|Holy See|Honduras|Hungary|Iceland|Indonesia|Iran|Iraq|Ireland|Israel|Jamaica|Jordan|Kazakhstan|Kenya|Kiribati|Kuwait|Kyrgyzstan|Laos|Latvia|Lebanon|Lesotho|Liberia|Libya|Liechtenstein|Lithuania|Luxembourg|Madagascar|Malawi|Malaysia|Maldives|Mali|Malta|Marshall Islands|Mauritania|Mauritius|Mexico|Micronesia|Moldova|Monaco|Mongolia|Montenegro|Morocco|Mozambique|Myanmar (formerly Burma)|Namibia|Nauru|Nepal|Netherlands|New Zealand|Nicaragua|Niger|Nigeria|North Korea|North Macedonia|Norway|Oman|Pakistan|Palau|Palestine State|Panama|Papua New Guinea|Paraguay|Peru|Philippines|Poland|Portugal|Qatar|Romania|Russia|Rwanda|Saint Kitts and Nevis|Saint Lucia|Saint Vincent and the Grenadines|Samoa|San Marino|Sao Tome and Principe|Saudi Arabia|Senegal|Serbia|Seychelles|Sierra Leone|Singapore|Slovakia|Slovenia|Solomon Islands|Somalia|South Africa|South Korea|South Sudan|Spain|Sri Lanka|Sudan|Suriname|Sweden|Switzerland|Syria|Tajikistan|Tanzania|Thailand|Timor-Leste|Togo|Tonga|Trinidad and Tobago|Tunisia|Turkey|Turkmenistan|Tuvalu|Uganda|Ukraine|United Arab Emirates|United Kingdom|United States of America|Uruguay|Uzbekistan|Vanuatu|Venezuela|Vietnam|Yemen|Zambia|Zimbabwe
-`.trim().split("|");
-
-/* =========================================
    REQUEST FOR INFORMATION FORM
 ========================================= */
 
 function createRFIForm(product) {
-  const countryOptions = RFI_COUNTRIES.map(country => `
-    <option value="${escapeHTML(country)}">
-      ${escapeHTML(country)}
-    </option>
-  `).join("");
-
   return `
     <section class="rfi-section" id="requestInformation">
 
@@ -494,150 +475,66 @@ function createRFIForm(product) {
 
       <form id="rfiForm">
 
-        <input
-          type="hidden"
-          name="productName"
-          value="${escapeHTML(getProductName(product))}"
-        >
+        <input type="hidden" name="productName"
+          value="${escapeHTML(getProductName(product))}">
 
-        <input
-          type="hidden"
-          name="productModel"
-          value="${escapeHTML(getProductModel(product))}"
-        >
+        <input type="hidden" name="productModel"
+          value="${escapeHTML(getProductModel(product))}">
 
         <div class="rfi-form-group">
-          <label for="rfiName">Name *</label>
-          <input
-            id="rfiName"
-            name="name"
-            type="text"
-            maxlength="100"
-            autocomplete="name"
-            required
-            placeholder="Enter your name"
-          >
+          <label for="rfiName">Full Name *</label>
+          <input id="rfiName" name="name" type="text"
+            maxlength="100" autocomplete="name"
+            required placeholder="Enter your full name">
+        </div>
+
+        <div class="rfi-form-group">
+          <label for="rfiPhone">Mobile Number *</label>
+          <input id="rfiPhone" name="phone" type="tel"
+            maxlength="25" autocomplete="tel"
+            required placeholder="Enter your mobile number">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiEmail">Email Address *</label>
-          <input
-            id="rfiEmail"
-            name="email"
-            type="email"
-            maxlength="150"
-            autocomplete="email"
-            required
-            placeholder="Enter your email address"
-          >
+          <input id="rfiEmail" name="email" type="email"
+            maxlength="150" autocomplete="email"
+            required placeholder="Enter your email address">
         </div>
 
         <div class="rfi-form-group">
-          <label for="rfiCompany">Your Company *</label>
-          <input
-            id="rfiCompany"
-            name="company"
-            type="text"
-            maxlength="150"
-            autocomplete="organization"
-            required
-            placeholder="Enter your company name"
-          >
+          <label for="rfiAddress">Full Address *</label>
+          <textarea id="rfiAddress" name="address"
+            maxlength="1000" required
+            placeholder="Enter your full address"></textarea>
         </div>
 
         <div class="rfi-form-group">
-          <label for="rfiCountry">Your Country *</label>
-          <select
-            id="rfiCountry"
-            name="country"
-            required
-          >
-            <option value="">Select country</option>
-            ${countryOptions}
-          </select>
-        </div>
-
-        <div class="rfi-form-group">
-          <label for="rfiState">State *</label>
-          <input
-            id="rfiState"
-            name="state"
-            type="text"
-            maxlength="100"
-            required
-            placeholder="Enter your state"
-          >
-        </div>
-
-        <div class="rfi-form-group">
-          <label for="rfiCity">City *</label>
-          <input
-            id="rfiCity"
-            name="city"
-            type="text"
-            maxlength="100"
-            required
-            placeholder="Enter your city"
-          >
-        </div>
-
-        <div class="rfi-form-group">
-          <label for="rfiPhone">Contact number *</label>
-          <input
-            id="rfiPhone"
-            name="phone"
-            type="tel"
-            maxlength="25"
-            autocomplete="tel"
-            required
-            placeholder="Enter your contact number"
-          >
+          <label for="rfiService">Product / Service</label>
+          <input id="rfiService" name="service" type="text"
+            maxlength="200"
+            value="${escapeHTML(getProductName(product))}"
+            placeholder="Product / Service">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiMessage">Message *</label>
-          <textarea
-            id="rfiMessage"
-            name="message"
-            maxlength="3000"
-            required
-            placeholder="Write your message"
-          ></textarea>
+          <textarea id="rfiMessage" name="message"
+            maxlength="3000" required
+            placeholder="Write your message"></textarea>
         </div>
 
         <div class="rfi-consent">
           <label>
-            <input
-              type="checkbox"
-              name="consent"
-              required
-            >
-
-            I consent to collect, store, and process my personal
-            information as outlined in the
-
-            <a
-              href="https://cpplusworld.com/cp-w32#PrivacyPolicyModal"
-              target="_blank"
-              rel="noopener"
-            >Privacy Policy</a>.
-            By clicking on Submit you agree to this.
+            <input type="checkbox" name="consent" required>
+            I agree to the processing of my enquiry information.
           </label>
         </div>
 
-        <button
-          type="submit"
-          id="rfiSubmitBtn"
-        >
-          Submit
-        </button>
+        <button type="submit" id="rfiSubmitBtn">Submit Inquiry</button>
 
-        <p
-          id="rfiStatus"
-          class="rfi-status"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <p id="rfiStatus" class="rfi-status"
+          role="status" aria-live="polite"></p>
 
       </form>
     </section>
@@ -645,7 +542,7 @@ function createRFIForm(product) {
 }
 
 /* =========================================
-   SUBMIT REQUEST FOR INFORMATION
+   SUBMIT PRODUCT REQUEST FOR INFORMATION
 ========================================= */
 
 async function submitRFI(form) {
@@ -658,21 +555,14 @@ async function submitRFI(form) {
 
   const enquiry = {
     name: String(formData.get("name") || "").trim(),
-    email: String(formData.get("email") || "").trim(),
-    company: String(formData.get("company") || "").trim(),
-    country: String(formData.get("country") || "").trim(),
-    state: String(formData.get("state") || "").trim(),
-    city: String(formData.get("city") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
+    email: String(formData.get("email") || "").trim(),
+    address: String(formData.get("address") || "").trim(),
+    service: String(formData.get("service") || "").trim(),
     message: String(formData.get("message") || "").trim(),
 
-    productName: String(
-      formData.get("productName") || ""
-    ).trim(),
-
-    productModel: String(
-      formData.get("productModel") || ""
-    ).trim(),
+    productName: String(formData.get("productName") || "").trim(),
+    productModel: String(formData.get("productModel") || "").trim(),
 
     consent: formData.get("consent") === "on",
     status: "New",
@@ -680,28 +570,21 @@ async function submitRFI(form) {
   };
 
   if (!enquiry.consent) {
-    status.textContent =
-      "Please accept the Privacy Policy.";
-
+    status.textContent = "Please accept the consent checkbox.";
     return;
   }
 
   submitButton.disabled = true;
   submitButton.textContent = "Submitting...";
-
   status.textContent = "";
 
   try {
-    await addDoc(
-      collection(db, "enquiries"),
-      enquiry
-    );
+    await addDoc(collection(db, "enquiries"), enquiry);
 
     status.textContent =
       "Thank you! Your enquiry has been submitted successfully.";
 
     status.style.color = "#087f3c";
-
     form.reset();
 
   } catch (error) {
@@ -714,7 +597,7 @@ async function submitRFI(form) {
 
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = "Submit";
+    submitButton.textContent = "Submit Inquiry";
   }
 }
 
@@ -733,59 +616,38 @@ function openProductDetails(index) {
   const model = getProductModel(product);
   const price = getProductPrice(product);
 
-  const description = String(
-    product.description || ""
-  ).trim();
-
-  const note = String(
-    product.note || product.notes || ""
-  ).trim();
+  const description = String(product.description || "").trim();
+  const note = String(product.note || product.notes || "").trim();
 
   const features = getProductFeatures(product);
   const specifications = getProductSpecifications(product);
 
   modalContent.innerHTML = `
+    <button id="modalClose" type="button"
+      aria-label="Close product details">×</button>
+
     <div class="modal-product-layout">
 
       <div class="modal-product-image">
-        <img
-          src="${escapeHTML(image)}"
+        <img src="${escapeHTML(image)}"
           alt="${escapeHTML(name)}"
-          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'"
-        >
+          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'">
       </div>
 
       <div class="modal-product-info">
 
         <span>${escapeHTML(category)}</span>
-
         <h2>${escapeHTML(name)}</h2>
 
-        ${model ? `
-          <p>
-            <strong>Model:</strong>
-            ${escapeHTML(model)}
-          </p>
-        ` : ""}
-
-        ${price ? `
-          <p>
-            <strong>Price:</strong>
-            ${escapeHTML(price)}
-          </p>
-        ` : ""}
-
-        ${description ? `
-          <p>${escapeHTML(description)}</p>
-        ` : ""}
+        ${model ? `<p><strong>Model:</strong> ${escapeHTML(model)}</p>` : ""}
+        ${price ? `<p><strong>Price:</strong> ${escapeHTML(price)}</p>` : ""}
+        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
 
         ${features.length ? `
           <div class="product-features">
             <h3>Features</h3>
             <ul>
-              ${features.map(feature => `
-                <li>${escapeHTML(feature)}</li>
-              `).join("")}
+              ${features.map(feature => `<li>${escapeHTML(feature)}</li>`).join("")}
             </ul>
           </div>
         ` : ""}
@@ -793,7 +655,6 @@ function openProductDetails(index) {
         ${specifications.length ? `
           <div class="product-specifications">
             <h3>Specification</h3>
-
             <table>
               <tbody>
                 ${specifications.map(item => `
@@ -819,7 +680,6 @@ function openProductDetails(index) {
         </button>
 
       </div>
-
     </div>
 
     ${createRFIForm(product)}
@@ -828,7 +688,8 @@ function openProductDetails(index) {
   productModal.classList.add("active");
   productModal.style.display = "flex";
 
-  /* WhatsApp enquiry */
+  modalContent.querySelector("#modalClose")
+    ?.addEventListener("click", closeProductModal);
 
   document.getElementById("modalEnquireBtn")
     ?.addEventListener("click", () => {
@@ -838,8 +699,6 @@ function openProductDetails(index) {
         (model ? "\nModel: " + model : "")
       );
     });
-
-  /* Request for Information form */
 
   modalContent.querySelector("#rfiForm")
     ?.addEventListener("submit", event => {
@@ -935,8 +794,7 @@ function startHeroSlideshow() {
   heroSlideTimer = setInterval(() => {
     slideElements[currentSlide].classList.remove("active");
 
-    currentSlide =
-      (currentSlide + 1) % slideElements.length;
+    currentSlide = (currentSlide + 1) % slideElements.length;
 
     slideElements[currentSlide].classList.add("active");
   }, 4000);
@@ -991,12 +849,7 @@ document.addEventListener("click", event => {
 ========================================= */
 
 document.addEventListener("keydown", event => {
-  if (
-    event.key !== "Enter" &&
-    event.key !== " "
-  ) {
-    return;
-  }
+  if (event.key !== "Enter" && event.key !== " ") return;
 
   const imageBox = event.target.closest(
     ".product-image[data-product-index]"
@@ -1012,7 +865,108 @@ document.addEventListener("keydown", event => {
 });
 
 /* =========================================
-   CONTACT FORM WHATSAPP
+   GENERAL WEBSITE INQUIRY FORM
+   CONTACT POPUP + INQUIRY PAGE
+========================================= */
+
+const websiteInquiryForm =
+  document.getElementById("websiteInquiryForm");
+
+websiteInquiryForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+
+  if (!form.reportValidity()) return;
+
+  const button = document.getElementById("websiteInquirySubmit");
+  const status = document.getElementById("websiteInquiryStatus");
+
+  const getValue = id =>
+    document.getElementById(id)?.value?.trim() || "";
+
+  const country = getValue("contactCountry");
+  const state = getValue("contactState");
+  const city = getValue("contactCity");
+  const pincode = getValue("contactPincode");
+
+  const address =
+    getValue("websiteInquiryAddress") ||
+    [city, state, pincode, country].filter(Boolean).join(", ");
+
+  const consentElement = document.getElementById("contactPrivacy");
+  const consent = consentElement ? consentElement.checked : false;
+
+  if (!consent) {
+    if (status) {
+      status.textContent = "Please accept the consent checkbox.";
+      status.style.color = "#dc2626";
+    }
+    return;
+  }
+
+  const enquiry = {
+    name: getValue("websiteInquiryName"),
+    phone: getValue("websiteInquiryMobile"),
+    email: getValue("websiteInquiryEmail"),
+
+    company: getValue("websiteInquiryCompany"),
+
+    country,
+    state,
+    city,
+    pincode,
+    address,
+
+    service: getValue("websiteInquiryProduct"),
+    queryType: getValue("websiteInquiryProduct"),
+    message: getValue("websiteInquiryMessage"),
+
+    consent: true,
+    status: "New",
+    createdAt: serverTimestamp()
+  };
+
+  const originalButtonText = button?.textContent || "Submit Inquiry";
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Submitting...";
+  }
+
+  if (status) status.textContent = "";
+
+  try {
+    await addDoc(collection(db, "enquiries"), enquiry);
+
+    if (status) {
+      status.textContent =
+        "Thank you! Your enquiry was submitted successfully.";
+      status.style.color = "#087f3c";
+    }
+
+    form.reset();
+
+  } catch (error) {
+    console.error("Website inquiry error:", error);
+
+    if (status) {
+      status.textContent =
+        "Unable to submit enquiry. Please try again.";
+      status.style.color = "#dc2626";
+    }
+
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalButtonText;
+    }
+  }
+});
+
+/* =========================================
+   OLD CONTACT WHATSAPP FORM SUPPORT
+   Runs only if those old elements exist
 ========================================= */
 
 enquiryWhatsApp?.addEventListener("click", () => {
