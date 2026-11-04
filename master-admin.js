@@ -1,4 +1,4 @@
-
+```javascript
 import { auth, db, authReady } from "./firebase.js";
 
 import {
@@ -40,7 +40,7 @@ function setDashboardEnabled(enabled) {
     });
 }
 
-// Keep customer form disabled until verification.
+// Initially disable customer form.
 setDashboardEnabled(false);
 
 // ========================================
@@ -48,26 +48,66 @@ setDashboardEnabled(false);
 // ========================================
 
 async function checkMasterAdmin(user) {
-  if (!user?.uid) {
+  if (!user || !user.uid) {
     throw new Error("Please login with your Master Admin account.");
   }
 
+  // Display logged-in UID for diagnosis.
+  console.log("================================");
+  console.log("MASTER ADMIN LOGIN CHECK");
+  console.log("Logged-in UID:", user.uid);
+  console.log("Checking Firestore path: admin/" + user.uid);
+  console.log("================================");
+
   const adminRef = doc(db, "admin", user.uid);
-  const adminSnap = await getDoc(adminRef);
+
+  let adminSnap;
+
+  try {
+    adminSnap = await getDoc(adminRef);
+  } catch (error) {
+    console.error("Firestore admin document read failed:", error);
+
+    if (error.code === "permission-denied") {
+      throw new Error(
+        "Firestore permission denied. Please check your Firestore Security Rules."
+      );
+    }
+
+    throw new Error(
+      "Unable to read Admin document: " + error.message
+    );
+  }
 
   if (!adminSnap.exists()) {
-    throw new Error("Master Admin record not found.");
+    console.error("Admin document not found for UID:", user.uid);
+
+    throw new Error(
+      "Admin document not found for logged-in UID: " + user.uid
+    );
   }
 
   const adminData = adminSnap.data();
 
+  console.log("Admin document found:", adminData);
+  console.log("Active value:", adminData.Active);
+  console.log("Active type:", typeof adminData.Active);
+  console.log("Role value:", adminData.Role);
+  console.log("Role type:", typeof adminData.Role);
+
   if (adminData.Active !== true) {
-    throw new Error("Your Admin account is inactive.");
+    throw new Error(
+      "Admin account is inactive. Active must be Boolean true."
+    );
   }
 
   if (adminData.Role !== "MasterAdmin") {
-    throw new Error("This account does not have Master Admin permission.");
+    throw new Error(
+      'Incorrect Admin Role. Role must be exactly "MasterAdmin".'
+    );
   }
+
+  console.log("MASTER ADMIN VERIFICATION SUCCESSFUL");
 
   return true;
 }
@@ -81,25 +121,44 @@ async function initializeMasterAdmin() {
 
   onAuthStateChanged(
     auth,
+
     async user => {
       isMasterAdminVerified = false;
       setDashboardEnabled(false);
 
       if (!user) {
-        showMessage("Please login first using the Admin Login page.");
+        console.log("No user is logged in.");
+
+        document.body.style.display = "block";
+
+        showMessage(
+          "Please login first using the Admin Login page."
+        );
+
         return;
       }
 
-      showMessage("Checking Master Admin permission...", "#64748b");
+      // Show UID immediately.
+      console.log("Logged-in UID:", user.uid);
+
+      showMessage(
+        "Checking Master Admin permission...",
+        "#64748b"
+      );
 
       try {
         await checkMasterAdmin(user);
 
-        // Confirm same user is still signed in.
-        if (auth.currentUser?.uid !== user.uid) return;
+        // Ensure same user is still logged in.
+        if (auth.currentUser?.uid !== user.uid) {
+          console.warn("Login user changed during verification.");
+          return;
+        }
 
         isMasterAdminVerified = true;
+
         document.body.style.display = "block";
+
         setDashboardEnabled(true);
 
         showMessage(
@@ -107,13 +166,18 @@ async function initializeMasterAdmin() {
           "#087f3c"
         );
 
-        console.log("Master Admin verified.");
+        console.log("Master Admin access granted.");
 
       } catch (error) {
-        console.error("Master Admin verification failed:", error);
+        console.error(
+          "Master Admin verification failed:",
+          error
+        );
 
         isMasterAdminVerified = false;
+
         setDashboardEnabled(false);
+
         document.body.style.display = "block";
 
         showMessage(
@@ -122,11 +186,19 @@ async function initializeMasterAdmin() {
         );
       }
     },
+
     error => {
-      console.error("Auth state error:", error);
+      console.error("Authentication state error:", error);
+
       isMasterAdminVerified = false;
+
       setDashboardEnabled(false);
-      showMessage("Authentication error: " + error.message);
+
+      document.body.style.display = "block";
+
+      showMessage(
+        "Authentication error: " + error.message
+      );
     }
   );
 }
@@ -139,10 +211,15 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
       await signOut(auth);
+
       window.location.replace("./admin.html");
+
     } catch (error) {
       console.error("Logout error:", error);
-      showMessage("Logout failed: " + error.message);
+
+      showMessage(
+        "Logout failed: " + error.message
+      );
     }
   });
 }
@@ -151,14 +228,15 @@ if (logoutBtn) {
 // CUSTOMER FORM
 // ========================================
 
-// Backend is not connected yet.
-// This prevents the form from pretending to create customers.
 if (customerForm) {
   customerForm.addEventListener("submit", event => {
     event.preventDefault();
 
     if (!isMasterAdminVerified) {
-      showMessage("Master Admin verification is required.");
+      showMessage(
+        "Master Admin verification is required."
+      );
+
       return;
     }
 
@@ -170,13 +248,19 @@ if (customerForm) {
 }
 
 // ========================================
-// START
+// START MASTER ADMIN
 // ========================================
 
 initializeMasterAdmin().catch(error => {
-  console.error("Master Admin initialization error:", error);
+  console.error(
+    "Master Admin initialization error:",
+    error
+  );
+
+  isMasterAdminVerified = false;
 
   setDashboardEnabled(false);
+
   document.body.style.display = "block";
 
   showMessage(
