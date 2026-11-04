@@ -1,4 +1,3 @@
-
 import { auth, db, authReady } from "./firebase.js";
 
 import {
