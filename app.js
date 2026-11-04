@@ -1,4 +1,3 @@
-
 import { db } from "./firebase.js";
 
 import {
@@ -10,8 +9,8 @@ import {
 
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
+   Customer Products + Old Products
    No Firebase Storage required
-   No CAPTCHA
 ========================================= */
 
 const WHATSAPP_NUMBER = "919663116089";
@@ -473,6 +472,29 @@ India|Australia|Bahrain|Bangladesh|Belgium|Bhutan|Cambodia|Canada|Chile|China|Co
 `.trim().split("|");
 
 /* =========================================
+   CUSTOMER PRODUCT ROUTING HELPERS
+========================================= */
+
+function getCustomerId(product) {
+  return String(product?.customerId || "").trim();
+}
+
+function getCustomerProductId(product) {
+  if (!product?.customerId) return "";
+  return String(product.id || "").trim();
+}
+
+function findProductByName(productName) {
+  const search = String(productName || "").trim().toLowerCase();
+
+  if (!search) return null;
+
+  return allProducts.find(product =>
+    getProductName(product).trim().toLowerCase() === search
+  ) || null;
+}
+
+/* =========================================
    REQUEST FOR INFORMATION FORM
 ========================================= */
 
@@ -494,64 +516,42 @@ function createRFIForm(product) {
 
       <form id="rfiForm">
 
-        <input
-          type="hidden"
-          name="productName"
-          value="${escapeHTML(getProductName(product))}"
-        >
+        <input type="hidden" name="productName"
+          value="${escapeHTML(getProductName(product))}">
 
-        <input
-          type="hidden"
-          name="productModel"
-          value="${escapeHTML(getProductModel(product))}"
-        >
+        <input type="hidden" name="productModel"
+          value="${escapeHTML(getProductModel(product))}">
+
+        <input type="hidden" name="customerId"
+          value="${escapeHTML(getCustomerId(product))}">
+
+        <input type="hidden" name="customerProductId"
+          value="${escapeHTML(getCustomerProductId(product))}">
 
         <div class="rfi-form-group">
           <label for="rfiName">Name *</label>
-          <input
-            id="rfiName"
-            name="name"
-            type="text"
-            maxlength="100"
-            autocomplete="name"
-            required
-            placeholder="Enter your name"
-          >
+          <input id="rfiName" name="name" type="text"
+            maxlength="100" autocomplete="name" required
+            placeholder="Enter your name">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiEmail">Email Address *</label>
-          <input
-            id="rfiEmail"
-            name="email"
-            type="email"
-            maxlength="150"
-            autocomplete="email"
-            required
-            placeholder="Enter your email address"
-          >
+          <input id="rfiEmail" name="email" type="email"
+            maxlength="150" autocomplete="email" required
+            placeholder="Enter your email address">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiCompany">Your Company *</label>
-          <input
-            id="rfiCompany"
-            name="company"
-            type="text"
-            maxlength="150"
-            autocomplete="organization"
-            required
-            placeholder="Enter your company name"
-          >
+          <input id="rfiCompany" name="company" type="text"
+            maxlength="150" autocomplete="organization" required
+            placeholder="Enter your company name">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiCountry">Your Country *</label>
-          <select
-            id="rfiCountry"
-            name="country"
-            required
-          >
+          <select id="rfiCountry" name="country" required>
             <option value="">Select country</option>
             ${countryOptions}
           </select>
@@ -559,85 +559,45 @@ function createRFIForm(product) {
 
         <div class="rfi-form-group">
           <label for="rfiState">State *</label>
-          <input
-            id="rfiState"
-            name="state"
-            type="text"
-            maxlength="100"
-            required
-            placeholder="Enter your state"
-          >
+          <input id="rfiState" name="state" type="text"
+            maxlength="100" required placeholder="Enter your state">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiCity">City *</label>
-          <input
-            id="rfiCity"
-            name="city"
-            type="text"
-            maxlength="100"
-            required
-            placeholder="Enter your city"
-          >
+          <input id="rfiCity" name="city" type="text"
+            maxlength="100" required placeholder="Enter your city">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiPhone">Contact number *</label>
-          <input
-            id="rfiPhone"
-            name="phone"
-            type="tel"
-            maxlength="25"
-            autocomplete="tel"
-            required
-            placeholder="Enter your contact number"
-          >
+          <input id="rfiPhone" name="phone" type="tel"
+            maxlength="25" autocomplete="tel" required
+            placeholder="Enter your contact number">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiMessage">Message *</label>
-          <textarea
-            id="rfiMessage"
-            name="message"
-            maxlength="3000"
-            required
-            placeholder="Write your message"
-          ></textarea>
+          <textarea id="rfiMessage" name="message"
+            maxlength="3000" required
+            placeholder="Write your message"></textarea>
         </div>
 
         <div class="rfi-consent">
           <label>
-            <input
-              type="checkbox"
-              name="consent"
-              required
-            >
-
+            <input type="checkbox" name="consent" required>
             I consent to collect, store, and process my personal
             information as outlined in the
-
-            <a
-              href="https://cpplusworld.com/cp-w32#PrivacyPolicyModal"
-              target="_blank"
-              rel="noopener"
-            >Privacy Policy</a>.
+            <a href="https://cpplusworld.com/cp-w32#PrivacyPolicyModal"
+              target="_blank" rel="noopener">Privacy Policy</a>.
             By clicking on Submit you agree to this.
           </label>
         </div>
 
-        <button
-          type="submit"
-          id="rfiSubmitBtn"
-        >
-          Submit
-        </button>
+        <button type="submit" id="rfiSubmitBtn">Submit</button>
 
-        <p
-          id="rfiStatus"
-          class="rfi-status"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <p id="rfiStatus" class="rfi-status"
+          role="status" aria-live="polite"></p>
 
       </form>
     </section>
@@ -657,6 +617,9 @@ async function submitRFI(form) {
   const formData = new FormData(form);
 
   const enquiry = {
+    enquiryType: "Product Request for Information",
+    source: "Website Product RFI",
+
     name: String(formData.get("name") || "").trim(),
     email: String(formData.get("email") || "").trim(),
     company: String(formData.get("company") || "").trim(),
@@ -666,12 +629,12 @@ async function submitRFI(form) {
     phone: String(formData.get("phone") || "").trim(),
     message: String(formData.get("message") || "").trim(),
 
-    productName: String(
-      formData.get("productName") || ""
-    ).trim(),
+    productName: String(formData.get("productName") || "").trim(),
+    productModel: String(formData.get("productModel") || "").trim(),
 
-    productModel: String(
-      formData.get("productModel") || ""
+    customerId: String(formData.get("customerId") || "").trim(),
+    customerProductId: String(
+      formData.get("customerProductId") || ""
     ).trim(),
 
     consent: formData.get("consent") === "on",
@@ -680,28 +643,21 @@ async function submitRFI(form) {
   };
 
   if (!enquiry.consent) {
-    status.textContent =
-      "Please accept the Privacy Policy.";
-
+    status.textContent = "Please accept the Privacy Policy.";
     return;
   }
 
   submitButton.disabled = true;
   submitButton.textContent = "Submitting...";
-
   status.textContent = "";
 
   try {
-    await addDoc(
-      collection(db, "enquiries"),
-      enquiry
-    );
+    await addDoc(collection(db, "enquiries"), enquiry);
 
     status.textContent =
       "Thank you! Your enquiry has been submitted successfully.";
 
     status.style.color = "#087f3c";
-
     form.reset();
 
   } catch (error) {
@@ -733,13 +689,8 @@ function openProductDetails(index) {
   const model = getProductModel(product);
   const price = getProductPrice(product);
 
-  const description = String(
-    product.description || ""
-  ).trim();
-
-  const note = String(
-    product.note || product.notes || ""
-  ).trim();
+  const description = String(product.description || "").trim();
+  const note = String(product.note || product.notes || "").trim();
 
   const features = getProductFeatures(product);
   const specifications = getProductSpecifications(product);
@@ -748,44 +699,31 @@ function openProductDetails(index) {
     <div class="modal-product-layout">
 
       <div class="modal-product-image">
-        <img
-          src="${escapeHTML(image)}"
+        <img src="${escapeHTML(image)}"
           alt="${escapeHTML(name)}"
-          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'"
-        >
+          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'">
       </div>
 
       <div class="modal-product-info">
 
         <span>${escapeHTML(category)}</span>
-
         <h2>${escapeHTML(name)}</h2>
 
         ${model ? `
-          <p>
-            <strong>Model:</strong>
-            ${escapeHTML(model)}
-          </p>
+          <p><strong>Model:</strong> ${escapeHTML(model)}</p>
         ` : ""}
 
         ${price ? `
-          <p>
-            <strong>Price:</strong>
-            ${escapeHTML(price)}
-          </p>
+          <p><strong>Price:</strong> ${escapeHTML(price)}</p>
         ` : ""}
 
-        ${description ? `
-          <p>${escapeHTML(description)}</p>
-        ` : ""}
+        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
 
         ${features.length ? `
           <div class="product-features">
             <h3>Features</h3>
             <ul>
-              ${features.map(feature => `
-                <li>${escapeHTML(feature)}</li>
-              `).join("")}
+              ${features.map(feature => `<li>${escapeHTML(feature)}</li>`).join("")}
             </ul>
           </div>
         ` : ""}
@@ -793,7 +731,6 @@ function openProductDetails(index) {
         ${specifications.length ? `
           <div class="product-specifications">
             <h3>Specification</h3>
-
             <table>
               <tbody>
                 ${specifications.map(item => `
@@ -819,7 +756,6 @@ function openProductDetails(index) {
         </button>
 
       </div>
-
     </div>
 
     ${createRFIForm(product)}
@@ -827,8 +763,6 @@ function openProductDetails(index) {
 
   productModal.classList.add("active");
   productModal.style.display = "flex";
-
-  /* WhatsApp enquiry */
 
   document.getElementById("modalEnquireBtn")
     ?.addEventListener("click", () => {
@@ -838,8 +772,6 @@ function openProductDetails(index) {
         (model ? "\nModel: " + model : "")
       );
     });
-
-  /* Request for Information form */
 
   modalContent.querySelector("#rfiForm")
     ?.addEventListener("submit", event => {
@@ -858,15 +790,11 @@ function closeProductModal() {
 modalClose?.addEventListener("click", closeProductModal);
 
 productModal?.addEventListener("click", event => {
-  if (event.target === productModal) {
-    closeProductModal();
-  }
+  if (event.target === productModal) closeProductModal();
 });
 
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") {
-    closeProductModal();
-  }
+  if (event.key === "Escape") closeProductModal();
 });
 
 /* =========================================
@@ -891,15 +819,10 @@ function startHeroSlideshow() {
 
   allProducts.forEach(product => {
     const image = getProductImage(product);
-
-    if (image && !images.includes(image)) {
-      images.push(image);
-    }
+    if (image && !images.includes(image)) images.push(image);
   });
 
-  if (!images.includes(DEFAULT_IMAGE)) {
-    images.push(DEFAULT_IMAGE);
-  }
+  if (!images.includes(DEFAULT_IMAGE)) images.push(DEFAULT_IMAGE);
 
   const slides = images.slice(0, 6);
 
@@ -911,9 +834,7 @@ function startHeroSlideshow() {
     slide.className = "hero-slideshow-image";
     slide.loading = index === 0 ? "eager" : "lazy";
 
-    if (index === 0) {
-      slide.classList.add("active");
-    }
+    if (index === 0) slide.classList.add("active");
 
     slide.onerror = () => {
       slide.style.display = "none";
@@ -935,8 +856,7 @@ function startHeroSlideshow() {
   heroSlideTimer = setInterval(() => {
     slideElements[currentSlide].classList.remove("active");
 
-    currentSlide =
-      (currentSlide + 1) % slideElements.length;
+    currentSlide = (currentSlide + 1) % slideElements.length;
 
     slideElements[currentSlide].classList.add("active");
   }, 4000);
@@ -949,9 +869,7 @@ function startHeroSlideshow() {
 document.querySelectorAll("[data-category]").forEach(link => {
   link.addEventListener("click", event => {
     event.preventDefault();
-
-    const category = link.dataset.category || "";
-    selectProductCategory(category);
+    selectProductCategory(link.dataset.category || "");
   });
 });
 
@@ -964,9 +882,7 @@ document.addEventListener("click", event => {
   const enquireButton = event.target.closest("[data-enquire-index]");
 
   if (detailsButton) {
-    openProductDetails(
-      Number(detailsButton.dataset.productIndex)
-    );
+    openProductDetails(Number(detailsButton.dataset.productIndex));
   }
 
   if (enquireButton) {
@@ -991,12 +907,7 @@ document.addEventListener("click", event => {
 ========================================= */
 
 document.addEventListener("keydown", event => {
-  if (
-    event.key !== "Enter" &&
-    event.key !== " "
-  ) {
-    return;
-  }
+  if (event.key !== "Enter" && event.key !== " ") return;
 
   const imageBox = event.target.closest(
     ".product-image[data-product-index]"
@@ -1005,10 +916,7 @@ document.addEventListener("keydown", event => {
   if (!imageBox) return;
 
   event.preventDefault();
-
-  openProductDetails(
-    Number(imageBox.dataset.productIndex)
-  );
+  openProductDetails(Number(imageBox.dataset.productIndex));
 });
 
 /* =========================================
@@ -1042,6 +950,7 @@ categoryFilter?.addEventListener("change", filterProducts);
 
 /* =========================================
    FIRESTORE PRODUCTS
+   Old products + Customer Admin products
 ========================================= */
 
 async function loadProducts() {
@@ -1050,14 +959,30 @@ async function loadProducts() {
   }
 
   try {
-    const snapshot = await getDocs(collection(db, "products"));
+    const [oldProductsSnapshot, customerProductsSnapshot] =
+      await Promise.all([
+        getDocs(collection(db, "products")),
+        getDocs(collection(db, "customerProducts"))
+      ]);
 
-    allProducts = snapshot.docs
-      .map(document => ({
-        id: document.id,
-        ...document.data()
+    const oldProducts = oldProductsSnapshot.docs.map(item => ({
+      id: item.id,
+      ...item.data(),
+      productSource: "website"
+    }));
+
+    const customerProducts = customerProductsSnapshot.docs
+      .map(item => ({
+        id: item.id,
+        ...item.data(),
+        productSource: "customer"
       }))
       .filter(product => product.active !== false);
+
+    allProducts = [
+      ...oldProducts.filter(product => product.active !== false),
+      ...customerProducts
+    ];
 
     displayProducts();
     displayTrendingProducts();
@@ -1084,6 +1009,153 @@ const footerYear = document.getElementById("footerYear");
 if (footerYear) {
   footerYear.textContent = new Date().getFullYear();
 }
+
+/* =========================================
+   WEBSITE CONTACT ENQUIRY FORM
+   Saves customerId for customer products
+========================================= */
+
+function setupWebsiteInquiryForm() {
+  const form = document.getElementById("websiteInquiryForm");
+
+  if (!form) {
+    console.warn("Website enquiry form not found.");
+    return;
+  }
+
+  const submitButton = document.getElementById("websiteInquirySubmit");
+  const statusBox = document.getElementById("websiteInquiryStatus");
+
+  function showStatus(message, success = false) {
+    if (!statusBox) {
+      alert(message);
+      return;
+    }
+
+    statusBox.textContent = message;
+    statusBox.style.display = "block";
+    statusBox.style.color = success ? "#087f3c" : "#d93025";
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (!form.reportValidity()) return;
+
+    const name =
+      document.getElementById("websiteInquiryName")?.value.trim() || "";
+
+    const email =
+      document.getElementById("websiteInquiryEmail")?.value.trim() || "";
+
+    const mobile =
+      document.getElementById("websiteInquiryMobile")?.value.trim() || "";
+
+    const product =
+      document.getElementById("websiteInquiryProduct")?.value.trim() || "";
+
+    const country =
+      document.getElementById("contactCountry")?.value.trim() || "";
+
+    const state =
+      document.getElementById("contactState")?.value.trim() || "";
+
+    const city =
+      document.getElementById("contactCity")?.value.trim() || "";
+
+    const pincode =
+      document.getElementById("contactPincode")?.value.trim() || "";
+
+    const message =
+      document.getElementById("websiteInquiryMessage")?.value.trim() || "";
+
+    const privacyAccepted =
+      document.getElementById("contactPrivacy")?.checked || false;
+
+    if (!name || !mobile || !product || !message) {
+      showStatus("Please fill all required fields.");
+      return;
+    }
+
+    if (!privacyAccepted) {
+      showStatus("Please accept the privacy policy.");
+      return;
+    }
+
+    if (!/^[0-9+\-\s()]{7,20}$/.test(mobile)) {
+      showStatus("Please enter a valid mobile number.");
+      return;
+    }
+
+    const matchedProduct = findProductByName(product);
+
+    const enquiryData = {
+      enquiryType: "Website Contact Enquiry",
+
+      name,
+      email,
+      mobile,
+      product,
+
+      country,
+      state,
+      city,
+      pincode,
+      message,
+
+      privacyAccepted,
+
+      customerId: getCustomerId(matchedProduct),
+      customerProductId: getCustomerProductId(matchedProduct),
+
+      status: "New",
+      source: "Website Contact Popup",
+      createdAt: serverTimestamp()
+    };
+
+    try {
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+      }
+
+      showStatus("Submitting your enquiry...");
+
+      const docRef = await addDoc(
+        collection(db, "enquiries"),
+        enquiryData
+      );
+
+      console.log("Website enquiry saved:", docRef.id);
+
+      showStatus(
+        "Thank you! Your enquiry has been submitted successfully.",
+        true
+      );
+
+      form.reset();
+
+      document
+        .getElementById("contactCaptchaRefresh")
+        ?.click();
+
+    } catch (error) {
+      console.error("Website enquiry error:", error);
+
+      showStatus(
+        "Unable to submit your enquiry. Please try again."
+      );
+
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Enquiry";
+      }
+    }
+  });
+}
+
+setupWebsiteInquiryForm();
 
 /* =========================================
    START WEBSITE
