@@ -20,30 +20,11 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-// ========================================
-// PRODUCT CATEGORIES AND SPECIFICATIONS
-// ========================================
+/* =====================================
+   RB TECH SOLUTION - CUSTOMER ADMIN
+===================================== */
 
-const PRODUCT_CATEGORIES = [
-  "CCTV Cameras", "Wireless Cameras", "IP Cameras", "PTZ Cameras",
-  "DVR & NVR", "Video Door Phone", "Biometric Systems",
-  "Networking", "Storage", "Accessories"
-];
-
-const STANDARD_SPECIFICATIONS = [
-  "Angle of View", "Image sensor", "Lens", "Aperture",
-  "Compression", "Video Format", "Video resolution",
-  "Smart Features", "Record Type", "Parking Mode",
-  "Mobile App", "Connectivity", "Microphone", "Speaker",
-  "SD Card", "Photo Format", "Housing Type", "Power Source",
-  "Working temperature", "Storage temperature", "Size", "Certificates"
-];
-
-// ========================================
-// ELEMENTS
-// ========================================
-
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 const loginSection = $("loginSection");
 const dashboardSection = $("dashboardSection");
@@ -51,227 +32,58 @@ const loginForm = $("customerLoginForm");
 const loginMessage = $("loginMessage");
 const dashboardMessage = $("dashboardMessage");
 const logoutBtn = $("logoutBtn");
-
-const emailInput = $("email");
-const passwordInput = $("password");
-
-const customerName = $("customerName");
-const businessTitle = $("businessTitle");
-const subscriptionStatus = $("subscriptionStatus");
 const sectionContent = $("sectionContent");
 
+let currentUser = null;
 let currentCustomer = null;
+let currentProducts = [];
 let editingProductId = null;
 
-// ========================================
-// CUSTOMER PRODUCT IMAGE UPLOAD
-// ========================================
+$("year").textContent = new Date().getFullYear();
 
-let selectedProductImage = null;
-let uploadedProductImageUrl = "";
-
-const IMAGE_UPLOAD_API =
-  "https://rb-tech-solution-camera-pluse.vercel.app/api/upload-image";
-
-async function compressProductImage(file) {
-  if (!file || !file.type.startsWith("image/")) {
-    throw new Error("Please select a valid image.");
-  }
-
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    throw new Error("Please use JPG, PNG or WEBP image.");
-  }
-
-  const image = new Image();
-  const imageUrl = URL.createObjectURL(file);
-
-  try {
-    await new Promise((resolve, reject) => {
-      image.onload = resolve;
-      image.onerror = reject;
-      image.src = imageUrl;
-    });
-
-    const maxDimension = 1600;
-    const scale = Math.min(
-      1,
-      maxDimension / Math.max(image.width, image.height)
-    );
-
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(image.width * scale);
-    canvas.height = Math.round(image.height * scale);
-
-    const context = canvas.getContext("2d");
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-    let blob = await new Promise(resolve => {
-      canvas.toBlob(resolve, "image/webp", 0.82);
-    });
-
-    if (!blob) throw new Error("Unable to process image.");
-
-    if (blob.size > 2.5 * 1024 * 1024) {
-      blob = await new Promise(resolve => {
-        canvas.toBlob(resolve, "image/jpeg", 0.7);
-      });
-    }
-
-    if (!blob || blob.size > 2.5 * 1024 * 1024) {
-      throw new Error("Image is too large. Please select a smaller image.");
-    }
-
-    return blob;
-  } finally {
-    URL.revokeObjectURL(imageUrl);
-  }
+function showMessage(element, message, success = false) {
+  if (!element) return;
+  element.textContent = message || "";
+  element.className = success ? "message success" : "message";
 }
-
-async function uploadCustomerProductImage(file) {
-  if (!currentCustomer || !auth.currentUser) {
-    throw new Error("Please login again.");
-  }
-
-  checkSubscription(currentCustomer);
-
-  const compressedImage = await compressProductImage(file);
-
-  const imageBase64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Unable to read image."));
-    reader.readAsDataURL(compressedImage);
-  });
-
-  const idToken = await auth.currentUser.getIdToken();
-
-  const response = await fetch(IMAGE_UPLOAD_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${idToken}`
-    },
-    body: JSON.stringify({
-      customerId: currentCustomer.id,
-      fileName: file.name,
-      mimeType: compressedImage.type,
-      imageBase64
-    })
-  });
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success || !result.imageUrl) {
-    throw new Error(result.error || "Image upload failed.");
-  }
-
-  return result.imageUrl;
-}
-
-// ========================================
-// MESSAGES
-// ========================================
-
-function showLoginMessage(message, color = "#b91c1c") {
-  if (!loginMessage) return;
-  loginMessage.textContent = message;
-  loginMessage.style.color = color;
-}
-
-function showDashboardMessage(message, color = "#087f3c") {
-  if (!dashboardMessage) return;
-  dashboardMessage.textContent = message;
-  dashboardMessage.style.color = color;
-}
-
-// ========================================
-// SCREEN CONTROL
-// ========================================
-
-function showLogin() {
-  if (loginSection) loginSection.hidden = false;
-  if (dashboardSection) dashboardSection.hidden = true;
-  if (logoutBtn) logoutBtn.hidden = true;
-
-  currentCustomer = null;
-  editingProductId = null;
-}
-
-function showDashboard() {
-  if (loginSection) loginSection.hidden = true;
-  if (dashboardSection) dashboardSection.hidden = false;
-  if (logoutBtn) logoutBtn.hidden = false;
-}
-
-// ========================================
-// HELPERS
-// ========================================
 
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#039;"
-  })[character]);
+  })[char]);
 }
 
-function normalizeFeatures(value) {
-  if (Array.isArray(value)) return value;
-
-  if (typeof value === "string") {
-    return value.split("\n").map(item => item.trim()).filter(Boolean);
-  }
-
-  return [];
+function showLogin() {
+  loginSection.classList.remove("hidden");
+  dashboardSection.classList.add("hidden");
+  logoutBtn.classList.add("hidden");
 }
 
-function normalizeSpecifications(value) {
-  if (Array.isArray(value)) {
-    const result = {};
-    value.forEach(item => {
-      const key = item.name || item.key || "";
-      if (key) result[key] = item.value || "";
-    });
-    return result;
-  }
-
-  if (value && typeof value === "object") return value;
-
-  if (typeof value === "string" && value.trim()) {
-    const result = {};
-    value.split("\n").forEach(line => {
-      const index = line.indexOf(":");
-      if (index > -1) {
-        result[line.slice(0, index).trim()] =
-          line.slice(index + 1).trim();
-      }
-    });
-    return result;
-  }
-
-  return {};
+function showDashboard() {
+  loginSection.classList.add("hidden");
+  dashboardSection.classList.remove("hidden");
+  logoutBtn.classList.remove("hidden");
 }
 
-// ========================================
-// CUSTOMER VERIFICATION
-// ========================================
+/* =====================================
+   CUSTOMER LOOKUP
+===================================== */
 
 async function getCustomerByUid(uid) {
-  const customersRef = collection(db, "customers");
-  const customerQuery = query(
-    customersRef,
+  const customersQuery = query(
+    collection(db, "customers"),
     where("uid", "==", uid),
     limit(1)
   );
 
-  const snapshot = await getDocs(customerQuery);
+  const snapshot = await getDocs(customersQuery);
 
   if (snapshot.empty) {
-    throw new Error(
-      "Customer record not found. Please contact RB Tech Solution."
-    );
+    throw new Error("Customer account nahi mila. Admin se contact kijiye.");
   }
 
   const customerDoc = snapshot.docs[0];
@@ -283,757 +95,567 @@ async function getCustomerByUid(uid) {
 }
 
 function checkSubscription(customer) {
-  if (customer.status !== "active") {
-    throw new Error("Your Customer Account is inactive.");
+  if (String(customer.status || "").toLowerCase() !== "active") {
+    return {
+      active: false,
+      message: "Inactive"
+    };
   }
 
-  if (
-    !customer.subscriptionExpiry ||
-    typeof customer.subscriptionExpiry.toDate !== "function"
-  ) {
-    throw new Error("Subscription expiry date is not set correctly.");
+  const expiry = customer.subscriptionExpiry;
+
+  if (!expiry) {
+    return {
+      active: false,
+      message: "Expiry date missing"
+    };
   }
 
-  const expiryDate = customer.subscriptionExpiry.toDate();
+  const expiryDate = typeof expiry.toDate === "function"
+    ? expiry.toDate()
+    : new Date(expiry);
 
-  if (Date.now() >= expiryDate.getTime()) {
-    throw new Error(
-      "Your subscription has expired. Please contact RB Tech Solution for renewal."
-    );
+  if (Number.isNaN(expiryDate.getTime())) {
+    return {
+      active: false,
+      message: "Invalid expiry date"
+    };
   }
 
-  return true;
+  if (expiryDate.getTime() < Date.now()) {
+    return {
+      active: false,
+      message: "Expired"
+    };
+  }
+
+  return {
+    active: true,
+    message: "Active"
+  };
 }
+
+/* =====================================
+   LOAD CUSTOMER
+===================================== */
 
 async function loadCustomer(user) {
-  const customer = await getCustomerByUid(user.uid);
+  currentUser = user;
+  showMessage(dashboardMessage, "Customer account checking...");
 
-  if (customer.uid !== user.uid) {
-    throw new Error("Customer account verification failed.");
+  try {
+    currentCustomer = await getCustomerByUid(user.uid);
+
+    const subscription = checkSubscription(currentCustomer);
+
+    if (!subscription.active) {
+      await signOut(auth);
+      throw new Error(
+        `Aapka subscription ${subscription.message} hai. Admin se contact kijiye.`
+      );
+    }
+
+    $("customerName").textContent =
+      currentCustomer.businessName ||
+      currentCustomer.name ||
+      user.email ||
+      "Customer";
+
+    $("businessTitle").textContent =
+      currentCustomer.businessName || "Customer Admin Panel";
+
+    $("subscriptionStatus").textContent = subscription.message;
+
+    showDashboard();
+    showMessage(dashboardMessage, "");
+    await loadProducts();
+    showSection("overview");
+
+  } catch (error) {
+    currentCustomer = null;
+    currentUser = null;
+    showLogin();
+    showMessage(loginMessage, error.message || "Customer load nahi hua.");
   }
-
-  checkSubscription(customer);
-  currentCustomer = customer;
-
-  if (customerName) {
-    customerName.textContent = customer.businessName || "Customer";
-  }
-
-  if (businessTitle) {
-    businessTitle.textContent =
-      customer.businessName || "Customer Admin Panel";
-  }
-
-  if (subscriptionStatus) {
-    subscriptionStatus.textContent = "Active";
-  }
-
-  showDashboard();
-  showDashboardMessage("Customer account verified successfully.");
-
-  await showSection("overview");
 }
 
-// ========================================
-// CUSTOMER PRODUCT COLLECTION
-// ========================================
-
-function getProductsCollection() {
-  return collection(db, "customerProducts");
-}
+/* =====================================
+   PRODUCTS
+===================================== */
 
 async function loadProducts() {
-  if (!currentCustomer) return [];
-
-  checkSubscription(currentCustomer);
+  if (!currentCustomer) return;
 
   const productsQuery = query(
-    getProductsCollection(),
+    collection(db, "customerProducts"),
     where("customerId", "==", currentCustomer.id)
   );
 
   const snapshot = await getDocs(productsQuery);
 
-  return snapshot.docs.map(item => ({
+  currentProducts = snapshot.docs.map((item) => ({
     id: item.id,
     ...item.data()
   }));
-}
-      </div>
-    </form>
-  `;
 
-  // The remaining form setup, save/edit/delete logic and dashboard
-  // functions continue in Part 3 and Part 4.
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .customer-product-form .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .customer-product-form label {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .customer-product-form input,
-    .customer-product-form select,
-    .customer-product-form textarea {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 11px;
-      border: 1px solid #cbd5e1;
-      border-radius: 7px;
-      font: inherit;
-      background: #fff;
-      color: #0f172a;
-    }
-
-    .customer-product-form textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    .customer-product-form .full-width {
-      grid-column: 1 / -1;
-    }
-
-    .customer-product-form .form-subheading {
-      grid-column: 1 / -1;
-      margin: 14px 0 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .customer-product-form .dynamic-row {
-      display: flex;
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .customer-product-form .dynamic-row input,
-    .customer-product-form .spec-row input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .customer-product-form .spec-row {
-      display: flex;
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .customer-product-form .remove-row {
-      background: #dc2626;
-      color: #fff;
-      border: 0;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    .customer-product-form .add-row {
-      background: #e0f2fe;
-      color: #075985;
-      border: 0;
-      border-radius: 6px;
-      padding: 9px 12px;
-      cursor: pointer;
-      margin-top: 6px;
-    }
-
-    .customer-product-form .check-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 7px 0;
-    }
-
-    .customer-product-form .check-row input {
-      width: auto;
-    }
-
-    .customer-product-form .form-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .customer-product-form button {
-      cursor: pointer;
-    }
-
-    .customer-product-form .save-button {
-      background: #087f3c;
-      color: white;
-      border: 0;
-      padding: 12px 20px;
-      border-radius: 7px;
-    }
-
-    .customer-product-form .cancel-button {
-      background: #64748b;
-      color: white;
-      border: 0;
-      padding: 12px 20px;
-      border-radius: 7px;
-    }
-
-    .customer-product-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 12px 0;
-      background: white;
-    }
-
-    .customer-product-card img {
-      width: 140px;
-      height: 110px;
-      object-fit: contain;
-      display: block;
-      margin-bottom: 10px;
-    }
-
-    .customer-product-card .product-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .customer-product-card button {
-      border: 0;
-      border-radius: 6px;
-      padding: 9px 14px;
-      color: white;
-      background: #2563eb;
-    }
-
-    .customer-product-card button.delete-button {
-      background: #dc2626;
-    }
-
-    @media (max-width: 650px) {
-      .customer-product-form {
-        grid-template-columns: 1fr;
-      }
-
-      .customer-product-form .full-width,
-      .customer-product-form .form-subheading,
-      .customer-product-form .form-actions {
-        grid-column: 1;
-      }
-
-      .customer-product-form .spec-row,
-      .customer-product-form .dynamic-row {
-        flex-wrap: wrap;
-      }
-    }
-  `;
-
-  document.head.appendChild(style);
+  $("productCount").textContent = currentProducts.length;
 }
 
-// ========================================
-// BUILD STANDARD SPECIFICATION FIELDS
-// ========================================
+function productFormHTML(product = {}) {
+  const categories = [
+    "CCTV Cameras",
+    "IP Cameras",
+    "DVR",
+    "NVR",
+    "Video Door Phones",
+    "Accessories",
+    "Other"
+  ];
 
-function buildStandardSpecifications(values = {}) {
-  const container = $("standardSpecifications");
-  if (!container) return;
+  const categoryOptions = categories.map((category) => `
+    <option value="${escapeHTML(category)}"
+      ${product.category === category ? "selected" : ""}>
+      ${escapeHTML(category)}
+    </option>
+  `).join("");
 
-  container.innerHTML = "";
+  const features = Array.isArray(product.features)
+    ? product.features.join("\n")
+    : "";
 
-  STANDARD_SPECIFICATIONS.forEach((specName, index) => {
-    const group = document.createElement("div");
-    group.className = "form-group";
+  const specifications = product.specifications &&
+    typeof product.specifications === "object"
+      ? Object.entries(product.specifications)
+      : [];
 
-    const label = document.createElement("label");
-    label.htmlFor = `standardSpec${index}`;
-    label.textContent = specName;
+  return `
+    <h2>${product.id ? "Edit Product" : "Add New Product"}</h2>
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.id = `standardSpec${index}`;
-    input.className = "standard-spec-input";
-    input.dataset.specName = specName;
-    input.placeholder = `Enter ${specName}`;
-    input.value = values[specName] ?? "";
-
-    group.append(label, input);
-    container.appendChild(group);
-  });
-}
-
-// ========================================
-// FEATURE INPUTS
-// ========================================
-
-function addFeatureRow(value = "") {
-  const container = $("featuresFields");
-  if (!container) return;
-
-  const row = document.createElement("div");
-  row.className = "dynamic-row";
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "feature-input";
-  input.placeholder = "Enter product feature";
-  input.value = value;
-
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "remove-row";
-  removeBtn.textContent = "Remove";
-
-  removeBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to remove this feature?")) {
-      row.remove();
-    }
-  });
-
-  row.append(input, removeBtn);
-  container.appendChild(row);
-}
-
-function getProductFeatures() {
-  return [...document.querySelectorAll(".feature-input")]
-    .map(input => input.value.trim())
-    .filter(Boolean);
-}
-
-// ========================================
-// CUSTOM SPECIFICATION INPUTS
-// ========================================
-
-function addCustomSpecificationRow(key = "", value = "") {
-  const container = $("customSpecifications");
-  if (!container) return;
-
-  const row = document.createElement("div");
-  row.className = "spec-row";
-
-  const nameInput = document.createElement("input");
-  nameInput.type = "text";
-  nameInput.className = "custom-spec-key";
-  nameInput.placeholder = "Specification Name";
-  nameInput.value = key;
-
-  const valueInput = document.createElement("input");
-  valueInput.type = "text";
-  valueInput.className = "custom-spec-value";
-  valueInput.placeholder = "Specification Value";
-  valueInput.value = value;
-
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "remove-row";
-  removeBtn.textContent = "Remove";
-
-  removeBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to remove this specification?")) {
-      row.remove();
-    }
-  });
-
-  row.append(nameInput, valueInput, removeBtn);
-  container.appendChild(row);
-}
-
-function getProductSpecifications() {
-  const specifications = {};
-
-  document.querySelectorAll(".standard-spec-input").forEach(input => {
-    specifications[input.dataset.specName] = input.value.trim();
-  });
-
-  document.querySelectorAll(".spec-row").forEach(row => {
-    const key = row.querySelector(".custom-spec-key").value.trim();
-    const value = row.querySelector(".custom-spec-value").value.trim();
-
-    if (key) specifications[key] = value;
-  });
-
-  return specifications;
-}
-
-// ========================================
-// FILL FORM FIELDS FOR EDITING
-// ========================================
-
-function setProductDetailsFields(features = [], specifications = {}) {
-  const featuresContainer = $("featuresFields");
-  const customContainer = $("customSpecifications");
-
-  if (!featuresContainer || !customContainer) return;
-
-  const featureList = normalizeFeatures(features);
-  const specValues = normalizeSpecifications(specifications);
-
-  featuresContainer.innerHTML = "";
-  customContainer.innerHTML = "";
-
-  if (featureList.length) {
-    featureList.forEach(feature => addFeatureRow(feature));
-  } else {
-    addFeatureRow();
-  }
-
-  buildStandardSpecifications(specValues);
-
-  const standardNames = new Set(STANDARD_SPECIFICATIONS);
-
-  const customEntries = Object.entries(specValues)
-    .filter(([key]) => !standardNames.has(key));
-
-  if (customEntries.length) {
-    customEntries.forEach(([key, value]) => {
-      addCustomSpecificationRow(key, value);
-    });
-  } else {
-    addCustomSpecificationRow();
-  }
-}
-// ========================================
-// RENDER PRODUCT FORM
-// ========================================
-
-function renderProductForm(product = null) {
-  if (!currentCustomer) return;
-
-  checkSubscription(currentCustomer);
-  addProductFormStyles();
-
-  editingProductId = product ? product.id : null;
-
-  const selectedCategory = product?.category || "";
-
-  sectionContent.innerHTML = `
-    <h2>${product ? "Edit Product" : "Add New Product"}</h2>
-
-    <form id="customerProductForm" class="customer-product-form">
-
-      <div class="form-group">
-        <label for="productName">Product Name *</label>
-        <input type="text" id="productName" required maxlength="100"
-          value="${escapeHTML(product?.name || "")}"
-          placeholder="Enter product name">
-      </div>
-
-      <div class="form-group">
-        <label for="productCategory">Category *</label>
-        <select id="productCategory" required>
-          <option value="">Select Category</option>
-          ${PRODUCT_CATEGORIES.map(category => `
-            <option value="${escapeHTML(category)}"
-              ${selectedCategory === category ? "selected" : ""}>
-              ${escapeHTML(category)}
-            </option>
-          `).join("")}
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="productModel">Model Number</label>
-        <input type="text" id="productModel"
-          value="${escapeHTML(product?.model || "")}"
-          placeholder="Enter model number">
-      </div>
-
-      <div class="form-group">
-        <label for="productPrice">Price (₹)</label>
-        <input type="number" id="productPrice" min="0" step="0.01"
-          value="${escapeHTML(product?.price ?? "")}"
-          placeholder="Enter price">
-      </div>
-
-      <div class="form-group full-width">
-        <label for="productDescription">Product Description</label>
-        <textarea id="productDescription" maxlength="5000"
-          placeholder="Enter product description">${escapeHTML(product?.description || "")}</textarea>
-      </div>
-
-      <div class="form-group full-width">
-        <label for="productImageFile">Product Image</label>
-        <input type="file" id="productImageFile"
-          accept="image/jpeg,image/png,image/webp">
-        <small>JPG, PNG या WEBP फोटो चुनें। अधिकतम आकार 2.5 MB है।</small>
-        <div id="productImagePreview" style="margin-top:12px;">
-          ${
-            product?.imageUrl || product?.image
-              ? `<img src="${escapeHTML(product.imageUrl || product.image)}"
-                  alt="Product Preview"
-                  style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;">`
-              : "<p>No image selected.</p>"
-          }
+    <form id="productForm">
+      <div class="grid">
+        <div>
+          <label>Product Name *</label>
+          <input id="productName" required
+            value="${escapeHTML(product.name || "")}"
+            placeholder="Example: CP Plus 3MP Camera">
         </div>
-        <p id="imageUploadMessage"></p>
+
+        <div>
+          <label>Category *</label>
+          <select id="productCategory" required>
+            <option value="">Select Category</option>
+            ${categoryOptions}
+          </select>
+        </div>
+
+        <div>
+          <label>Model Number</label>
+          <input id="productModel"
+            value="${escapeHTML(product.model || "")}"
+            placeholder="Enter model number">
+        </div>
+
+        <div>
+          <label>Price (₹)</label>
+          <input id="productPrice" type="number" min="0" step="0.01"
+            value="${escapeHTML(product.price ?? "")}"
+            placeholder="Enter price">
+        </div>
+
+        <div class="full">
+          <label>Product Image URL</label>
+          <input id="productImage"
+            value="${escapeHTML(product.imageUrl || "")}"
+            placeholder="Paste GitHub-hosted image URL">
+        </div>
+
+        <div class="full">
+          <label>Description</label>
+          <textarea id="productDescription"
+            placeholder="Product description">${escapeHTML(product.description || "")}</textarea>
+        </div>
+
+        <div class="full">
+          <label>Features (one feature per line)</label>
+          <textarea id="productFeatures"
+            placeholder="Full HD recording&#10;Night vision&#10;Motion detection">${escapeHTML(features)}</textarea>
+        </div>
+
+        <div class="full">
+          <label>Specifications (one per line: Name: Value)</label>
+          <textarea id="productSpecifications"
+            placeholder="Resolution: 3MP&#10;Night Vision: Yes&#10;Warranty: 1 Year">${escapeHTML(
+              specifications.map(([key, value]) => `${key}: ${value}`).join("\n")
+            )}</textarea>
+        </div>
       </div>
 
-      <h3 class="form-subheading">Product Features</h3>
-      <div class="form-group full-width">
-        <div id="featuresFields"></div>
-        <button type="button" id="addFeatureBtn" class="add-row">
-          + Add Feature
-        </button>
+      <div class="checkbox-row">
+        <label><input type="checkbox" id="productNew"
+          ${product.isNew ? "checked" : ""}> New Product</label>
+
+        <label><input type="checkbox" id="productTrending"
+          ${product.trending ? "checked" : ""}> Trending</label>
+
+        <label><input type="checkbox" id="productActive"
+          ${product.active !== false ? "checked" : ""}> Active</label>
       </div>
 
-      <h3 class="form-subheading">Product Specifications</h3>
-      <div id="standardSpecifications" class="full-width"
-        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px"></div>
+      <button class="primary" type="submit">
+        ${product.id ? "Update Product" : "Save Product"}
+      </button>
 
-      <h3 class="form-subheading">Additional Specifications</h3>
-      <div class="form-group full-width">
-        <div id="customSpecifications"></div>
-        <button type="button" id="addSpecificationBtn" class="add-row">
-          + Add Specification
-        </button>
-      </div>
-
-      <div class="form-group full-width">
-        <label for="productNote">Additional Note</label>
-        <textarea id="productNote" maxlength="3000"
-          placeholder="Enter additional note">${escapeHTML(product?.note || product?.notes || "")}</textarea>
-      </div>
-
-      <div class="form-group full-width">
-        <label class="check-row">
-          <input type="checkbox" id="productIsNew"
-            ${product?.isNew === true ? "checked" : ""}>
-          Show NEW Badge
-        </label>
-
-        <label class="check-row">
-          <input type="checkbox" id="productTrending"
-            ${
-              product?.trending === true ||
-              product?.isTrending === true ||
-              product?.featured === true ? "checked" : ""
-            }>
-          Show in Trending Products
-        </label>
-
-        <label class="check-row">
-          <input type="checkbox" id="productActive"
-            ${product?.active !== false ? "checked" : ""}>
-          Active Product
-        </label>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" id="saveProductBtn" class="save-button">
-          ${product ? "Update Product" : "Save Product"}
-        </button>
-        <button type="button" id="clearProductBtn" class="cancel-button">
-          Clear Form
-        </button>
-        <button type="button" id="cancelProductBtn" class="cancel-button">
-          Back to Products
-        </button>
-      </div>
-
-      <p id="customerProductMessage" class="full-width"></p>
+      <button class="secondary" type="button" id="cancelProduct">
+        Cancel
+      </button>
     </form>
   `;
-
-  setProductDetailsFields(
-    product?.features || [],
-    product?.specifications || {}
-  );
-
-  selectedProductImage = null;
-  uploadedProductImageUrl = product?.imageUrl || product?.image || "";
-
-  const imageInput = $("productImageFile");
-
-  if (imageInput) {
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files?.[0];
-      if (!file) return;
-
-      selectedProductImage = file;
-
-      const preview = $("productImagePreview");
-
-      if (preview) {
-        const previewUrl = URL.createObjectURL(file);
-        preview.innerHTML = `
-          <img src="${previewUrl}" alt="Selected Product"
-            style="max-width:220px;max-height:180px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px;">
-        `;
-      }
-    });
-  }
-
-  $("addFeatureBtn").addEventListener("click", () => addFeatureRow());
-  $("addSpecificationBtn").addEventListener("click", () => addCustomSpecificationRow());
-  $("clearProductBtn").addEventListener("click", () => renderProductForm());
-  $("cancelProductBtn").addEventListener("click", () => showSection("products"));
-
-  $("customerProductForm").addEventListener("submit", saveProduct);
 }
 
-// ========================================
-// SAVE OR UPDATE PRODUCT
-// ========================================
+function parseSpecifications(value) {
+  const result = {};
+
+  value.split("\n").forEach((line) => {
+    const separator = line.indexOf(":");
+
+    if (separator < 1) return;
+
+    const key = line.slice(0, separator).trim();
+    const val = line.slice(separator + 1).trim();
+
+    if (key && val) result[key] = val;
+  });
+
+  return result;
+}
 
 async function saveProduct(event) {
   event.preventDefault();
 
-  if (!currentCustomer) return;
+  if (!currentCustomer || !currentUser) {
+    showMessage(dashboardMessage, "Customer login required.");
+    return;
+  }
 
-  const message = $("customerProductMessage");
-  const saveButton = $("saveProductBtn");
+  const name = $("productName").value.trim();
+  const category = $("productCategory").value;
+  const priceValue = $("productPrice").value.trim();
+
+  if (!name || !category) {
+    showMessage(dashboardMessage, "Product name aur category required hain.");
+    return;
+  }
+
+  const price = priceValue === "" ? null : Number(priceValue);
+
+  if (price !== null && (!Number.isFinite(price) || price < 0)) {
+    showMessage(dashboardMessage, "Please valid price enter kijiye.");
+    return;
+  }
+
+  const features = $("productFeatures").value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const productData = {
+    customerId: currentCustomer.id,
+    customerUid: currentUser.uid,
+    name,
+    category,
+    model: $("productModel").value.trim(),
+    price,
+    imageUrl: $("productImage").value.trim(),
+    description: $("productDescription").value.trim(),
+    features,
+    specifications: parseSpecifications(
+      $("productSpecifications").value
+    ),
+    isNew: $("productNew").checked,
+    trending: $("productTrending").checked,
+    active: $("productActive").checked,
+    updatedAt: serverTimestamp()
+  };
 
   try {
-    checkSubscription(currentCustomer);
-
-    const name = $("productName").value.trim();
-    const category = $("productCategory").value.trim();
-    const priceText = $("productPrice").value.trim();
-    const price = priceText === "" ? "" : Number(priceText);
-    const description = $("productDescription").value.trim();
-
-    let imageUrl = uploadedProductImageUrl;
-
-    if (selectedProductImage) {
-      message.textContent = "Uploading product image...";
-      message.style.color = "#087f3c";
-
-      saveButton.disabled = true;
-      saveButton.textContent = "Uploading Image...";
-
-      imageUrl = await uploadCustomerProductImage(selectedProductImage);
-      uploadedProductImageUrl = imageUrl;
-    }
-
-    const note = $("productNote").value.trim();
-
-    if (!name || !category) {
-      throw new Error("Product Name and Category are required.");
-    }
-
-    if (
-      priceText !== "" &&
-      (!Number.isFinite(price) || price < 0)
-    ) {
-      throw new Error("Please enter a valid product price.");
-    }
-
-    if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) {
-      throw new Error("Please enter a valid HTTP or HTTPS image URL.");
-    }
-
-    const trending = $("productTrending").checked;
-
-    const productData = {
-      customerId: currentCustomer.id,
-      name,
-      category,
-      model: $("productModel").value.trim(),
-      price,
-      description,
-      features: getProductFeatures(),
-      specifications: getProductSpecifications(),
-      note,
-      isNew: $("productIsNew").checked,
-      trending,
-      isTrending: trending,
-      featured: trending,
-      active: $("productActive").checked,
-      imageUrl: imageUrl || "",
-      image: imageUrl || "",
-      updatedAt: serverTimestamp()
-    };
-
-    saveButton.disabled = true;
-    saveButton.textContent = "Saving...";
+    showMessage(dashboardMessage, "Saving product...");
 
     if (editingProductId) {
-      const productRef = doc(db, "customerProducts", editingProductId);
-      const existingProduct = await getDoc(productRef);
+      const existing = currentProducts.find(
+        (item) => item.id === editingProductId
+      );
 
-      if (
-        !existingProduct.exists() ||
-        existingProduct.data().customerId !== currentCustomer.id
-      ) {
-        throw new Error("You cannot edit this product.");
+      if (!existing || existing.customerId !== currentCustomer.id) {
+        throw new Error("Aap is product ko edit nahi kar sakte.");
       }
 
-      await updateDoc(productRef, productData);
-      showDashboardMessage("Product updated successfully.");
-
+      await updateDoc(
+        doc(db, "customerProducts", editingProductId),
+        productData
+      );
     } else {
       productData.createdAt = serverTimestamp();
 
-      await addDoc(getProductsCollection(), productData);
-      showDashboardMessage("Product added successfully.");
+      await addDoc(
+        collection(db, "customerProducts"),
+        productData
+      );
     }
 
     editingProductId = null;
-    selectedProductImage = null;
-    uploadedProductImageUrl = "";
 
-    await showSection("products");
+    await loadProducts();
+    showMessage(dashboardMessage, "Product successfully saved.", true);
+    showProducts();
 
   } catch (error) {
-    console.error("Save product error:", error);
-
-    if (message) {
-      message.textContent = error.message || "Unable to save product.";
-      message.style.color = "#dc2626";
-    }
-
-    if (saveButton) {
-      saveButton.disabled = false;
-      saveButton.textContent = editingProductId
-        ? "Update Product"
-        : "Save Product";
-    }
+    showMessage(
+      dashboardMessage,
+      error.message || "Product save nahi hua."
+    );
   }
 }
 
-// ========================================
-// DELETE PRODUCT
-// ========================================
-
-async function removeProduct(productId) {
+async function deleteProduct(productId) {
   if (!currentCustomer) return;
 
-  if (!confirm("Are you sure you want to permanently delete this product?")) {
+  const product = currentProducts.find(
+    (item) => item.id === productId
+  );
+
+  if (!product || product.customerId !== currentCustomer.id) {
+    showMessage(dashboardMessage, "Aap is product ko delete nahi kar sakte.");
+    return;
+  }
+
+  if (!confirm("Kya aap ye product delete karna chahte hain?")) {
     return;
   }
 
   try {
-    checkSubscription(currentCustomer);
+    await deleteDoc(doc(db, "customerProducts", productId));
 
-    const productRef = doc(db, "customerProducts", productId);
-    const productSnapshot = await getDoc(productRef);
-
-    if (
-      !productSnapshot.exists() ||
-      productSnapshot.data().customerId !== currentCustomer.id
-    ) {
-      throw new Error("You cannot delete this product.");
-    }
-
-    await deleteDoc(productRef);
-
-    showDashboardMessage("Product deleted successfully.");
-    await showSection("products");
+    await loadProducts();
+    showMessage(dashboardMessage, "Product deleted successfully.", true);
+    showProducts();
 
   } catch (error) {
-    console.error("Delete product error:", error);
-    alert(error.message || "Unable to delete product.");
+    showMessage(dashboardMessage, error.message || "Delete failed.");
   }
 }
+
+function showProducts() {
+  const productCards = currentProducts.map((product) => `
+    <article class="product">
+      ${product.imageUrl
+        ? `<img src="${escapeHTML(product.imageUrl)}"
+             alt="${escapeHTML(product.name)}"
+             onerror="this.style.display='none'">`
+        : ""
+      }
+
+      <h3>${escapeHTML(product.name)}</h3>
+      <p><b>Category:</b> ${escapeHTML(product.category)}</p>
+      <p><b>Model:</b> ${escapeHTML(product.model || "-")}</p>
+      <p><b>Price:</b> ${
+        product.price === null || product.price === undefined
+          ? "Not set"
+          : "₹" + escapeHTML(product.price)
+      }</p>
+      <p><b>Status:</b> ${product.active === false ? "Inactive" : "Active"}</p>
+
+      <button class="primary" data-edit="${escapeHTML(product.id)}">
+        Edit
+      </button>
+
+      <button class="danger" data-delete="${escapeHTML(product.id)}">
+        Delete
+      </button>
+    </article>
+  `).join("");
+
+  sectionContent.innerHTML = `
+    <h2>My Products</h2>
+    <p class="muted">Add and manage your business products.</p>
+
+    <div>
+      <button class="primary" id="addProductBtn">+ Add Product</button>
+    </div>
+
+    <div id="productFormArea"></div>
+
+    <div class="product-list">
+      ${productCards || "<p>No products added yet.</p>"}
+    </div>
+  `;
+
+  $("addProductBtn").addEventListener("click", () => {
+    editingProductId = null;
+    $("productFormArea").innerHTML = productFormHTML();
+    attachProductFormEvents();
+  });
+
+  sectionContent.querySelectorAll("[data-edit]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const product = currentProducts.find(
+        (item) => item.id === button.dataset.edit
+      );
+
+      if (!product) return;
+
+      editingProductId = product.id;
+      $("productFormArea").innerHTML = productFormHTML(product);
+      attachProductFormEvents();
+
+      $("productFormArea").scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  sectionContent.querySelectorAll("[data-delete]").forEach((button) => {
+    button.addEventListener("click", () => {
+      deleteProduct(button.dataset.delete);
+    });
+  });
+}
+
+function attachProductFormEvents() {
+  $("productForm").addEventListener("submit", saveProduct);
+
+  $("cancelProduct").addEventListener("click", () => {
+    editingProductId = null;
+    $("productFormArea").innerHTML = "";
+  });
+}
+
+/* =====================================
+   DASHBOARD SECTIONS
+===================================== */
+
+async function showSection(section) {
+  document.querySelectorAll("[data-section]").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.section === section
+    );
+  });
+
+  if (section === "overview") {
+    sectionContent.innerHTML = `
+      <h2>Overview</h2>
+      <p>Welcome to your RB Tech Solution Customer Admin Panel.</p>
+      <p>Total products: <b>${currentProducts.length}</b></p>
+      <p>Subscription: <b>${escapeHTML($("subscriptionStatus").textContent)}</b></p>
+    `;
+    return;
+  }
+
+  if (section === "products") {
+    try {
+      await loadProducts();
+      showProducts();
+    } catch (error) {
+      showMessage(dashboardMessage, error.message || "Products load nahi hue.");
+    }
+    return;
+  }
+
+  if (section === "enquiries") {
+    sectionContent.innerHTML = `
+      <h2>Customer Enquiries</h2>
+      <p>Enquiries section abhi aapke Firestore enquiry collection ke structure se connect nahi hai.</p>
+    `;
+    return;
+  }
+
+  if (section === "subscription") {
+    const expiry = currentCustomer?.subscriptionExpiry;
+    let expiryText = "Not available";
+
+    if (expiry) {
+      const date = typeof expiry.toDate === "function"
+        ? expiry.toDate()
+        : new Date(expiry);
+
+      expiryText = Number.isNaN(date.getTime())
+        ? "Invalid date"
+        : date.toLocaleDateString("en-IN");
+    }
+
+    sectionContent.innerHTML = `
+      <h2>Subscription Details</h2>
+      <p><b>Status:</b> ${escapeHTML($("subscriptionStatus").textContent)}</p>
+      <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
+      <p class="muted">Subscription renewal ke liye RB Tech Solution Admin se contact kijiye.</p>
+    `;
+  }
+}
+
+/* =====================================
+   LOGIN / LOGOUT
+===================================== */
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  showMessage(loginMessage, "Logging in...");
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    showMessage(loginMessage, "");
+  } catch (error) {
+    showMessage(loginMessage, error.message || "Login failed.");
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    currentCustomer = null;
+    currentProducts = [];
+    currentUser = null;
+    showLogin();
+    showMessage(loginMessage, "You have logged out.", true);
+  } catch (error) {
+    showMessage(dashboardMessage, error.message || "Logout failed.");
+  }
+});
+
+document.querySelectorAll("[data-section]").forEach((button) => {
+  button.addEventListener("click", () => {
+    showSection(button.dataset.section);
+  });
+});
+
+/* =====================================
+   AUTH INITIALIZATION
+===================================== */
+
+async function initializeCustomerAdmin() {
+  try {
+    await authReady;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        currentUser = null;
+        currentCustomer = null;
+        currentProducts = [];
+        showLogin();
+        return;
+      }
+
+      await loadCustomer(user);
+    });
+
+  } catch (error) {
+    showLogin();
+    showMessage(
+      loginMessage,
+      error.message || "Firebase initialization failed."
+    );
+  }
+}
+
+initializeCustomerAdmin();
