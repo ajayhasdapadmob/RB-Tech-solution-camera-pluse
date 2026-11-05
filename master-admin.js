@@ -3,9 +3,9 @@ import { auth, db, authReady } from "./firebase.js";
 
 import {
   onAuthStateChanged,
-  signOut
+  signOut,
+  signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
 import {
   doc,
   getDoc,
@@ -39,7 +39,13 @@ const customerForm = document.getElementById("customerForm");
 const messageBox = document.getElementById("message");
 const customerTableBody = document.getElementById("customerTableBody");
 const createCustomerBtn = document.getElementById("createCustomerBtn");
-
+const loginSection = document.getElementById("loginSection");
+const dashboardSection = document.getElementById("dashboardSection");
+const masterLoginForm = document.getElementById("masterLoginForm");
+const masterEmail = document.getElementById("masterEmail");
+const masterPassword = document.getElementById("masterPassword");
+const masterLoginBtn = document.getElementById("masterLoginBtn");
+const loginMessage = document.getElementById("loginMessage");
 // ========================================
 // HELPERS
 // ========================================
@@ -934,7 +940,41 @@ async function createCustomer(event) {
     }
   }
 }
+// ========================================
+// MASTER ADMIN LOGIN
+// ========================================
 
+if (masterLoginForm) {
+  masterLoginForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    masterLoginBtn.disabled = true;
+    masterLoginBtn.textContent = "Checking...";
+
+    loginMessage.textContent = "Verifying Master Admin...";
+    loginMessage.style.color = "#64748b";
+
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        masterEmail.value.trim(),
+        masterPassword.value
+      );
+
+      // onAuthStateChanged will verify the UID and permissions
+
+    } catch (error) {
+      console.error("Master Admin login error:", error);
+
+      loginMessage.textContent = error.message;
+      loginMessage.style.color = "#b91c1c";
+
+    } finally {
+      masterLoginBtn.disabled = false;
+      masterLoginBtn.textContent = "Master Admin Login";
+    }
+  });
+}
 // ========================================
 // AUTH STATE
 // ========================================
@@ -942,59 +982,84 @@ async function createCustomer(event) {
 async function initializeMasterAdmin() {
   await authReady;
 
-  onAuthStateChanged(
-    auth,
-    async user => {
+  onAuthStateChanged(auth, async user => {
+    isMasterAdminVerified = false;
+    setDashboardEnabled(false);
+
+    // No login: show login page only
+    if (!user) {
+      dashboardSection.style.display = "none";
+      loginSection.style.display = "block";
+
+      showMessage("");
+      if (loginMessage) {
+        loginMessage.textContent = "";
+      }
+
+      if (masterPassword) {
+        masterPassword.value = "";
+      }
+
+      return;
+    }
+
+    showMessage("Checking Master Admin permission...", "#64748b");
+
+    try {
+      await checkMasterAdmin(user);
+
+      if (auth.currentUser?.uid !== user.uid) return;
+
+      isMasterAdminVerified = true;
+
+      // Verified: show dashboard only
+      loginSection.style.display = "none";
+      dashboardSection.style.display = "block";
+
+      setDashboardEnabled(true);
+
+      const startInput =
+        document.getElementById("subscriptionStart");
+
+      if (startInput && !startInput.value) {
+        startInput.value = getTodayInputDate();
+      }
+
+      await loadDashboard();
+
+      console.log("Master Admin access granted.");
+
+    } catch (error) {
+      console.error("Master Admin error:", error);
+
       isMasterAdminVerified = false;
       setDashboardEnabled(false);
 
-      if (!user) {
-        document.body.style.display = "block";
-        showMessage("Please login first using the Admin Login page.");
-        return;
+      dashboardSection.style.display = "none";
+      loginSection.style.display = "block";
+
+      if (loginMessage) {
+        loginMessage.textContent = error.message;
+        loginMessage.style.color = "#b91c1c";
       }
 
-      showMessage("Checking Master Admin permission...", "#64748b");
-
-      try {
-        await checkMasterAdmin(user);
-
-        if (auth.currentUser?.uid !== user.uid) return;
-
-        isMasterAdminVerified = true;
-        document.body.style.display = "block";
-
-        setDashboardEnabled(true);
-
-        const startInput =
-          document.getElementById("subscriptionStart");
-
-        if (startInput && !startInput.value) {
-          startInput.value = getTodayInputDate();
-        }
-
-        await loadDashboard();
-
-        console.log("Master Admin access granted.");
-
-      } catch (error) {
-        console.error("Master Admin error:", error);
-
-        isMasterAdminVerified = false;
-        setDashboardEnabled(false);
-        document.body.style.display = "block";
-
-        showMessage("Master Admin access failed: " + error.message);
+      // Unauthorized account ko sign out karein
+      if (auth.currentUser?.uid === user.uid) {
+        await signOut(auth);
       }
-    },
-    error => {
-      console.error("Authentication error:", error);
-      showMessage("Authentication error: " + error.message);
-      document.body.style.display = "block";
     }
-  );
-}
+  }, error => {
+    console.error("Authentication error:", error);
 
+    dashboardSection.style.display = "none";
+    loginSection.style.display = "block";
+
+    if (loginMessage) {
+      loginMessage.textContent = error.message;
+      loginMessage.style.color = "#b91c1c";
+    }
+  });
+}
 // ========================================
 // LOGOUT
 // ========================================
@@ -1002,17 +1067,24 @@ async function initializeMasterAdmin() {
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = "Logging out...";
+
       await signOut(auth);
 
-// Master Admin page par hi Login screen dikhayein
-window.location.replace("./master-admin.html");
+      // Keep Master Admin URL and show its login screen
+      window.location.replace("./master-admin.html");
+
     } catch (error) {
       console.error("Logout error:", error);
+
       showMessage("Logout failed: " + error.message);
+
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = "Logout";
     }
   });
 }
-
 // ========================================
 // FORM SUBMIT
 // ========================================
