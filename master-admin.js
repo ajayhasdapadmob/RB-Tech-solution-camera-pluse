@@ -1,3 +1,4 @@
+
 import { auth, db, authReady } from "./firebase.js";
 
 import {
@@ -19,6 +20,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 // ========================================
+// CONFIGURATION
+// ========================================
+
+const UPI_ID = "9353689775@upi";
+const MASTER_ADMIN_UID = "J13WbOAxtNWe3u7lQN4pSXLUMjI3";
+
+let isMasterAdminVerified = false;
+let subscriptionRequestsContainer = null;
+
+// ========================================
 // ELEMENTS
 // ========================================
 
@@ -27,11 +38,6 @@ const customerForm = document.getElementById("customerForm");
 const messageBox = document.getElementById("message");
 const customerTableBody = document.getElementById("customerTableBody");
 const createCustomerBtn = document.getElementById("createCustomerBtn");
-
-const UPI_ID = "9353689775@upi";
-
-let isMasterAdminVerified = false;
-let subscriptionRequestsContainer = null;
 
 // ========================================
 // HELPERS
@@ -109,34 +115,55 @@ function formatDateTime(value) {
 
 function getTodayInputDate() {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`;
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
 }
 
 function calculateExpiry(startDate, plan) {
   const expiry = new Date(startDate);
+  const originalDay = expiry.getDate();
 
   if (plan === "yearly") {
-    expiry.setFullYear(expiry.getFullYear() + 1);
-  } else {
-    const originalDay = expiry.getDate();
-
-    expiry.setDate(1);
-    expiry.setMonth(expiry.getMonth() + 1);
+    const targetYear = expiry.getFullYear() + 1;
+    const targetMonth = expiry.getMonth();
 
     const lastDay = new Date(
-      expiry.getFullYear(),
-      expiry.getMonth() + 1,
+      targetYear,
+      targetMonth + 1,
       0
     ).getDate();
 
+    expiry.setDate(1);
+    expiry.setFullYear(targetYear);
+    expiry.setMonth(targetMonth);
     expiry.setDate(Math.min(originalDay, lastDay));
+
+    return expiry;
   }
 
-  return expiry;
+  const target = new Date(
+    expiry.getFullYear(),
+    expiry.getMonth() + 1,
+    1,
+    expiry.getHours(),
+    expiry.getMinutes(),
+    expiry.getSeconds(),
+    expiry.getMilliseconds()
+  );
+
+  const lastDay = new Date(
+    target.getFullYear(),
+    target.getMonth() + 1,
+    0
+  ).getDate();
+
+  target.setDate(Math.min(originalDay, lastDay));
+
+  return target;
 }
 
 function normalizeSlug(value) {
@@ -144,6 +171,145 @@ function normalizeSlug(value) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-");
+}
+
+// ========================================
+// MASTER ADMIN VERIFICATION
+// ========================================
+
+async function checkMasterAdmin(user) {
+  if (!user?.uid) {
+    throw new Error("Please login with your Master Admin account.");
+  }
+
+  console.log("MASTER ADMIN LOGIN UID:", user.uid);
+  console.log("FIREBASE PROJECT ID:", db.app.options.projectId);
+
+  if (user.uid !== MASTER_ADMIN_UID) {
+    throw new Error(
+      "Logged-in UID does not match the configured Master Admin UID."
+    );
+  }
+
+  if (db.app.options.projectId !== "rb-tech-solution") {
+    throw new Error(
+      "Wrong Firebase project connected. Expected rb-tech-solution."
+    );
+  }
+
+  const adminRef = doc(db, "admin", user.uid);
+  const adminSnap = await getDoc(adminRef);
+
+  console.log("ADMIN DOCUMENT EXISTS:", adminSnap.exists());
+
+  if (!adminSnap.exists()) {
+    throw new Error(
+      "Master Admin document not found. Check admin document ID and Firebase project."
+    );
+  }
+
+  const adminData = adminSnap.data();
+
+  console.log("ADMIN DATA:", adminData);
+
+  if (adminData.Active !== true) {
+    throw new Error("Admin account is inactive. Active must be Boolean true.");
+  }
+
+  if (adminData.Role !== "MasterAdmin") {
+    throw new Error('Role must be exactly "MasterAdmin".');
+  }
+
+  return true;
+}
+
+// ========================================
+// LOAD CUSTOMERS
+// ========================================
+
+async function loadCustomers() {
+  if (!customerTableBody) return;
+
+  customerTableBody.innerHTML = `
+    <tr><td colspan="7">Loading customers...</td></tr>
+  `;
+
+  const snapshot = await getDocs(collection(db, "customers"));
+
+  const now = new Date();
+
+  let total = 0;
+  let active = 0;
+  let expired = 0;
+
+  const rows = [];
+
+  snapshot.forEach(documentSnapshot => {
+    const customer = documentSnapshot.data();
+    const customerId = documentSnapshot.id;
+
+    total++;
+
+    const expiry = getDate(customer.subscriptionExpiry);
+    const status = String(customer.status || "inactive").toLowerCase();
+
+    const isExpired = expiry && expiry <= now;
+    const isActive = status === "active" && !isExpired;
+
+    if (isActive) active++;
+    if (isExpired) expired++;
+
+    const statusText = isExpired
+      ? "Expired"
+      : status === "active"
+        ? "Active"
+        : "Inactive";
+
+    const statusColor =
+      statusText === "Active" ? "#087f3c" : "#b91c1c";
+
+    rows.push(`
+      <tr>
+        <td>${escapeHTML(customer.businessName || "Unnamed Business")}</td>
+        <td>${escapeHTML(customer.ownerName || "—")}</td>
+        <td>${escapeHTML(customer.slug || customerId)}</td>
+        <td>${escapeHTML(customer.plan || "—")}</td>
+        <td>${escapeHTML(formatDate(customer.subscriptionExpiry))}</td>
+        <td>
+          <span style="
+            display:inline-block;
+            padding:5px 9px;
+            border-radius:20px;
+            background:#f1f5f9;
+            color:${statusColor};
+          ">${statusText}</span>
+        </td>
+        <td>${escapeHTML(customerId)}</td>
+      </tr>
+    `);
+  });
+
+  setStat("totalCustomers", total);
+  setStat("activeCustomers", active);
+  setStat("expiredCustomers", expired);
+
+  customerTableBody.innerHTML = rows.length
+    ? rows.join("")
+    : `<tr><td colspan="7">No customer records found.</td></tr>`;
+
+  console.log("Customers loaded:", total);
+}
+
+// ========================================
+// LOAD ENQUIRIES
+// ========================================
+
+async function loadEnquiries() {
+  const snapshot = await getDocs(collection(db, "enquiries"));
+
+  setStat("totalEnquiries", snapshot.size);
+
+  console.log("Enquiries loaded:", snapshot.size);
 }
 
 // ========================================
@@ -183,10 +349,10 @@ function createSubscriptionPanel() {
     ">
       <div>
         <h2 style="margin:0 0 6px;font-size:22px;">
-          Subscription Renewal Requests
+          Subscription Payment Requests
         </h2>
         <p style="margin:0;color:#64748b;">
-          Verify customer UPI payments and approve or reject renewals.
+          Verify customer UTR and approve or reject renewal requests.
         </p>
       </div>
 
@@ -212,46 +378,19 @@ function createSubscriptionPanel() {
       gap:12px;
       margin-bottom:18px;
     ">
-      <div style="
-        flex:1;
-        min-width:130px;
-        padding:14px;
-        background:#f1f5f9;
-        border-radius:10px;
-      ">
-        <div style="color:#64748b;font-size:13px;">
-          Total Requests
-        </div>
-        <strong id="totalSubscriptionRequests"
-          style="font-size:24px;">0</strong>
+      <div style="flex:1;min-width:130px;padding:14px;background:#f1f5f9;border-radius:10px;">
+        <div style="color:#64748b;font-size:13px;">Total Requests</div>
+        <strong id="totalSubscriptionRequests" style="font-size:24px;">0</strong>
       </div>
 
-      <div style="
-        flex:1;
-        min-width:130px;
-        padding:14px;
-        background:#fff7ed;
-        border-radius:10px;
-      ">
-        <div style="color:#9a3412;font-size:13px;">
-          Pending Requests
-        </div>
-        <strong id="pendingSubscriptionRequests"
-          style="font-size:24px;">0</strong>
+      <div style="flex:1;min-width:130px;padding:14px;background:#fff7ed;border-radius:10px;">
+        <div style="color:#9a3412;font-size:13px;">Pending Requests</div>
+        <strong id="pendingSubscriptionRequests" style="font-size:24px;">0</strong>
       </div>
 
-      <div style="
-        flex:1;
-        min-width:130px;
-        padding:14px;
-        background:#f0fdf4;
-        border-radius:10px;
-      ">
-        <div style="color:#166534;font-size:13px;">
-          Approved Requests
-        </div>
-        <strong id="approvedSubscriptionRequests"
-          style="font-size:24px;">0</strong>
+      <div style="flex:1;min-width:130px;padding:14px;background:#f0fdf4;border-radius:10px;">
+        <div style="color:#166534;font-size:13px;">Approved Requests</div>
+        <strong id="approvedSubscriptionRequests" style="font-size:24px;">0</strong>
       </div>
     </div>
 
@@ -267,13 +406,11 @@ function createSubscriptionPanel() {
       border-radius:8px;
       font-size:13px;
     ">
-      Important: Verify the UTR/reference in your UPI or bank app
-      before approving any payment. Approval extends the customer's
-      subscription automatically.
+      Verify the UTR in your UPI or bank app before approving payment.
+      UPI ID: ${UPI_ID}
     </p>
   `;
 
-  // Add panel after the existing dashboard content.
   const target =
     document.querySelector("main") ||
     document.querySelector(".container") ||
@@ -288,9 +425,9 @@ function createSubscriptionPanel() {
   document
     .getElementById("refreshSubscriptionRequests")
     .addEventListener("click", async () => {
-      if (!isMasterAdminVerified) return;
-
-      await loadSubscriptionRequests();
+      if (isMasterAdminVerified) {
+        await loadSubscriptionRequests();
+      }
     });
 
   subscriptionRequestsContainer.addEventListener("click", async event => {
@@ -319,139 +456,6 @@ function createSubscriptionPanel() {
 }
 
 // ========================================
-// MASTER ADMIN VERIFICATION
-// ========================================
-
-async function checkMasterAdmin(user) {
-  if (!user?.uid) {
-    throw new Error("Please login with your Master Admin account.");
-  }
-
-  const adminRef = doc(db, "admin", user.uid);
-  const adminSnap = await getDoc(adminRef);
-
-  if (!adminSnap.exists()) {
-    throw new Error("Master Admin document not found for this login UID.");
-  }
-
-  const adminData = adminSnap.data();
-
-  if (adminData.Active !== true) {
-    throw new Error("Admin account is inactive.");
-  }
-
-  if (adminData.Role !== "MasterAdmin") {
-    throw new Error('Role must be exactly "MasterAdmin".');
-  }
-
-  return true;
-}
-
-// ========================================
-// LOAD CUSTOMERS
-// ========================================
-
-async function loadCustomers() {
-  if (!customerTableBody) return;
-
-  customerTableBody.innerHTML = `
-    <tr>
-      <td colspan="7">Loading customers...</td>
-    </tr>
-  `;
-
-  const snapshot = await getDocs(collection(db, "customers"));
-
-  const now = new Date();
-
-  let total = 0;
-  let active = 0;
-  let expired = 0;
-
-  const rows = [];
-
-  snapshot.forEach(documentSnapshot => {
-    const customer = documentSnapshot.data();
-    const customerId = documentSnapshot.id;
-
-    total++;
-
-    const expiry = getDate(customer.subscriptionExpiry);
-    const status = String(customer.status || "inactive").toLowerCase();
-
-    const isExpired = expiry && expiry <= now;
-    const isActive = status === "active" && !isExpired;
-
-    if (isActive) active++;
-    if (isExpired) expired++;
-
-    const businessName = escapeHTML(
-      customer.businessName || "Unnamed Business"
-    );
-
-    const ownerName = escapeHTML(customer.ownerName || "—");
-    const slug = escapeHTML(customer.slug || customerId);
-    const plan = escapeHTML(customer.plan || "—");
-
-    const expiryText = escapeHTML(
-      formatDate(customer.subscriptionExpiry)
-    );
-
-    const statusText = isExpired
-      ? "Expired"
-      : status === "active"
-        ? "Active"
-        : "Inactive";
-
-    const statusColor = isExpired || status !== "active"
-      ? "#b91c1c"
-      : "#087f3c";
-
-    rows.push(`
-      <tr>
-        <td>${businessName}</td>
-        <td>${ownerName}</td>
-        <td>${slug}</td>
-        <td>${plan}</td>
-        <td>${expiryText}</td>
-        <td>
-          <span style="
-            display:inline-block;
-            padding:5px 9px;
-            border-radius:20px;
-            background:#f1f5f9;
-            color:${statusColor};
-          ">${statusText}</span>
-        </td>
-        <td>${escapeHTML(customerId)}</td>
-      </tr>
-    `);
-  });
-
-  setStat("totalCustomers", total);
-  setStat("activeCustomers", active);
-  setStat("expiredCustomers", expired);
-
-  customerTableBody.innerHTML = rows.length
-    ? rows.join("")
-    : `<tr><td colspan="7">No customer records found.</td></tr>`;
-
-  console.log("Customers loaded:", total);
-}
-
-// ========================================
-// LOAD ENQUIRIES
-// ========================================
-
-async function loadEnquiries() {
-  const snapshot = await getDocs(collection(db, "enquiries"));
-
-  setStat("totalEnquiries", snapshot.size);
-
-  console.log("Enquiries loaded:", snapshot.size);
-}
-
-// ========================================
 // LOAD SUBSCRIPTION REQUESTS
 // ========================================
 
@@ -460,38 +464,31 @@ async function loadSubscriptionRequests() {
     createSubscriptionPanel();
   }
 
-  subscriptionRequestsContainer.innerHTML = `
-    <p style="color:#64748b;">Loading subscription requests...</p>
-  `;
+  subscriptionRequestsContainer.innerHTML =
+    `<p style="color:#64748b;">Loading subscription requests...</p>`;
 
   try {
     const snapshot = await getDocs(
       collection(db, "subscriptionRequests")
     );
 
-    const requests = [];
+    const requests = snapshot.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
 
-    snapshot.forEach(documentSnapshot => {
-      requests.push({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data()
-      });
-    });
-
-    // Latest requests first.
     requests.sort((a, b) => {
       const dateA = getDate(a.createdAt)?.getTime() || 0;
       const dateB = getDate(b.createdAt)?.getTime() || 0;
-
       return dateB - dateA;
     });
 
     const pendingCount = requests.filter(
-      request => request.status === "pending"
+      item => item.status === "pending"
     ).length;
 
     const approvedCount = requests.filter(
-      request => request.status === "approved"
+      item => item.status === "approved"
     ).length;
 
     setStat("totalSubscriptionRequests", requests.length);
@@ -500,13 +497,7 @@ async function loadSubscriptionRequests() {
 
     if (!requests.length) {
       subscriptionRequestsContainer.innerHTML = `
-        <div style="
-          padding:20px;
-          text-align:center;
-          background:#f8fafc;
-          border-radius:10px;
-          color:#64748b;
-        ">
+        <div style="padding:20px;text-align:center;background:#f8fafc;border-radius:10px;color:#64748b;">
           No subscription renewal requests found.
         </div>
       `;
@@ -526,54 +517,27 @@ async function loadSubscriptionRequests() {
         status === "rejected" ? "#fee2e2" :
         "#ffedd5";
 
-      const actionButtons = status === "pending"
+      const actions = status === "pending"
         ? `
-          <div style="
-            display:flex;
-            flex-wrap:wrap;
-            gap:9px;
-            margin-top:15px;
-          ">
+          <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:15px;">
             <button
               type="button"
               data-request-action="approve"
               data-request-id="${escapeHTML(request.id)}"
-              style="
-                padding:10px 17px;
-                border:0;
-                border-radius:7px;
-                background:#15803d;
-                color:white;
-                cursor:pointer;
-              "
-            >
-              Approve Payment
-            </button>
+              style="padding:10px 17px;border:0;border-radius:7px;background:#15803d;color:white;cursor:pointer;"
+            >Approve Payment</button>
 
             <button
               type="button"
               data-request-action="reject"
               data-request-id="${escapeHTML(request.id)}"
-              style="
-                padding:10px 17px;
-                border:0;
-                border-radius:7px;
-                background:#b91c1c;
-                color:white;
-                cursor:pointer;
-              "
-            >
-              Reject
-            </button>
+              style="padding:10px 17px;border:0;border-radius:7px;background:#b91c1c;color:white;cursor:pointer;"
+            >Reject</button>
           </div>
         `
         : `
-          <p style="
-            margin:14px 0 0;
-            color:${statusColor};
-            font-weight:bold;
-          ">
-            ${status.toUpperCase()}
+          <p style="margin:14px 0 0;color:${statusColor};font-weight:bold;">
+            ${escapeHTML(status.toUpperCase())}
             ${request.reviewedAt
               ? " · Reviewed: " + escapeHTML(formatDateTime(request.reviewedAt))
               : ""}
@@ -581,94 +545,29 @@ async function loadSubscriptionRequests() {
         `;
 
       return `
-        <article style="
-          padding:17px;
-          margin-bottom:13px;
-          border:1px solid #e2e8f0;
-          border-radius:11px;
-          background:#ffffff;
-        ">
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:10px;
-          ">
+        <article style="padding:17px;margin-bottom:13px;border:1px solid #e2e8f0;border-radius:11px;background:white;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
             <h3 style="margin:0;font-size:18px;">
               ${escapeHTML(request.businessName || "Customer")}
             </h3>
 
-            <span style="
-              padding:6px 11px;
-              border-radius:20px;
-              background:${statusBackground};
-              color:${statusColor};
-              font-size:12px;
-              font-weight:bold;
-            ">
+            <span style="padding:6px 11px;border-radius:20px;background:${statusBackground};color:${statusColor};font-size:12px;font-weight:bold;">
               ${escapeHTML(status.toUpperCase())}
             </span>
           </div>
 
-          <div style="
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-            gap:12px;
-            margin-top:15px;
-          ">
-            <div>
-              <small style="color:#64748b;">Customer ID</small>
-              <div>${escapeHTML(request.customerId || "—")}</div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">Customer UID</small>
-              <div style="word-break:break-all;">
-                ${escapeHTML(request.customerUid || "—")}
-              </div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">Plan</small>
-              <div>${escapeHTML(request.plan || "—")}</div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">Payment Amount</small>
-              <div style="font-weight:bold;">
-                ₹${escapeHTML(request.amount ?? "—")}
-              </div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">Payment Method</small>
-              <div>${escapeHTML(request.paymentMethod || "UPI")}</div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">UPI ID</small>
-              <div>${escapeHTML(request.upiId || UPI_ID)}</div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">UTR / Transaction Reference</small>
-              <div style="
-                font-weight:bold;
-                word-break:break-all;
-                color:#075b30;
-              ">
-                ${escapeHTML(request.utr || "Not provided")}
-              </div>
-            </div>
-
-            <div>
-              <small style="color:#64748b;">Request Date</small>
-              <div>${escapeHTML(formatDateTime(request.createdAt))}</div>
-            </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:15px;">
+            <div><small>Customer ID</small><div>${escapeHTML(request.customerId || "—")}</div></div>
+            <div><small>Customer UID</small><div style="word-break:break-all;">${escapeHTML(request.customerUid || "—")}</div></div>
+            <div><small>Plan</small><div>${escapeHTML(request.plan || "—")}</div></div>
+            <div><small>Payment Amount</small><div style="font-weight:bold;">₹${escapeHTML(request.amount ?? "—")}</div></div>
+            <div><small>Payment Method</small><div>${escapeHTML(request.paymentMethod || "UPI")}</div></div>
+            <div><small>UPI ID</small><div>${escapeHTML(request.upiId || UPI_ID)}</div></div>
+            <div><small>UTR / Transaction Reference</small><div style="font-weight:bold;word-break:break-all;color:#075b30;">${escapeHTML(request.utr || "Not provided")}</div></div>
+            <div><small>Request Date</small><div>${escapeHTML(formatDateTime(request.createdAt))}</div></div>
           </div>
 
-          ${actionButtons}
+          ${actions}
         </article>
       `;
     }).join("");
@@ -679,14 +578,8 @@ async function loadSubscriptionRequests() {
     console.error("Subscription request loading error:", error);
 
     subscriptionRequestsContainer.innerHTML = `
-      <div style="
-        padding:15px;
-        background:#fee2e2;
-        color:#991b1b;
-        border-radius:9px;
-      ">
-        Unable to load subscription requests:
-        ${escapeHTML(error.message)}
+      <div style="padding:15px;background:#fee2e2;color:#991b1b;border-radius:9px;">
+        Unable to load subscription requests: ${escapeHTML(error.message)}
       </div>
     `;
   }
@@ -699,7 +592,7 @@ async function loadSubscriptionRequests() {
 async function approveSubscriptionRequest(requestId, button) {
   const confirmed = confirm(
     "Have you verified this UTR/payment in your UPI or bank app?\n\n" +
-    "Only click OK after confirming that the payment was received."
+    "Only approve after confirming that payment was received."
   );
 
   if (!confirmed) return;
@@ -724,7 +617,7 @@ async function approveSubscriptionRequest(requestId, button) {
     }
 
     if (!request.customerId || !request.customerUid) {
-      throw new Error("Customer information is missing from this request.");
+      throw new Error("Customer information is missing.");
     }
 
     const customerRef = doc(db, "customers", request.customerId);
@@ -737,43 +630,38 @@ async function approveSubscriptionRequest(requestId, button) {
     const customer = customerSnap.data();
 
     if (customer.uid !== request.customerUid) {
-      throw new Error("Customer UID does not match. Approval cancelled.");
+      throw new Error("Customer UID does not match.");
     }
 
     if (!["monthly", "yearly"].includes(customer.plan)) {
-      throw new Error("Customer subscription plan is invalid.");
+      throw new Error("Invalid customer subscription plan.");
     }
 
     if (
       Number(customer.subscriptionAmount) !== Number(request.amount) ||
       customer.plan !== request.plan
     ) {
-      throw new Error(
-        "Request amount or plan does not match the customer's current plan."
-      );
+      throw new Error("Request amount or plan does not match the customer plan.");
     }
 
     if (!request.utr || String(request.utr).trim().length < 6) {
       throw new Error("Valid UTR/reference is missing.");
     }
 
-    // Extend from the later of current expiry or today's date.
+    if (request.upiId !== UPI_ID) {
+      throw new Error("UPI ID does not match the configured payment ID.");
+    }
+
     const now = new Date();
     const oldExpiry = getDate(customer.subscriptionExpiry);
 
     const extensionStart =
-      oldExpiry && oldExpiry > now
-        ? oldExpiry
-        : now;
+      oldExpiry && oldExpiry > now ? oldExpiry : now;
 
-    const newExpiry = calculateExpiry(
-      extensionStart,
-      customer.plan
-    );
+    const newExpiry = calculateExpiry(extensionStart, customer.plan);
 
     const batch = writeBatch(db);
 
-    // Update customer's subscription.
     batch.update(customerRef, {
       subscriptionStart: Timestamp.fromDate(extensionStart),
       subscriptionExpiry: Timestamp.fromDate(newExpiry),
@@ -781,7 +669,6 @@ async function approveSubscriptionRequest(requestId, button) {
       updatedAt: serverTimestamp()
     });
 
-    // Mark payment request as approved.
     batch.update(requestRef, {
       status: "approved",
       reviewedAt: serverTimestamp(),
@@ -819,11 +706,9 @@ async function approveSubscriptionRequest(requestId, button) {
 // ========================================
 
 async function rejectSubscriptionRequest(requestId, button) {
-  const confirmed = confirm(
-    "Are you sure you want to reject this subscription payment request?"
-  );
-
-  if (!confirmed) return;
+  if (!confirm("Are you sure you want to reject this payment request?")) {
+    return;
+  }
 
   button.disabled = true;
   button.textContent = "Rejecting...";
@@ -883,11 +768,7 @@ async function loadDashboard() {
 
     if (customerTableBody) {
       customerTableBody.innerHTML = `
-        <tr>
-          <td colspan="7">
-            Unable to load customers: ${escapeHTML(error.message)}
-          </td>
-        </tr>
+        <tr><td colspan="7">Unable to load customers: ${escapeHTML(error.message)}</td></tr>
       `;
     }
   }
@@ -925,71 +806,37 @@ async function loadDashboard() {
 async function createCustomer(event) {
   event.preventDefault();
 
-  if (!isMasterAdminVerified) {
+  if (!isMasterAdminVerified || !auth.currentUser) {
     showMessage("Master Admin verification is required.");
     return;
   }
 
-  if (!auth.currentUser) {
-    showMessage("Please login again.");
-    return;
-  }
+  const getValue = id =>
+    document.getElementById(id)?.value.trim() || "";
 
-  const businessName =
-    document.getElementById("businessName").value.trim();
-
-  const ownerName =
-    document.getElementById("ownerName").value.trim();
-
-  const email =
-    document.getElementById("customerEmail").value.trim().toLowerCase();
-
-  const phone =
-    document.getElementById("customerPhone").value.trim();
-
-  const customerUid =
-    document.getElementById("customerAuthUid").value.trim();
-
-  const slug = normalizeSlug(
-    document.getElementById("customerSlug").value
-  );
-
-  const plan =
-    document.getElementById("subscriptionPlan").value;
-
-  const amount = Number(
-    document.getElementById("subscriptionAmount").value
-  );
-
-  const startValue =
-    document.getElementById("subscriptionStart").value;
-
-  const whatsapp =
-    document.getElementById("customerWhatsApp").value.trim();
-
-  const status =
-    document.getElementById("customerStatus").value;
-
-  const address =
-    document.getElementById("customerAddress").value.trim();
+  const businessName = getValue("businessName");
+  const ownerName = getValue("ownerName");
+  const email = getValue("customerEmail").toLowerCase();
+  const phone = getValue("customerPhone");
+  const customerUid = getValue("customerAuthUid");
+  const slug = normalizeSlug(getValue("customerSlug"));
+  const plan = getValue("subscriptionPlan");
+  const amount = Number(getValue("subscriptionAmount"));
+  const startValue = getValue("subscriptionStart");
+  const whatsapp = getValue("customerWhatsApp");
+  const status = getValue("customerStatus");
+  const address = getValue("customerAddress");
 
   if (
-    !businessName ||
-    !ownerName ||
-    !email ||
-    !phone ||
-    !customerUid ||
-    !slug ||
-    !startValue
+    !businessName || !ownerName || !email || !phone ||
+    !customerUid || !slug || !startValue
   ) {
     showMessage("Please fill all required fields.");
     return;
   }
 
   if (!/^[a-z0-9-]+$/.test(slug)) {
-    showMessage(
-      "Website Link Name: use only letters, numbers and hyphens."
-    );
+    showMessage("Website Link Name: use only letters, numbers and hyphens.");
     return;
   }
 
@@ -1022,8 +869,10 @@ async function createCustomer(event) {
 
   const expiryDate = calculateExpiry(startDate, plan);
 
-  createCustomerBtn.disabled = true;
-  createCustomerBtn.textContent = "Creating Customer...";
+  if (createCustomerBtn) {
+    createCustomerBtn.disabled = true;
+    createCustomerBtn.textContent = "Creating Customer...";
+  }
 
   try {
     await checkMasterAdmin(auth.currentUser);
@@ -1032,9 +881,7 @@ async function createCustomer(event) {
     const existingCustomer = await getDoc(customerRef);
 
     if (existingCustomer.exists()) {
-      throw new Error(
-        "This Website Link Name already exists. Please use another slug."
-      );
+      throw new Error("This Website Link Name already exists.");
     }
 
     const uidQuery = query(
@@ -1045,25 +892,23 @@ async function createCustomer(event) {
     const uidSnapshot = await getDocs(uidQuery);
 
     if (!uidSnapshot.empty) {
-      throw new Error(
-        "This Firebase Authentication UID is already linked to a customer."
-      );
+      throw new Error("This Authentication UID is already linked to a customer.");
     }
 
     const customerData = {
-      businessName: businessName,
-      ownerName: ownerName,
-      email: email,
-      phone: phone,
+      businessName,
+      ownerName,
+      email,
+      phone,
       uid: customerUid,
-      slug: slug,
-      plan: plan,
+      slug,
+      plan,
       subscriptionAmount: amount,
       subscriptionStart: Timestamp.fromDate(startDate),
       subscriptionExpiry: Timestamp.fromDate(expiryDate),
-      status: status,
-      whatsapp: whatsapp,
-      address: address,
+      status,
+      whatsapp,
+      address,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
@@ -1089,16 +934,16 @@ async function createCustomer(event) {
     console.error("Create customer error:", error);
 
     if (error.code === "permission-denied") {
-      showMessage(
-        "Permission denied. Please check Firestore Security Rules."
-      );
+      showMessage("Permission denied. Please check Firestore Security Rules.");
     } else {
       showMessage("Customer creation failed: " + error.message);
     }
 
   } finally {
-    createCustomerBtn.disabled = false;
-    createCustomerBtn.textContent = "Create Customer Profile";
+    if (createCustomerBtn) {
+      createCustomerBtn.disabled = false;
+      createCustomerBtn.textContent = "Create Customer Profile";
+    }
   }
 }
 
