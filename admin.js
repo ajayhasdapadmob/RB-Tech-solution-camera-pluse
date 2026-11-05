@@ -100,16 +100,6 @@ function showMessage(element, message, isError = false) {
   element.style.color = isError ? "#dc2626" : "#087f3c";
 }
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
-}
-
 function normalizeFeatures(value) {
   if (Array.isArray(value)) return value;
 
@@ -155,8 +145,12 @@ function normalizeSpecifications(value) {
   return {};
 }
 
+function confirmRemove(message) {
+  return window.confirm(message);
+}
+
 // ========================================
-// BUILD ALL 22 STANDARD SPECIFICATION BOXES
+// BUILD STANDARD SPECIFICATIONS
 // ========================================
 
 function buildStandardSpecifications(values = {}) {
@@ -181,14 +175,6 @@ function buildStandardSpecifications(values = {}) {
     group.append(label, input);
     standardSpecifications.appendChild(group);
   });
-}
-
-// ========================================
-// REMOVE CONFIRMATION
-// ========================================
-
-function confirmRemove(message) {
-  return window.confirm(message);
 }
 
 // ========================================
@@ -222,7 +208,9 @@ function addFeatureRow(value = "") {
   featuresFields.appendChild(row);
 }
 
-addFeatureBtn.addEventListener("click", () => addFeatureRow());
+addFeatureBtn.addEventListener("click", () => {
+  addFeatureRow();
+});
 
 function getProductFeatures() {
   return [...featuresFields.querySelectorAll(".feature-input")]
@@ -297,7 +285,7 @@ function getProductSpecifications() {
 }
 
 // ========================================
-// FILL ALL FIELDS DURING EDIT
+// FILL FIELDS DURING EDIT
 // ========================================
 
 function setProductDetailsFields(features = [], specifications = {}) {
@@ -338,6 +326,7 @@ setProductDetailsFields();
 
 function clearProductForm() {
   productForm.reset();
+
   productId.value = "";
   productActive.checked = true;
 
@@ -356,19 +345,33 @@ cancelEditBtn.addEventListener("click", clearProductForm);
 // ========================================
 
 async function checkAdminPermission(user) {
-  if (!user) return false;
-
-  try {
-    const adminRef = doc(db, "admin", user.uid);
-    const adminSnap = await getDoc(adminRef);
-
-    return adminSnap.exists() &&
-      adminSnap.data().Active === true;
-
-  } catch (error) {
-    console.error("Admin permission error:", error);
-    return false;
+  if (!user) {
+    return { allowed: false };
   }
+
+  const adminRef = doc(db, "admin", user.uid);
+  const adminSnap = await getDoc(adminRef);
+
+  if (!adminSnap.exists()) {
+    return { allowed: false };
+  }
+
+  const adminData = adminSnap.data();
+
+  // Master Admin goes to separate dashboard
+  if (adminData.Role === "MasterAdmin") {
+    return {
+      allowed: false,
+      redirect: "./master-admin.html"
+    };
+  }
+
+  // Only active Product Admin allowed
+  if (adminData.Active !== true) {
+    return { allowed: false };
+  }
+
+  return { allowed: true };
 }
 
 // ========================================
@@ -379,6 +382,12 @@ loginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
   showMessage(loginMessage, "Logging in...");
+
+  const submitButton = loginForm.querySelector('button[type="submit"]');
+
+  if (submitButton) {
+    submitButton.disabled = true;
+  }
 
   try {
     await signInWithEmailAndPassword(
@@ -391,7 +400,13 @@ loginForm.addEventListener("submit", async event => {
 
   } catch (error) {
     console.error("Login error:", error);
+
     showMessage(loginMessage, error.message, true);
+
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+    }
   }
 });
 
@@ -401,12 +416,21 @@ loginForm.addEventListener("submit", async event => {
 
 logoutBtn.addEventListener("click", async () => {
   try {
+    logoutBtn.disabled = true;
+    logoutBtn.textContent = "Logging out...";
+
     await signOut(auth);
-    clearProductForm();
+
+    // Logout ke baad Login page
+    window.location.replace("./admin.html");
 
   } catch (error) {
     console.error("Logout error:", error);
+
     showMessage(adminMessage, error.message, true);
+
+    logoutBtn.disabled = false;
+    logoutBtn.textContent = "Logout";
   }
 });
 
@@ -420,20 +444,29 @@ onAuthStateChanged(auth, async user => {
 
   if (!user) {
     showMessage(loginMessage, "");
+    adminPassword.value = "";
     return;
   }
 
   showMessage(loginMessage, "Checking admin permission...");
 
   try {
-    if (authReady) await authReady;
+    if (authReady) {
+      await authReady;
+    }
 
-    const allowed = await checkAdminPermission(user);
+    const access = await checkAdminPermission(user);
 
-    if (!allowed) {
+    // Redirect Master Admin
+    if (access.redirect) {
+      window.location.replace(access.redirect);
+      return;
+    }
+
+    if (!access.allowed) {
       showMessage(
         loginMessage,
-        "Access denied. This account is not an active admin.",
+        "Access denied. This account is not an active Product Admin.",
         true
       );
 
@@ -444,7 +477,7 @@ onAuthStateChanged(auth, async user => {
     loginSection.classList.add("hidden");
     dashboardSection.classList.remove("hidden");
 
-    showMessage(adminMessage, "Admin login successful.");
+    showMessage(adminMessage, "Product Admin login successful.");
 
     await loadAdminProducts();
 
@@ -452,6 +485,7 @@ onAuthStateChanged(auth, async user => {
     console.error("Authentication error:", error);
 
     showMessage(loginMessage, error.message, true);
+
     await signOut(auth);
   }
 });
@@ -530,12 +564,14 @@ productForm.addEventListener("submit", async event => {
     }
 
     clearProductForm();
+
     await loadAdminProducts();
 
     showMessage(productMessage, "Product saved successfully.");
 
   } catch (error) {
     console.error("Save product error:", error);
+
     showMessage(productMessage, error.message, true);
 
   } finally {
@@ -576,13 +612,16 @@ async function loadAdminProducts() {
       name.textContent = product.name || "Unnamed Product";
 
       const details = document.createElement("p");
+
       details.textContent =
         `${product.category || "No Category"} | Model: ${product.model || "N/A"} | Price: ${product.price || "N/A"}`;
 
       const badges = document.createElement("p");
       const badgeList = [];
 
-      if (product.isNew === true) badgeList.push("NEW");
+      if (product.isNew === true) {
+        badgeList.push("NEW");
+      }
 
       if (
         product.trending === true ||
@@ -592,7 +631,9 @@ async function loadAdminProducts() {
         badgeList.push("TRENDING");
       }
 
-      badgeList.push(product.active === false ? "INACTIVE" : "ACTIVE");
+      badgeList.push(
+        product.active === false ? "INACTIVE" : "ACTIVE"
+      );
 
       badges.textContent = badgeList.join(" • ");
 
@@ -622,6 +663,7 @@ async function loadAdminProducts() {
       actions.append(editBtn, deleteBtn);
 
       item.append(info, actions);
+
       adminProductList.appendChild(item);
     });
 
@@ -671,7 +713,10 @@ function editProduct(id, product) {
     "Editing: " + (product.name || "Product")
   );
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 }
 
 // ========================================
