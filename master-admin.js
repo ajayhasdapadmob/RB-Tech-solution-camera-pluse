@@ -1003,7 +1003,9 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     try {
       await signOut(auth);
-      window.location.replace("./admin.html");
+
+// Master Admin page par hi Login screen dikhayein
+window.location.replace("./master-admin.html");
     } catch (error) {
       console.error("Logout error:", error);
       showMessage("Logout failed: " + error.message);
