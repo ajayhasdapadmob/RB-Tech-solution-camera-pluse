@@ -1162,6 +1162,8 @@ async function showSection(section) {
 }
 /* =====================================
    SINGLE LOGIN HANDLER
+===================================== */
+
 loginForm?.addEventListener("submit", async event => {
   event.preventDefault();
 
