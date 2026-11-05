@@ -905,6 +905,162 @@ function showEnquiries() {
 }
 
 /* =====================================
+   SUBSCRIPTION RENEWAL HELPERS
+===================================== */
+
+const RENEWAL_UPI_ID = "9353689775@upi";
+
+function getExpiryDate(customer) {
+  const expiry = customer?.subscriptionExpiry;
+
+  if (!expiry) return null;
+
+  const date = typeof expiry.toDate === "function"
+    ? expiry.toDate()
+    : new Date(expiry);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getRenewalStatus() {
+  return checkSubscription(currentCustomer);
+}
+
+async function copyRenewalUPI() {
+  try {
+    await navigator.clipboard.writeText(RENEWAL_UPI_ID);
+    showMessage(
+      dashboardMessage,
+      "UPI ID copied successfully.",
+      true
+    );
+  } catch (error) {
+    showMessage(
+      dashboardMessage,
+      "UPI ID copy nahi hua. Manually copy kijiye."
+    );
+  }
+}
+
+async function loadSubscriptionRequests() {
+  if (!currentUser || !currentCustomer) return [];
+
+  const requestsQuery = query(
+    collection(db, "subscriptionRequests"),
+    where("customerUid", "==", currentUser.uid)
+  );
+
+  const snapshot = await getDocs(requestsQuery);
+
+  const requests = snapshot.docs.map(item => ({
+    id: item.id,
+    ...item.data()
+  }));
+
+  requests.sort((a, b) => {
+    const dateA = a.createdAt?.toDate
+      ? a.createdAt.toDate().getTime()
+      : 0;
+
+    const dateB = b.createdAt?.toDate
+      ? b.createdAt.toDate().getTime()
+      : 0;
+
+    return dateB - dateA;
+  });
+
+  return requests;
+}
+
+async function submitRenewalRequest(event) {
+  event.preventDefault();
+
+  if (!currentUser || !currentCustomer) {
+    showMessage(dashboardMessage, "Customer login required.");
+    return;
+  }
+
+  const utr = $("renewalUTR")?.value.trim() || "";
+  const submitButton = $("submitRenewalBtn");
+
+  if (utr.length < 6 || utr.length > 50) {
+    showMessage(
+      dashboardMessage,
+      "Valid UTR enter kijiye (6–50 characters)."
+    );
+    return;
+  }
+
+  const amount = Number(currentCustomer.subscriptionAmount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showMessage(
+      dashboardMessage,
+      "Subscription amount valid nahi hai. Admin se contact kijiye."
+    );
+    return;
+  }
+
+  try {
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+    }
+
+    const existingRequests = await loadSubscriptionRequests();
+
+    const pendingRequest = existingRequests.find(
+      request =>
+        String(request.status || "").toLowerCase() === "pending"
+    );
+
+    if (pendingRequest) {
+      throw new Error(
+        "Aapki renewal request pehle se Pending hai. Admin ke response ka wait kijiye."
+      );
+    }
+
+    await addDoc(collection(db, "subscriptionRequests"), {
+      customerId: currentCustomer.id,
+      customerUid: currentUser.uid,
+      businessName:
+        currentCustomer.businessName ||
+        currentCustomer.ownerName ||
+        "Customer",
+      plan: currentCustomer.plan || "monthly",
+      amount,
+      utr,
+      paymentMethod: "UPI",
+      upiId: RENEWAL_UPI_ID,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    showMessage(
+      dashboardMessage,
+      "Renewal request successfully submitted.",
+      true
+    );
+
+    await showSection("subscription");
+
+  } catch (error) {
+    console.error("Renewal submission error:", error);
+
+    showMessage(
+      dashboardMessage,
+      error.message || "Renewal request submit nahi hui."
+    );
+
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Renewal Request";
+    }
+  }
+}
+
+/* =====================================
    DASHBOARD SECTIONS
 ===================================== */
 
