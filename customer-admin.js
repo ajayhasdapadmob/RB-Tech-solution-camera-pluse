@@ -181,10 +181,7 @@ function checkSubscription(customer) {
 ===================================== */
 
 async function loadCustomer(user) {
-  showMessage(
-    loginMessage,
-    "Customer account verify ho raha hai..."
-  );
+  showMessage(loginMessage, "Customer account verify ho raha hai...");
 
   try {
     const customer = await getCustomerByUid(user.uid);
@@ -193,14 +190,9 @@ async function loadCustomer(user) {
       throw new Error("Customer UID verification failed.");
     }
 
-    const subscription = checkSubscription(customer);
-
-    if (!subscription.active) {
-      throw new Error(
-        `Aapka subscription ${subscription.message} hai. Admin se contact kijiye.`
-      );
-    }
-
+    // Expired subscription par bhi customer login kar sakega.
+    // Products aur Enquiries ke liye ensureActiveSubscription()
+    // pehle ki tarah access block karega.
     currentUser = user;
     currentCustomer = customer;
 
@@ -214,12 +206,14 @@ async function loadCustomer(user) {
 
     if ($("businessTitle")) {
       $("businessTitle").textContent =
-        customer.businessName ||
-        "Customer Admin Panel";
+        customer.businessName || "Customer Admin Panel";
     }
 
+    const subscription = checkSubscription(customer);
+
     if ($("subscriptionStatus")) {
-      $("subscriptionStatus").textContent = "Active";
+      $("subscriptionStatus").textContent =
+        subscription.active ? "Active" : subscription.message;
     }
 
     showDashboard();
@@ -230,9 +224,10 @@ async function loadCustomer(user) {
       true
     );
 
-    // Customer verification ke baad dashboard khulega.
-    // Product/enquiry errors login ko logout nahi karenge.
-    await showSection("overview");
+    // Expired customer ko seedha Subscription page dikhayenge.
+    await showSection(
+      subscription.active ? "overview" : "subscription"
+    );
 
     showMessage(loginMessage, "");
 
@@ -247,7 +242,6 @@ async function loadCustomer(user) {
       error.message || "Customer verification failed."
     );
 
-    // Verification fail hone par hi sign out.
     if (auth.currentUser) {
       try {
         await signOut(auth);
@@ -257,7 +251,6 @@ async function loadCustomer(user) {
     }
   }
 }
-
 /* =====================================
    LOAD CUSTOMER PRODUCTS
 ===================================== */
@@ -1030,38 +1023,145 @@ async function showSection(section) {
   }
 
   if (section === "subscription") {
-    const expiry = currentCustomer.subscriptionExpiry;
+  const subscription = getRenewalStatus();
+  const expiryDate = getExpiryDate(currentCustomer);
 
-    const expiryDate = expiry
-      ? (typeof expiry.toDate === "function"
-          ? expiry.toDate()
-          : new Date(expiry))
-      : null;
+  const expiryText = expiryDate
+    ? expiryDate.toLocaleDateString("en-IN")
+    : "Not available";
 
-    const expiryText =
-      expiryDate && !Number.isNaN(expiryDate.getTime())
-        ? expiryDate.toLocaleDateString("en-IN")
-        : "Not available";
+  const amount = Number(currentCustomer.subscriptionAmount);
+  const amountText = Number.isFinite(amount)
+    ? amount.toLocaleString("en-IN")
+    : "Not set";
 
-    sectionContent.innerHTML = `
-      <h2>Subscription Details</h2>
+  const statusText = subscription.active
+    ? "Active"
+    : subscription.message;
 
+  sectionContent.innerHTML = `
+    <h2>Subscription Details</h2>
+
+    <div class="product">
       <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
-      <p><b>Amount:</b> ₹${escapeHTML(currentCustomer.subscriptionAmount ?? "-")}</p>
-      <p><b>Status:</b> Active</p>
+      <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
+      <p><b>Status:</b> ${escapeHTML(statusText)}</p>
       <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
+    </div>
+
+    <div class="product">
+      <h3>Renew Subscription</h3>
+
+      <p>
+        Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
+      </p>
+
+      <p><b>UPI ID:</b></p>
+
+      <input
+        id="renewalUPI"
+        value="${RENEWAL_UPI_ID}"
+        readonly
+      >
+
+      <button
+        class="secondary"
+        type="button"
+        id="copyRenewalUPI">
+        Copy UPI ID
+      </button>
+
+      <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
 
       <p class="muted">
-        Subscription renewal ke liye RB Tech Solution Admin se contact kijiye.
+        Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
+        Admin payment verify karne ke baad request approve karega.
       </p>
-    `;
+
+      <form id="renewalForm">
+        <label for="renewalUTR">
+          UTR / Transaction Reference Number *
+        </label>
+
+        <input
+          id="renewalUTR"
+          type="text"
+          minlength="6"
+          maxlength="50"
+          required
+          placeholder="Enter payment UTR number"
+        >
+
+        <button
+          class="primary"
+          type="submit"
+          id="submitRenewalBtn">
+          Submit Renewal Request
+        </button>
+      </form>
+    </div>
+
+    <div class="product">
+      <h3>Renewal Request History</h3>
+      <div id="renewalHistory">
+        Loading renewal requests...
+      </div>
+    </div>
+  `;
+
+  $("copyRenewalUPI")?.addEventListener(
+    "click",
+    copyRenewalUPI
+  );
+
+  $("renewalForm")?.addEventListener(
+    "submit",
+    submitRenewalRequest
+  );
+
+  try {
+    const requests = await loadSubscriptionRequests();
+    const history = $("renewalHistory");
+
+    if (history) {
+      history.innerHTML = requests.length
+        ? requests.map(request => {
+            const date = request.createdAt?.toDate
+              ? request.createdAt.toDate().toLocaleString("en-IN")
+              : "Recently submitted";
+
+            const status = String(
+              request.status || "pending"
+            ).toUpperCase();
+
+            return `
+              <article class="product">
+                <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
+                <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
+                <p><b>Date:</b> ${escapeHTML(date)}</p>
+                <p><b>Status:</b> ${escapeHTML(status)}</p>
+              </article>
+            `;
+          }).join("")
+        : "<p>No renewal requests submitted yet.</p>";
+    }
+
+  } catch (error) {
+    console.error("Renewal history error:", error);
+
+    const history = $("renewalHistory");
+
+    if (history) {
+      history.textContent =
+        "Renewal history load nahi hui: " + error.message;
+    }
+  }
+
+  return;
   }
 }
-
 /* =====================================
    SINGLE LOGIN HANDLER
-===================================== */
-
 loginForm?.addEventListener("submit", async event => {
   event.preventDefault();
 
