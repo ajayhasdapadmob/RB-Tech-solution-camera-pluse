@@ -25,6 +25,7 @@ import {
 
 const UPI_ID = "9353689775@upi";
 const MASTER_ADMIN_UID = "J13WbOAxtNWe3u7lQN4pSXLUMjI3";
+const FIREBASE_PROJECT_ID = "rb-tech-solution";
 
 let isMasterAdminVerified = false;
 let subscriptionRequestsContainer = null;
@@ -127,43 +128,25 @@ function calculateExpiry(startDate, plan) {
   const expiry = new Date(startDate);
   const originalDay = expiry.getDate();
 
-  if (plan === "yearly") {
-    const targetYear = expiry.getFullYear() + 1;
-    const targetMonth = expiry.getMonth();
+  const monthsToAdd = plan === "yearly" ? 12 : 1;
 
-    const lastDay = new Date(
-      targetYear,
-      targetMonth + 1,
-      0
-    ).getDate();
+  const targetYear =
+    expiry.getFullYear() +
+    Math.floor((expiry.getMonth() + monthsToAdd) / 12);
 
-    expiry.setDate(1);
-    expiry.setFullYear(targetYear);
-    expiry.setMonth(targetMonth);
-    expiry.setDate(Math.min(originalDay, lastDay));
-
-    return expiry;
-  }
-
-  const target = new Date(
-    expiry.getFullYear(),
-    expiry.getMonth() + 1,
-    1,
-    expiry.getHours(),
-    expiry.getMinutes(),
-    expiry.getSeconds(),
-    expiry.getMilliseconds()
-  );
+  const targetMonth =
+    (expiry.getMonth() + monthsToAdd) % 12;
 
   const lastDay = new Date(
-    target.getFullYear(),
-    target.getMonth() + 1,
+    targetYear,
+    targetMonth + 1,
     0
   ).getDate();
 
-  target.setDate(Math.min(originalDay, lastDay));
+  expiry.setFullYear(targetYear, targetMonth, 1);
+  expiry.setDate(Math.min(originalDay, lastDay));
 
-  return target;
+  return expiry;
 }
 
 function normalizeSlug(value) {
@@ -183,28 +166,29 @@ async function checkMasterAdmin(user) {
   }
 
   console.log("MASTER ADMIN LOGIN UID:", user.uid);
+  console.log("EXPECTED MASTER ADMIN UID:", MASTER_ADMIN_UID);
   console.log("FIREBASE PROJECT ID:", db.app.options.projectId);
 
   if (user.uid !== MASTER_ADMIN_UID) {
     throw new Error(
-      "Logged-in UID does not match the configured Master Admin UID."
+      "Login UID mismatch. Please login with the correct Master Admin account."
     );
   }
 
-  if (db.app.options.projectId !== "rb-tech-solution") {
+  if (db.app.options.projectId !== FIREBASE_PROJECT_ID) {
     throw new Error(
-      "Wrong Firebase project connected. Expected rb-tech-solution."
+      "Wrong Firebase project connected. Expected " + FIREBASE_PROJECT_ID
     );
   }
 
-  const adminRef = doc(db, "admin", user.uid);
+  const adminRef = doc(db, "admin", MASTER_ADMIN_UID);
   const adminSnap = await getDoc(adminRef);
 
   console.log("ADMIN DOCUMENT EXISTS:", adminSnap.exists());
 
   if (!adminSnap.exists()) {
     throw new Error(
-      "Master Admin document not found. Check admin document ID and Firebase project."
+      "Master Admin document not found in Firestore admin collection."
     );
   }
 
@@ -213,11 +197,15 @@ async function checkMasterAdmin(user) {
   console.log("ADMIN DATA:", adminData);
 
   if (adminData.Active !== true) {
-    throw new Error("Admin account is inactive. Active must be Boolean true.");
+    throw new Error(
+      "Admin account inactive. Firestore Active field must be Boolean true."
+    );
   }
 
   if (adminData.Role !== "MasterAdmin") {
-    throw new Error('Role must be exactly "MasterAdmin".');
+    throw new Error(
+      'Firestore Role must be exactly "MasterAdmin".'
+    );
   }
 
   return true;
@@ -407,7 +395,7 @@ function createSubscriptionPanel() {
       font-size:13px;
     ">
       Verify the UTR in your UPI or bank app before approving payment.
-      UPI ID: ${UPI_ID}
+      UPI ID: ${escapeHTML(UPI_ID)}
     </p>
   `;
 
