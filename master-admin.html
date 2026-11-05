@@ -196,10 +196,32 @@
   </style>
 </head>
 
-<body style="display:none">
+<body>
 
   <main class="container">
+<section id="loginSection" class="section" style="max-width:450px;margin:50px auto;">
+  <h2>Master Admin Login</h2>
+  <form id="masterLoginForm">
+    <div class="field" style="margin-bottom:15px;">
+      <label for="masterEmail">Email Address</label>
+      <input id="masterEmail" type="email" required autocomplete="username">
+    </div>
 
+    <div class="field" style="margin-bottom:15px;">
+      <label for="masterPassword">Password</label>
+      <input id="masterPassword" type="password" required autocomplete="current-password">
+    </div>
+
+    <button type="submit" id="masterLoginBtn"
+      style="background:#087f3c;color:white;width:100%;">
+      Master Admin Login
+    </button>
+
+    <p id="loginMessage" role="status" aria-live="polite"></p>
+  </form>
+</section>
+
+<div id="dashboardSection" style="display:none;">
     <header>
       <div>
         <h1>RB Tech Solution</h1>
@@ -384,7 +406,7 @@
     <footer>
       © <span id="year"></span> RB Tech Solution. All rights reserved.
     </footer>
-
+</div>
   </main>
 
   <script>
