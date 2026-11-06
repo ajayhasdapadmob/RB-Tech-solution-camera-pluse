@@ -420,47 +420,26 @@ function getProductFeatures(product) {
 ========================================= */
 
 function getProductSpecifications(product) {
-  const raw = product.specifications || {};
-  let specifications = [];
-
-  if (Array.isArray(raw)) {
-    specifications = raw
-      .map(item => {
-        if (!item || typeof item !== "object") return null;
-
-        const label = String(
-          item.label || item.name || item.key || ""
-        ).trim();
-
-        const value = String(
-          item.value ?? item.description ?? ""
-        ).trim();
-
-        return label && value ? { label, value } : null;
-      })
-      .filter(Boolean);
-
-  } else if (raw && typeof raw === "object") {
-    specifications = Object.entries(raw)
-      .map(([key, value]) => {
-        const label = String(key).trim();
-
-        let text = "";
-
-        if (value && typeof value === "object") {
-          text = String(
-            value.value || value.description || ""
-          ).trim();
-        } else {
-          text = String(value ?? "").trim();
-        }
-
-        return label && text ? { label, value: text } : null;
-      })
-      .filter(Boolean);
+  const specifications = product?.specifications || {};
+  
+  let entries = [];
+  
+  if (Array.isArray(specifications)) {
+    entries = specifications.map(item => ({
+      label: item.label || item.name || item.key || "",
+      value: item.value || item.description || ""
+    }));
+  } else {
+    entries = Object.entries(specifications).map(([label, value]) => ({
+      label,
+      value
+    }));
   }
-
-  return specifications;
+  
+  return entries.filter(item =>
+    String(item.label || "").trim() &&
+    String(item.value ?? "").trim()
+  );
 }
 
 /* =========================================
