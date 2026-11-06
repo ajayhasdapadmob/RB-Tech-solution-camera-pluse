@@ -465,6 +465,7 @@ function getProductSpecifications(product) {
 
 /* =========================================
    REQUEST FOR INFORMATION - COUNTRY LIST
+   Existing country options retained
 ========================================= */
 
 const RFI_COUNTRIES = `
@@ -495,6 +496,39 @@ function findProductByName(productName) {
 }
 
 /* =========================================
+   CAPTCHA HELPERS
+========================================= */
+
+function createCaptchaQuestion() {
+  const first = Math.floor(Math.random() * 9) + 1;
+  const second = Math.floor(Math.random() * 9) + 1;
+
+  return {
+    question: `${first} + ${second} = ?`,
+    answer: String(first + second)
+  };
+}
+
+function refreshRFICaptcha(form) {
+  if (!form) return;
+
+  const questionElement = form.querySelector("#rfiCaptchaQuestion");
+  const answerInput = form.querySelector("#rfiCaptcha");
+
+  const captcha = createCaptchaQuestion();
+
+  form.dataset.captchaAnswer = captcha.answer;
+
+  if (questionElement) {
+    questionElement.textContent = captcha.question;
+  }
+
+  if (answerInput) {
+    answerInput.value = "";
+  }
+}
+
+/* =========================================
    REQUEST FOR INFORMATION FORM
 ========================================= */
 
@@ -505,6 +539,8 @@ function createRFIForm(product) {
     </option>
   `).join("");
 
+  const captcha = createCaptchaQuestion();
+
   return `
     <section class="rfi-section" id="requestInformation">
 
@@ -514,7 +550,7 @@ function createRFIForm(product) {
         Please fill in all required fields marked with *
       </p>
 
-      <form id="rfiForm">
+      <form id="rfiForm" data-captcha-answer="${captcha.answer}">
 
         <input type="hidden" name="productName"
           value="${escapeHTML(getProductName(product))}">
@@ -573,6 +609,7 @@ function createRFIForm(product) {
           <label for="rfiPhone">Contact number *</label>
           <input id="rfiPhone" name="phone" type="tel"
             maxlength="25" autocomplete="tel" required
+            pattern="[0-9+()\\s-]{7,25}"
             placeholder="Enter your contact number">
         </div>
 
@@ -583,12 +620,43 @@ function createRFIForm(product) {
             placeholder="Write your message"></textarea>
         </div>
 
+        <div class="rfi-form-group rfi-captcha-group">
+          <label>Captcha Code *</label>
+
+          <div class="rfi-captcha-row">
+            <span id="rfiCaptchaQuestion" class="rfi-captcha-question">
+              ${captcha.question}
+            </span>
+
+            <button
+              type="button"
+              id="rfiCaptchaRefresh"
+              class="rfi-captcha-refresh"
+              aria-label="Refresh captcha"
+            >
+              ↻ Refresh
+            </button>
+          </div>
+
+          <input
+            id="rfiCaptcha"
+            name="captcha"
+            type="text"
+            inputmode="numeric"
+            maxlength="3"
+            autocomplete="off"
+            required
+            placeholder="Enter captcha answer"
+          >
+        </div>
+
         <div class="rfi-consent">
           <label>
             <input type="checkbox" name="consent" required>
+
             I consent to collect, store, and process my personal
             information as outlined in the
-            <a href="https://cpplusworld.com/cp-w32#PrivacyPolicyModal"
+            <a href="privacy-policy.html"
               target="_blank" rel="noopener">Privacy Policy</a>.
             By clicking on Submit you agree to this.
           </label>
@@ -616,6 +684,44 @@ async function submitRFI(form) {
 
   const formData = new FormData(form);
 
+  const captchaEntered = String(
+    formData.get("captcha") || ""
+  ).trim();
+
+  const captchaCorrect = String(
+    form.dataset.captchaAnswer || ""
+  );
+
+  if (!captchaEntered || captchaEntered !== captchaCorrect) {
+    if (status) {
+      status.textContent = "Incorrect Captcha Code. Please try again.";
+      status.style.color = "#dc2626";
+    }
+
+    refreshRFICaptcha(form);
+    return;
+  }
+
+  const consent = formData.get("consent") === "on";
+
+  if (!consent) {
+    if (status) {
+      status.textContent = "Please accept the Privacy Policy.";
+      status.style.color = "#dc2626";
+    }
+    return;
+  }
+
+  const phone = String(formData.get("phone") || "").trim();
+
+  if (!/^[0-9+\-\s()]{7,25}$/.test(phone)) {
+    if (status) {
+      status.textContent = "Please enter a valid contact number.";
+      status.style.color = "#dc2626";
+    }
+    return;
+  }
+
   const enquiry = {
     enquiryType: "Product Request for Information",
     source: "Website Product RFI",
@@ -626,7 +732,8 @@ async function submitRFI(form) {
     country: String(formData.get("country") || "").trim(),
     state: String(formData.get("state") || "").trim(),
     city: String(formData.get("city") || "").trim(),
-    phone: String(formData.get("phone") || "").trim(),
+    phone,
+    mobile: phone,
     message: String(formData.get("message") || "").trim(),
 
     productName: String(formData.get("productName") || "").trim(),
@@ -637,40 +744,51 @@ async function submitRFI(form) {
       formData.get("customerProductId") || ""
     ).trim(),
 
-    consent: formData.get("consent") === "on",
+    consent: true,
+    privacyAccepted: true,
+    read: false,
     status: "New",
     createdAt: serverTimestamp()
   };
 
-  if (!enquiry.consent) {
-    status.textContent = "Please accept the Privacy Policy.";
-    return;
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
   }
 
-  submitButton.disabled = true;
-  submitButton.textContent = "Submitting...";
-  status.textContent = "";
+  if (status) {
+    status.textContent = "Submitting your enquiry...";
+    status.style.color = "#555";
+  }
 
   try {
     await addDoc(collection(db, "enquiries"), enquiry);
 
-    status.textContent =
-      "Thank you! Your enquiry has been submitted successfully.";
+    if (status) {
+      status.textContent =
+        "Thank you! Your enquiry has been submitted successfully.";
+      status.style.color = "#087f3c";
+    }
 
-    status.style.color = "#087f3c";
     form.reset();
+    refreshRFICaptcha(form);
 
   } catch (error) {
     console.error("Enquiry submission error:", error);
 
-    status.textContent =
-      "Enquiry could not be submitted. Please try again later.";
+    if (status) {
+      status.textContent =
+        "Enquiry could not be submitted. Please try again later.";
+      status.style.color = "#dc2626";
+    }
 
-    status.style.color = "#dc2626";
+    refreshRFICaptcha(form);
 
   } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = "Submit";
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit";
+    }
   }
 }
 
@@ -742,7 +860,12 @@ function openProductDetails(index) {
               </tbody>
             </table>
           </div>
-        ` : ""}
+        ` : `
+          <div class="product-specifications">
+            <h3>Specification</h3>
+            <p>Specifications will be updated soon.</p>
+          </div>
+        `}
 
         ${note ? `
           <div class="product-additional-note">
@@ -773,10 +896,16 @@ function openProductDetails(index) {
       );
     });
 
-  modalContent.querySelector("#rfiForm")
-    ?.addEventListener("submit", event => {
-      event.preventDefault();
-      submitRFI(event.currentTarget);
+  const rfiForm = modalContent.querySelector("#rfiForm");
+
+  rfiForm?.addEventListener("submit", event => {
+    event.preventDefault();
+    submitRFI(event.currentTarget);
+  });
+
+  rfiForm?.querySelector("#rfiCaptchaRefresh")
+    ?.addEventListener("click", () => {
+      refreshRFICaptcha(rfiForm);
     });
 }
 
@@ -1108,6 +1237,7 @@ function setupWebsiteInquiryForm() {
       customerId: getCustomerId(matchedProduct),
       customerProductId: getCustomerProductId(matchedProduct),
 
+      read: false,
       status: "New",
       source: "Website Contact Popup",
       createdAt: serverTimestamp()
