@@ -251,6 +251,7 @@ async function loadCustomer(user) {
     }
   }
 }
+
 /* =====================================
    LOAD CUSTOMER PRODUCTS
 ===================================== */
@@ -289,34 +290,34 @@ async function loadProducts() {
 
 async function loadCustomerEnquiries() {
   if (!currentCustomer) return [];
-  
+
   ensureActiveSubscription();
-  
+
   const enquiriesQuery = query(
     collection(db, "enquiries"),
     where("customerId", "==", currentCustomer.id),
     limit(100)
   );
-  
+
   const snapshot = await getDocs(enquiriesQuery);
-  
+
   currentEnquiries = snapshot.docs.map(item => ({
     id: item.id,
     ...item.data()
   }));
-  
+
   currentEnquiries.sort((a, b) => {
     const dateA = a.createdAt?.toDate ?
       a.createdAt.toDate().getTime() :
       0;
-    
+
     const dateB = b.createdAt?.toDate ?
       b.createdAt.toDate().getTime() :
       0;
-    
+
     return dateB - dateA;
   });
-  
+
   return currentEnquiries;
 }
 
@@ -402,10 +403,24 @@ function productFormHTML(product = {}) {
         </div>
 
         <div>
-          <label>Product Image URL</label>
-          <input id="productImage"
+          <label for="productImageFile">Product Photo (Mobile / Computer se upload karein)</label>
+          <input id="productImageFile" type="file"
+            accept="image/jpeg,image/png,image/webp">
+          <small class="muted">JPG, PNG ya WEBP. Maximum file size 5 MB.</small>
+
+          <div style="margin:12px 0;">
+            <img id="productImagePreview"
+              src="${escapeHTML(product.imageUrl || "")}"
+              alt="Product photo preview"
+              style="display:${product.imageUrl ? "block" : "none"};max-width:180px;max-height:150px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:5px;">
+          </div>
+
+          <label for="productImage">Existing Image URL (optional)</label>
+          <input id="productImage" type="url"
             value="${escapeHTML(product.imageUrl || "")}"
-            placeholder="Paste GitHub image URL">
+            placeholder="Optional: paste an existing image URL">
+          <small class="muted">Nayi photo select karenge to Cloudinary par upload hogi. Photo select na karne par existing URL use hoga.</small>
+          <p id="imageUploadStatus" class="muted" aria-live="polite"></p>
         </div>
 
         <div>
@@ -447,7 +462,9 @@ function productFormHTML(product = {}) {
         </label>
       </div>
 
-      <button class="primary" type="submit">
+      <button class="primary" id="saveProductBtn"
+        data-original-label="${product.id ? "Update Product" : "Save Product"}"
+        type="submit">
         ${product.id ? "Update Product" : "Save Product"}
       </button>
 
@@ -458,7 +475,6 @@ function productFormHTML(product = {}) {
     </form>
   `;
 }
-
 /* =====================================
    PARSE SPECIFICATIONS
 ===================================== */
@@ -481,6 +497,58 @@ function parseSpecifications(value) {
 }
 
 /* =====================================
+   CLOUDINARY IMAGE UPLOAD
+===================================== */
+
+// Unsigned upload preset. API Secret browser code mein kabhi na rakhein.
+const CLOUDINARY_CLOUD_NAME = "ch5mab4a";
+const CLOUDINARY_UPLOAD_PRESET = "rbtech_products";
+const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PRODUCT_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+async function uploadProductImage(file) {
+  if (!file) return "";
+
+  if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
+    throw new Error("Sirf JPG, PNG ya WEBP photo upload kijiye.");
+  }
+
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+    throw new Error("Photo ka size 5 MB se kam hona chahiye.");
+  }
+
+  const status = $("imageUploadStatus");
+  if (status) status.textContent = "Photo Cloudinary par upload ho rahi hai...";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", "rb-tech-solution/products");
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.secure_url) {
+    console.error("Cloudinary upload error:", result);
+    throw new Error(
+      result.error?.message ||
+      "Photo upload nahi hui. Cloudinary Upload Preset ka Unsigned mode check kijiye."
+    );
+  }
+
+  if (status) status.textContent = "Photo upload successful.";
+  return result.secure_url;
+}
+
+/* =====================================
    SAVE PRODUCT
 ===================================== */
 
@@ -490,6 +558,14 @@ async function saveProduct(event) {
   if (!currentCustomer || !currentUser) {
     showMessage(dashboardMessage, "Customer login required.");
     return;
+  }
+
+  const saveButton = $("saveProductBtn");
+  const imageFileInput = $("productImageFile");
+
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Please wait...";
   }
 
   try {
@@ -503,19 +579,35 @@ async function saveProduct(event) {
       throw new Error("Product name aur category required hain.");
     }
 
-    const price = priceValue === ""
-      ? null
-      : Number(priceValue);
+    const price = priceValue === "" ? null : Number(priceValue);
 
-    if (
-      price !== null &&
-      (!Number.isFinite(price) || price < 0)
-    ) {
+    if (price !== null && (!Number.isFinite(price) || price < 0)) {
       throw new Error("Please valid price enter kijiye.");
     }
 
+    const existing = editingProductId
+      ? currentProducts.find(item => item.id === editingProductId)
+      : null;
+
+    if (editingProductId && (
+      !existing || existing.customerId !== currentCustomer.id
+    )) {
+      throw new Error("Aap is product ko edit nahi kar sakte.");
+    }
+
+    // New photo selected: upload it. Otherwise retain the current URL.
+    let imageUrl = $("productImage").value.trim();
+
+    if (imageFileInput?.files?.[0]) {
+      showMessage(dashboardMessage, "Product photo upload ho rahi hai...");
+      imageUrl = await uploadProductImage(imageFileInput.files[0]);
+      $("productImage").value = imageUrl;
+    } else if (!imageUrl && existing?.imageUrl) {
+      imageUrl = existing.imageUrl;
+    }
+
     const features = $("productFeatures").value
-      .split("\n")
+      .split("\\n")
       .map(item => item.trim())
       .filter(Boolean);
 
@@ -526,7 +618,7 @@ async function saveProduct(event) {
       category,
       model: $("productModel").value.trim(),
       price,
-      imageUrl: $("productImage").value.trim(),
+      imageUrl,
       description: $("productDescription").value.trim(),
       features,
       specifications: parseSpecifications(
@@ -538,56 +630,43 @@ async function saveProduct(event) {
       updatedAt: serverTimestamp()
     };
 
-    showMessage(dashboardMessage, "Saving product...");
+    showMessage(dashboardMessage, "Saving product details...");
 
     if (editingProductId) {
-      const existing = currentProducts.find(
-        item => item.id === editingProductId
-      );
-
-      if (
-        !existing ||
-        existing.customerId !== currentCustomer.id
-      ) {
-        throw new Error("Aap is product ko edit nahi kar sakte.");
-      }
-
       await updateDoc(
         doc(db, "customerProducts", editingProductId),
         productData
       );
-
     } else {
       productData.createdAt = serverTimestamp();
-
-      await addDoc(
-        collection(db, "customerProducts"),
-        productData
-      );
+      await addDoc(collection(db, "customerProducts"), productData);
     }
 
     editingProductId = null;
-
     await loadProducts();
     await updateDashboardCounts();
 
-    showMessage(
-      dashboardMessage,
-      "Product successfully saved.",
-      true
-    );
-
+    showMessage(dashboardMessage, "Product and photo successfully saved.", true);
     showProducts();
 
   } catch (error) {
     console.error("Product save error:", error);
-
     showMessage(
       dashboardMessage,
       error.message || "Product save nahi hua."
     );
+
+    const status = $("imageUploadStatus");
+    if (status) status.textContent = error.message || "Upload/save failed.";
+
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = saveButton.dataset.originalLabel || "Save Product";
+    }
   }
 }
+
 
 /* =====================================
    DELETE PRODUCT
@@ -728,6 +807,35 @@ function showProducts() {
 function attachProductFormEvents() {
   $("productForm")?.addEventListener("submit", saveProduct);
 
+  $("productImageFile")?.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    const preview = $("productImagePreview");
+    const status = $("imageUploadStatus");
+
+    if (!file) return;
+
+    if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
+      event.target.value = "";
+      if (status) status.textContent = "Sirf JPG, PNG ya WEBP photo select kijiye.";
+      return;
+    }
+
+    if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+      event.target.value = "";
+      if (status) status.textContent = "Photo ka size 5 MB se kam hona chahiye.";
+      return;
+    }
+
+    if (preview) {
+      if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+      preview.dataset.objectUrl = URL.createObjectURL(file);
+      preview.src = preview.dataset.objectUrl;
+      preview.style.display = "block";
+    }
+
+    if (status) status.textContent = "Photo ready hai. Save Product dabakar upload karein.";
+  });
+
   $("cancelProduct")?.addEventListener("click", () => {
     editingProductId = null;
     $("productFormArea").innerHTML = "";
@@ -740,6 +848,7 @@ function attachProductFormEvents() {
 
 function formatEnquiryDate(timestamp) {
   if (!timestamp) return "Not available";
+    if (!timestamp) return "Not available";
 
   const date = typeof timestamp.toDate === "function"
     ? timestamp.toDate()
@@ -1177,145 +1286,145 @@ async function showSection(section) {
 
     return;
   }
+    if (section === "subscription") {
+    const subscription = getRenewalStatus();
+    const expiryDate = getExpiryDate(currentCustomer);
 
-  if (section === "subscription") {
-  const subscription = getRenewalStatus();
-  const expiryDate = getExpiryDate(currentCustomer);
+    const expiryText = expiryDate
+      ? expiryDate.toLocaleDateString("en-IN")
+      : "Not available";
 
-  const expiryText = expiryDate
-    ? expiryDate.toLocaleDateString("en-IN")
-    : "Not available";
+    const amount = Number(currentCustomer.subscriptionAmount);
+    const amountText = Number.isFinite(amount)
+      ? amount.toLocaleString("en-IN")
+      : "Not set";
 
-  const amount = Number(currentCustomer.subscriptionAmount);
-  const amountText = Number.isFinite(amount)
-    ? amount.toLocaleString("en-IN")
-    : "Not set";
+    const statusText = subscription.active
+      ? "Active"
+      : subscription.message;
 
-  const statusText = subscription.active
-    ? "Active"
-    : subscription.message;
+    sectionContent.innerHTML = `
+      <h2>Subscription Details</h2>
 
-  sectionContent.innerHTML = `
-    <h2>Subscription Details</h2>
+      <div class="product">
+        <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
+        <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
+        <p><b>Status:</b> ${escapeHTML(statusText)}</p>
+        <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
+      </div>
 
-    <div class="product">
-      <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
-      <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
-      <p><b>Status:</b> ${escapeHTML(statusText)}</p>
-      <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
-    </div>
+      <div class="product">
+        <h3>Renew Subscription</h3>
 
-    <div class="product">
-      <h3>Renew Subscription</h3>
+        <p>
+          Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
+        </p>
 
-      <p>
-        Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
-      </p>
-
-      <p><b>UPI ID:</b></p>
-
-      <input
-        id="renewalUPI"
-        value="${RENEWAL_UPI_ID}"
-        readonly
-      >
-
-      <button
-        class="secondary"
-        type="button"
-        id="copyRenewalUPI">
-        Copy UPI ID
-      </button>
-
-      <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
-
-      <p class="muted">
-        Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
-        Admin payment verify karne ke baad request approve karega.
-      </p>
-
-      <form id="renewalForm">
-        <label for="renewalUTR">
-          UTR / Transaction Reference Number *
-        </label>
+        <p><b>UPI ID:</b></p>
 
         <input
-          id="renewalUTR"
-          type="text"
-          minlength="6"
-          maxlength="50"
-          required
-          placeholder="Enter payment UTR number"
+          id="renewalUPI"
+          value="${RENEWAL_UPI_ID}"
+          readonly
         >
 
         <button
-          class="primary"
-          type="submit"
-          id="submitRenewalBtn">
-          Submit Renewal Request
+          class="secondary"
+          type="button"
+          id="copyRenewalUPI">
+          Copy UPI ID
         </button>
-      </form>
-    </div>
 
-    <div class="product">
-      <h3>Renewal Request History</h3>
-      <div id="renewalHistory">
-        Loading renewal requests...
+        <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
+
+        <p class="muted">
+          Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
+          Admin payment verify karne ke baad request approve karega.
+        </p>
+
+        <form id="renewalForm">
+          <label for="renewalUTR">
+            UTR / Transaction Reference Number *
+          </label>
+
+          <input
+            id="renewalUTR"
+            type="text"
+            minlength="6"
+            maxlength="50"
+            required
+            placeholder="Enter payment UTR number"
+          >
+
+          <button
+            class="primary"
+            type="submit"
+            id="submitRenewalBtn">
+            Submit Renewal Request
+          </button>
+        </form>
       </div>
-    </div>
-  `;
 
-  $("copyRenewalUPI")?.addEventListener(
-    "click",
-    copyRenewalUPI
-  );
+      <div class="product">
+        <h3>Renewal Request History</h3>
+        <div id="renewalHistory">
+          Loading renewal requests...
+        </div>
+      </div>
+    `;
 
-  $("renewalForm")?.addEventListener(
-    "submit",
-    submitRenewalRequest
-  );
+    $("copyRenewalUPI")?.addEventListener(
+      "click",
+      copyRenewalUPI
+    );
 
-  try {
-    const requests = await loadSubscriptionRequests();
-    const history = $("renewalHistory");
+    $("renewalForm")?.addEventListener(
+      "submit",
+      submitRenewalRequest
+    );
 
-    if (history) {
-      history.innerHTML = requests.length
-        ? requests.map(request => {
-            const date = request.createdAt?.toDate
-              ? request.createdAt.toDate().toLocaleString("en-IN")
-              : "Recently submitted";
+    try {
+      const requests = await loadSubscriptionRequests();
+      const history = $("renewalHistory");
 
-            const status = String(
-              request.status || "pending"
-            ).toUpperCase();
+      if (history) {
+        history.innerHTML = requests.length
+          ? requests.map(request => {
+              const date = request.createdAt?.toDate
+                ? request.createdAt.toDate().toLocaleString("en-IN")
+                : "Recently submitted";
 
-            return `
-              <article class="product">
-                <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
-                <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
-                <p><b>Date:</b> ${escapeHTML(date)}</p>
-                <p><b>Status:</b> ${escapeHTML(status)}</p>
-              </article>
-            `;
-          }).join("")
-        : "<p>No renewal requests submitted yet.</p>";
+              const status = String(
+                request.status || "pending"
+              ).toUpperCase();
+
+              return `
+                <article class="product">
+                  <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
+                  <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
+                  <p><b>Date:</b> ${escapeHTML(date)}</p>
+                  <p><b>Status:</b> ${escapeHTML(status)}</p>
+                </article>
+              `;
+            }).join("")
+          : "<p>No renewal requests submitted yet.</p>";
+      }
+
+    } catch (error) {
+      console.error("Renewal history error:", error);
+
+      const history = $("renewalHistory");
+
+      if (history) {
+        history.textContent =
+          "Renewal history load nahi hui: " + error.message;
+      }
     }
 
-  } catch (error) {
-    console.error("Renewal history error:", error);
-
-    const history = $("renewalHistory");
-
-    if (history) {
-      history.textContent =
-        "Renewal history load nahi hui: " + error.message;
-    }
-  }
-
-  return;
+    return;
   }
 }
+
 /* =====================================
    SINGLE LOGIN HANDLER
 ===================================== */
