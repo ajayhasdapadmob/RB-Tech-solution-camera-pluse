@@ -1875,3 +1875,108 @@ select:focus-visible {
     width: 38%;
   }
 }
+/* =========================================
+   PRODUCT DETAILS - HORIZONTAL TABS
+========================================= */
+
+.product-detail-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  gap: 0;
+  margin: 30px 0 0;
+  border-bottom: 2px solid #087f3c;
+  background: #f4f7f5;
+}
+
+.product-detail-tab {
+  border: none;
+  border-bottom: 4px solid transparent;
+  background: transparent;
+  color: #333;
+  padding: 17px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+.product-detail-tab:hover {
+  color: #087f3c;
+  background: #eaf5ee;
+}
+
+.product-detail-tab.active {
+  color: #087f3c;
+  border-bottom-color: #087f3c;
+  background: #ffffff;
+}
+
+.detail-tab-panel {
+  width: 100%;
+  padding-top: 20px;
+}
+
+.detail-tab-panel[hidden] {
+  display: none !important;
+}
+
+/* Specification table */
+
+.specification-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.specification-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.specification-table th,
+.specification-table td {
+  padding: 13px 15px;
+  border: 1px solid #dddddd;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.specification-table th {
+  width: 30%;
+  background: #f3f6f4;
+  color: #222;
+  font-weight: 700;
+}
+
+.specification-table td {
+  color: #333;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Mobile responsive */
+
+@media (max-width: 600px) {
+
+  .product-detail-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .product-detail-tab {
+    padding: 13px 6px;
+    font-size: 13px;
+  }
+
+  .specification-table th,
+  .specification-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .specification-table th {
+    width: 38%;
+  }
+
+}
