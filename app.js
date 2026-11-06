@@ -1217,56 +1217,44 @@ enquiryWhatsApp?.addEventListener("click", () => {
 searchInput?.addEventListener("input", filterProducts);
 categoryFilter?.addEventListener("change", filterProducts);
 
-/* =========================================
-   FIRESTORE PRODUCTS
-   Old products + Customer Admin products
-========================================= */
+// =====================================
+// CUSTOMER PRODUCTS COLLECTION
+// =====================================
 
-async function loadProducts() {
-  if (productGrid) {
-    productGrid.innerHTML = "<p>Loading products...</p>";
-  }
+match /customerProducts/{productId} {
 
-  try {
-    const [oldProductsSnapshot, customerProductsSnapshot] =
-      await Promise.all([
-        getDocs(collection(db, "products")),
-        getDocs(collection(db, "customerProducts"))
-      ]);
+  // Public website: active products only.
+  // Customer: own products with active subscription.
+  // Master Admin: all products.
 
-    const oldProducts = oldProductsSnapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data(),
-      productSource: "website"
-    }));
+  allow read: if isMasterAdmin()
+    || resource.data.active == true
+    || (
+      request.auth != null
+      && resource.data.customerId is string
+      && isActiveCustomer(resource.data.customerId)
+    );
 
-    const customerProducts = customerProductsSnapshot.docs
-      .map(item => ({
-        id: item.id,
-        ...item.data(),
-        productSource: "customer"
-      }))
-      .filter(product => product.active !== false);
+  allow create: if isMasterAdmin()
+    || (
+      request.resource.data.customerId is string
+      && isActiveCustomer(request.resource.data.customerId)
+    );
 
-    allProducts = [
-      ...oldProducts.filter(product => product.active !== false),
-      ...customerProducts
-    ];
+  allow update: if isMasterAdmin()
+    || (
+      request.auth != null
+      && resource.data.customerId is string
+      && request.resource.data.customerId == resource.data.customerId
+      && isActiveCustomer(resource.data.customerId)
+    );
 
-    displayProducts();
-    displayTrendingProducts();
-    setupTrendingCarousel();
-    createOfferCategoryCards();
-    startHeroSlideshow();
-
-  } catch (error) {
-    console.error("Product loading error:", error);
-
-    if (productGrid) {
-      productGrid.innerHTML =
-        "<p>Unable to load products. Please try again later.</p>";
-    }
-  }
+  allow delete: if isMasterAdmin()
+    || (
+      request.auth != null
+      && resource.data.customerId is string
+      && isActiveCustomer(resource.data.customerId)
+    );
 }
 
 /* =========================================
