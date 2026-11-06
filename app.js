@@ -542,8 +542,7 @@ function createRFIForm(product) {
   const captcha = createCaptchaQuestion();
 
   return `
-    <section class="rfi-section" id="requestInformation">
-
+    <section class="rfi-section" id="RequestInformation">
       <h2>Request for Information</h2>
 
       <p class="rfi-required-note">
@@ -814,88 +813,117 @@ function openProductDetails(index) {
   const specifications = getProductSpecifications(product);
 
   modalContent.innerHTML = `
-    <div class="modal-product-layout">
+    <div class="product-detail-page">
 
-      <div class="modal-product-image">
-        <img src="${escapeHTML(image)}"
-          alt="${escapeHTML(name)}"
-          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'">
+      <div class="product-detail-navigation">
+        <a href="#Specification">Specification</a>
+        <a href="#RequestInformation">Request for Information</a>
       </div>
 
-      <div class="modal-product-info">
+      <div class="modal-product-layout">
 
-        <span>${escapeHTML(category)}</span>
-        <h2>${escapeHTML(name)}</h2>
+        <div class="modal-product-image">
+          <img
+            src="${escapeHTML(image)}"
+            alt="${escapeHTML(name)}"
+            onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'"
+          >
+        </div>
 
-        ${model ? `
-          <p><strong>Model:</strong> ${escapeHTML(model)}</p>
-        ` : ""}
+        <div class="modal-product-info">
 
-        ${price ? `
-          <p><strong>Price:</strong> ${escapeHTML(price)}</p>
-        ` : ""}
+          <span>${escapeHTML(category)}</span>
 
-        ${description ? `<p>${escapeHTML(description)}</p>` : ""}
+          <h2>${escapeHTML(name)}</h2>
 
-        ${features.length ? `
-          <div class="product-features">
-            <h3>Features</h3>
-            <ul>
-              ${features.map(feature => `<li>${escapeHTML(feature)}</li>`).join("")}
-            </ul>
-          </div>
-        ` : ""}
+          ${model ? `
+            <p><strong>Model:</strong> ${escapeHTML(model)}</p>
+          ` : ""}
 
-        ${specifications.length ? `
-          <div class="product-specifications">
-            <h3>Specification</h3>
-            <table>
-              <tbody>
-                ${specifications.map(item => `
-                  <tr>
-                    <th>${escapeHTML(item.label)}</th>
-                    <td>${escapeHTML(item.value)}</td>
-                  </tr>
+          ${price ? `
+            <p><strong>Price:</strong> ${escapeHTML(price)}</p>
+          ` : ""}
+
+          ${description ? `
+            <p>${escapeHTML(description)}</p>
+          ` : ""}
+
+          ${features.length ? `
+            <div class="product-features">
+              <h3>Features</h3>
+              <ul>
+                ${features.map(feature => `
+                  <li>${escapeHTML(feature)}</li>
                 `).join("")}
-              </tbody>
-            </table>
-          </div>
-        ` : `
-          <div class="product-specifications">
-            <h3>Specification</h3>
-            <p>Specifications will be updated soon.</p>
-          </div>
-        `}
+              </ul>
+            </div>
+          ` : ""}
 
-        ${note ? `
-          <div class="product-additional-note">
-            <h3>Additional Note</h3>
-            <p>${escapeHTML(note)}</p>
-          </div>
-        ` : ""}
+          <button type="button" id="modalEnquireBtn">
+            Enquire on WhatsApp
+          </button>
 
-        <button type="button" id="modalEnquireBtn">
-          Enquire on WhatsApp
-        </button>
-
+        </div>
       </div>
-    </div>
 
-    ${createRFIForm(product)}
+      <section class="product-specifications" id="Specification">
+
+        <h2>Specification</h2>
+
+        ${
+          specifications.length
+            ? `
+              <div class="specification-table-wrapper">
+                <table class="specification-table">
+                  <tbody>
+                    ${specifications.map(item => `
+                      <tr>
+                        <th>${escapeHTML(item.label)}</th>
+                        <td>${escapeHTML(item.value)}</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            `
+            : `
+              <p class="specification-empty">
+                Product specifications have not been added yet.
+                Please update this product's specifications from Admin Panel.
+              </p>
+            `
+        }
+
+      </section>
+
+      ${note ? `
+        <div class="product-additional-note">
+          <h3>Additional Note</h3>
+          <p>${escapeHTML(note)}</p>
+        </div>
+      ` : ""}
+
+      ${createRFIForm(product)}
+
+    </div>
   `;
 
   productModal.classList.add("active");
   productModal.style.display = "flex";
 
+  // Modal ko shuru se dikhayein
+  modalContent.scrollTop = 0;
+
   document.getElementById("modalEnquireBtn")
     ?.addEventListener("click", () => {
       openWhatsApp(
-        "Hello RB Tech Solution,\nI want details about:\n" +
+        "Hello RB Tech Solution,\\nI want details about:\\n" +
         name +
-        (model ? "\nModel: " + model : "")
+        (model ? "\\nModel: " + model : "")
       );
     });
 
+  // RFI form submit
   const rfiForm = modalContent.querySelector("#rfiForm");
 
   rfiForm?.addEventListener("submit", event => {
@@ -903,29 +931,29 @@ function openProductDetails(index) {
     submitRFI(event.currentTarget);
   });
 
+  // Captcha refresh
   rfiForm?.querySelector("#rfiCaptchaRefresh")
     ?.addEventListener("click", () => {
       refreshRFICaptcha(rfiForm);
     });
+
+  // Specification / RFI links
+  modalContent.querySelectorAll(".product-detail-navigation a")
+    .forEach(link => {
+      link.addEventListener("click", event => {
+        event.preventDefault();
+
+        const target = modalContent.querySelector(
+          link.getAttribute("href")
+        );
+
+        target?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+    });
 }
-
-function closeProductModal() {
-  if (!productModal) return;
-
-  productModal.classList.remove("active");
-  productModal.style.display = "none";
-}
-
-modalClose?.addEventListener("click", closeProductModal);
-
-productModal?.addEventListener("click", event => {
-  if (event.target === productModal) closeProductModal();
-});
-
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape") closeProductModal();
-});
-
 /* =========================================
    HERO SLIDESHOW
 ========================================= */
