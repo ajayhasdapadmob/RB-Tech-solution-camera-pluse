@@ -813,6 +813,11 @@ function openProductDetails(index) {
   const specifications = getProductSpecifications(product);
 
   modalContent.innerHTML = `
+  <button
+  id="modalClose"
+  type="button"
+  aria-label="Close product details"
+>×</button>
     <div class="product-detail-page">
 
       <div class="product-detail-navigation">
@@ -847,7 +852,7 @@ function openProductDetails(index) {
           ${description ? `
             <p>${escapeHTML(description)}</p>
           ` : ""}
-
+         
           ${features.length ? `
             <div class="product-features">
               <h3>Features</h3>
@@ -858,7 +863,7 @@ function openProductDetails(index) {
               </ul>
             </div>
           ` : ""}
-
+           
           <button type="button" id="modalEnquireBtn">
             Enquire on WhatsApp
           </button>
@@ -907,7 +912,8 @@ function openProductDetails(index) {
 
     </div>
   `;
-
+modalContent.querySelector("#modalClose")
+  ?.addEventListener("click", closeProductModal);
   productModal.classList.add("active");
   productModal.style.display = "flex";
 
