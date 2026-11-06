@@ -793,6 +793,7 @@ async function submitRFI(form) {
 
 /* =========================================
    PRODUCT DETAILS MODAL
+   CP PLUS STYLE HORIZONTAL TABS
 ========================================= */
 
 function openProductDetails(index) {
@@ -813,17 +814,15 @@ function openProductDetails(index) {
   const specifications = getProductSpecifications(product);
 
   modalContent.innerHTML = `
-  <button
-  id="modalClose"
-  type="button"
-  aria-label="Close product details"
->×</button>
+    <button
+      id="modalClose"
+      type="button"
+      aria-label="Close product details"
+    >×</button>
+
     <div class="product-detail-page">
 
-      <div class="product-detail-navigation">
-        <a href="#Specification">Specification</a>
-        <a href="#RequestInformation">Request for Information</a>
-      </div>
+      <!-- PRODUCT INFORMATION -->
 
       <div class="modal-product-layout">
 
@@ -852,7 +851,7 @@ function openProductDetails(index) {
           ${description ? `
             <p>${escapeHTML(description)}</p>
           ` : ""}
-         
+
           ${features.length ? `
             <div class="product-features">
               <h3>Features</h3>
@@ -863,43 +862,13 @@ function openProductDetails(index) {
               </ul>
             </div>
           ` : ""}
-           
+
           <button type="button" id="modalEnquireBtn">
             Enquire on WhatsApp
           </button>
 
         </div>
       </div>
-
-      <section class="product-specifications" id="Specification">
-
-        <h2>Specification</h2>
-
-        ${
-          specifications.length
-            ? `
-              <div class="specification-table-wrapper">
-                <table class="specification-table">
-                  <tbody>
-                    ${specifications.map(item => `
-                      <tr>
-                        <th>${escapeHTML(item.label)}</th>
-                        <td>${escapeHTML(item.value)}</td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              </div>
-            `
-            : `
-              <p class="specification-empty">
-                Product specifications have not been added yet.
-                Please update this product's specifications from Admin Panel.
-              </p>
-            `
-        }
-
-      </section>
 
       ${note ? `
         <div class="product-additional-note">
@@ -908,59 +877,188 @@ function openProductDetails(index) {
         </div>
       ` : ""}
 
-      ${createRFIForm(product)}
+      <!-- HORIZONTAL TABS -->
+
+      <div class="product-detail-tabs" role="tablist"
+        aria-label="Product information">
+
+        <button
+          type="button"
+          class="product-detail-tab active"
+          id="specificationTab"
+          role="tab"
+          aria-selected="true"
+          aria-controls="specificationPanel"
+          data-detail-tab="specification"
+        >
+          Specification
+        </button>
+
+        <button
+          type="button"
+          class="product-detail-tab"
+          id="rfiTab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="rfiPanel"
+          data-detail-tab="rfi"
+        >
+          Request for Information
+        </button>
+
+      </div>
+
+      <!-- SPECIFICATION PANEL -->
+
+      <section
+        class="detail-tab-panel"
+        id="specificationPanel"
+        role="tabpanel"
+        aria-labelledby="specificationTab"
+      >
+
+        <section class="product-specifications" id="Specification">
+
+          <h2>Specification</h2>
+
+          ${
+            specifications.length
+              ? `
+                <div class="specification-table-wrapper">
+
+                  <table class="specification-table">
+
+                    <tbody>
+                      ${specifications.map(item => `
+                        <tr>
+                          <th>${escapeHTML(item.label)}</th>
+                          <td>${escapeHTML(item.value)}</td>
+                        </tr>
+                      `).join("")}
+                    </tbody>
+
+                  </table>
+
+                </div>
+              `
+              : `
+                <p class="specification-empty">
+                  Product specifications have not been added yet.
+                  Please update this product's specifications from Admin Panel.
+                </p>
+              `
+          }
+
+        </section>
+
+      </section>
+
+      <!-- REQUEST INFORMATION PANEL -->
+
+      <div
+        class="detail-tab-panel"
+        id="rfiPanel"
+        role="tabpanel"
+        aria-labelledby="rfiTab"
+        hidden
+      >
+
+        ${createRFIForm(product)}
+
+      </div>
 
     </div>
   `;
-modalContent.querySelector("#modalClose")
-  ?.addEventListener("click", closeProductModal);
+
+  // CLOSE BUTTON
+
+  modalContent.querySelector("#modalClose")
+    ?.addEventListener("click", closeProductModal);
+
+  // OPEN MODAL
+
   productModal.classList.add("active");
   productModal.style.display = "flex";
-
-  // Modal ko shuru se dikhayein
   modalContent.scrollTop = 0;
 
-  document.getElementById("modalEnquireBtn")
+  // WHATSAPP ENQUIRY
+
+  modalContent.querySelector("#modalEnquireBtn")
     ?.addEventListener("click", () => {
+
       openWhatsApp(
-        "Hello RB Tech Solution,\\nI want details about:\\n" +
+        "Hello RB Tech Solution,\nI want details about:\n" +
         name +
-        (model ? "\\nModel: " + model : "")
+        (model ? "\nModel: " + model : "")
       );
+
     });
 
-  // RFI form submit
+  // HORIZONTAL TAB SWITCHING
+
+  const tabButtons = modalContent.querySelectorAll(
+    ".product-detail-tab"
+  );
+
+  const specificationPanel =
+    modalContent.querySelector("#specificationPanel");
+
+  const rfiPanel =
+    modalContent.querySelector("#rfiPanel");
+
+  tabButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      const selectedTab = button.dataset.detailTab;
+
+      tabButtons.forEach(tab => {
+
+        const isActive = tab === button;
+
+        tab.classList.toggle("active", isActive);
+
+        tab.setAttribute(
+          "aria-selected",
+          isActive ? "true" : "false"
+        );
+
+      });
+
+      specificationPanel.hidden =
+        selectedTab !== "specification";
+
+      rfiPanel.hidden =
+        selectedTab !== "rfi";
+
+      modalContent.scrollTop = 0;
+
+    });
+
+  });
+
+  // RFI FORM SUBMISSION
+
   const rfiForm = modalContent.querySelector("#rfiForm");
 
   rfiForm?.addEventListener("submit", event => {
+
     event.preventDefault();
+
     submitRFI(event.currentTarget);
+
   });
 
-  // Captcha refresh
+  // CAPTCHA REFRESH
+
   rfiForm?.querySelector("#rfiCaptchaRefresh")
     ?.addEventListener("click", () => {
+
       refreshRFICaptcha(rfiForm);
+
     });
 
-  // Specification / RFI links
-  modalContent.querySelectorAll(".product-detail-navigation a")
-    .forEach(link => {
-      link.addEventListener("click", event => {
-        event.preventDefault();
-
-        const target = modalContent.querySelector(
-          link.getAttribute("href")
-        );
-
-        target?.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      });
-    });
 }
-
 /* =========================================
    CLOSE PRODUCT DETAILS MODAL
 ========================================= */
