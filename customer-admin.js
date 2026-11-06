@@ -335,11 +335,109 @@ async function updateDashboardCounts() {
   }
 }
 
+
+/* =====================================
+   PRODUCT SPECIFICATION FIELD LIST
+===================================== */
+
+const SPECIFICATION_FIELDS = [
+  "Image Sensor",
+  "Minimum Illumination",
+  "Effective Pixels",
+  "Shutter Speed",
+  "Angle Adjustment",
+  "ROM",
+  "White Balance",
+  "Image Setting",
+  "Lens Type",
+  "Max. Aperture",
+  "Lens Mount",
+  "Smart IR",
+  "IR Number",
+  "IR",
+  "Day/Night",
+  "Close Focus Distance",
+  "DORI Distance",
+  "Gain Control (AGC)",
+  "Lens",
+  "Video Compression",
+  "Back Light Compensation",
+  "S/N Ratio",
+  "Angle of view",
+  "Stream Capability",
+  "Frame Rate",
+  "Resolution",
+  "Noise Reduction",
+  "Defog",
+  "Privacy Mask",
+  "Audio",
+  "Audio Compression",
+  "OSD",
+  "Bit Rate Control",
+  "Bit Rate",
+  "Protocol",
+  "Video Format",
+  "SDK and API",
+  "Event Alarm",
+  "Cyber Security",
+  "Device Search Tool",
+  "OTA (Over-The-Air)",
+  "Audio Sampling Rate",
+  "Image Flip",
+  "Iris Control",
+  "Browser",
+  "User/Host",
+  "Ethernet",
+  "Storage",
+  "Power Source",
+  "Power Consumption",
+  "Operating Temperature",
+  "Operating Humidity",
+  "Storage Temperature",
+  "Storage Humidity",
+  "Certificates",
+  "Casing",
+  "Dimensions",
+  "Weight"
+];
+
+/* Long specification values ke liye textarea */
+const LONG_SPECIFICATION_FIELDS = [
+  "DORI Distance",
+  "Frame Rate",
+  "Video Compression",
+  "Protocol",
+  "Event Alarm",
+  "Cyber Security",
+  "Power Consumption",
+  "Certificates",
+  "White Balance",
+  "Image Setting"
+];
+/* =====================================
+   COLLECT SPECIFICATIONS
+===================================== */
+
+function collectSpecifications() {
+  const result = {};
+  
+  document.querySelectorAll("[data-spec-key]").forEach(field => {
+    const key = field.dataset.specKey;
+    const value = field.value.trim();
+    
+    if (key && value) {
+      result[key] = value;
+    }
+  });
+  
+  return result;
+}
 /* =====================================
    PRODUCT FORM
 ===================================== */
 
 function productFormHTML(product = {}) {
+  
   const categories = [
     "CCTV Cameras",
     "IP Cameras",
@@ -349,28 +447,71 @@ function productFormHTML(product = {}) {
     "Accessories",
     "Other"
   ];
-
+  
   const categoryOptions = categories.map(category => `
     <option value="${escapeHTML(category)}"
       ${product.category === category ? "selected" : ""}>
       ${escapeHTML(category)}
     </option>
   `).join("");
-
-  const features = Array.isArray(product.features)
-    ? product.features.join("\n")
-    : "";
-
+  
+  const features = Array.isArray(product.features) ?
+    product.features.join("\n") :
+    "";
+  
   const specifications =
     product.specifications &&
-    typeof product.specifications === "object"
-      ? Object.entries(product.specifications)
-      : [];
-
+    typeof product.specifications === "object" ?
+    product.specifications :
+    {};
+  
+  /* Existing saved specifications + all standard fields */
+  const allSpecificationFields = [
+    ...SPECIFICATION_FIELDS,
+    ...Object.keys(specifications).filter(
+      key => !SPECIFICATION_FIELDS.includes(key)
+    )
+  ];
+  
+  const specificationInputs = allSpecificationFields.map(key => {
+    
+    const value = specifications[key] ?? "";
+    
+    const fieldLabel = escapeHTML(key);
+    const fieldValue = escapeHTML(value);
+    
+    if (LONG_SPECIFICATION_FIELDS.includes(key)) {
+      return `
+        <div class="specification-input">
+          <label>${fieldLabel}</label>
+          <textarea
+            data-spec-key="${fieldLabel}"
+            rows="3"
+            placeholder="Enter ${fieldLabel}"
+          >${fieldValue}</textarea>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="specification-input">
+        <label>${fieldLabel}</label>
+        <input
+          type="text"
+          data-spec-key="${fieldLabel}"
+          value="${fieldValue}"
+          placeholder="Enter ${fieldLabel}"
+        >
+      </div>
+    `;
+  }).join("");
+  
   return `
     <h2>${product.id ? "Edit Product" : "Add New Product"}</h2>
 
     <form id="productForm">
+
+      <h3>Product Information</h3>
 
       <div class="grid">
 
@@ -403,10 +544,16 @@ function productFormHTML(product = {}) {
         </div>
 
         <div>
-          <label for="productImageFile">Product Photo (Mobile / Computer se upload karein)</label>
+          <label for="productImageFile">
+            Product Photo (Mobile / Computer se upload karein)
+          </label>
+
           <input id="productImageFile" type="file"
             accept="image/jpeg,image/png,image/webp">
-          <small class="muted">JPG, PNG ya WEBP. Maximum file size 5 MB.</small>
+
+          <small class="muted">
+            JPG, PNG ya WEBP. Maximum file size 5 MB.
+          </small>
 
           <div style="margin:12px 0;">
             <img id="productImagePreview"
@@ -416,11 +563,17 @@ function productFormHTML(product = {}) {
           </div>
 
           <label for="productImage">Existing Image URL (optional)</label>
+
           <input id="productImage" type="url"
             value="${escapeHTML(product.imageUrl || "")}"
             placeholder="Optional: paste an existing image URL">
-          <small class="muted">Nayi photo select karenge to Cloudinary par upload hogi. Photo select na karne par existing URL use hoga.</small>
-          <p id="imageUploadStatus" class="muted" aria-live="polite"></p>
+
+          <small class="muted">
+            Nayi photo select karenge to Cloudinary par upload hogi.
+          </small>
+
+          <p id="imageUploadStatus" class="muted"
+            aria-live="polite"></p>
         </div>
 
         <div>
@@ -433,16 +586,25 @@ function productFormHTML(product = {}) {
           <textarea id="productFeatures">${escapeHTML(features)}</textarea>
         </div>
 
-        <div>
-          <label>Specifications (Name: Value)</label>
-          <textarea id="productSpecifications">${escapeHTML(
-            specifications.map(([key, value]) => `${key}: ${value}`).join("\n")
-          )}</textarea>
-        </div>
-
       </div>
 
+      <hr>
+
+      <h3>Technical Specifications</h3>
+
+      <p class="muted">
+        Har specification ki value alag field mein enter karein.
+        Jo specification available nahi hai use blank chhod sakte hain.
+      </p>
+
+      <div class="grid specification-grid">
+        ${specificationInputs}
+      </div>
+
+      <hr>
+
       <div class="checkbox-row">
+
         <label>
           <input type="checkbox" id="productNew"
             ${product.isNew ? "checked" : ""}>
@@ -460,6 +622,7 @@ function productFormHTML(product = {}) {
             ${product.active !== false ? "checked" : ""}>
           Active
         </label>
+
       </div>
 
       <button class="primary" id="saveProductBtn"
@@ -474,26 +637,6 @@ function productFormHTML(product = {}) {
 
     </form>
   `;
-}
-/* =====================================
-   PARSE SPECIFICATIONS
-===================================== */
-
-function parseSpecifications(value) {
-  const result = {};
-
-  value.split("\n").forEach(line => {
-    const separator = line.indexOf(":");
-
-    if (separator < 1) return;
-
-    const key = line.slice(0, separator).trim();
-    const val = line.slice(separator + 1).trim();
-
-    if (key && val) result[key] = val;
-  });
-
-  return result;
 }
 
 /* =====================================
@@ -606,10 +749,10 @@ async function saveProduct(event) {
       imageUrl = existing.imageUrl;
     }
 
-    const features = $("productFeatures").value
-      .split("\\n")
-      .map(item => item.trim())
-      .filter(Boolean);
+  const features = $("productFeatures").value
+  .split("\n")
+  .map(item => item.trim())
+  .filter(Boolean);
 
     const productData = {
       customerId: currentCustomer.id,
@@ -621,9 +764,7 @@ async function saveProduct(event) {
       imageUrl,
       description: $("productDescription").value.trim(),
       features,
-      specifications: parseSpecifications(
-        $("productSpecifications").value
-      ),
+     specifications: collectSpecifications(),
       isNew: $("productNew").checked,
       trending: $("productTrending").checked,
       active: $("productActive").checked,
@@ -848,7 +989,6 @@ function attachProductFormEvents() {
 
 function formatEnquiryDate(timestamp) {
   if (!timestamp) return "Not available";
-    if (!timestamp) return "Not available";
 
   const date = typeof timestamp.toDate === "function"
     ? timestamp.toDate()
