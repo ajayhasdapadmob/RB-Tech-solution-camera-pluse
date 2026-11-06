@@ -954,6 +954,35 @@ function openProductDetails(index) {
       });
     });
 }
+
+/* =========================================
+   CLOSE PRODUCT DETAILS MODAL
+========================================= */
+
+function closeProductModal() {
+  if (!productModal) return;
+
+  productModal.classList.remove("active");
+  productModal.style.display = "none";
+}
+
+// Close button
+modalClose?.addEventListener("click", closeProductModal);
+
+// Modal ke bahar click karne par close
+productModal?.addEventListener("click", event => {
+  if (event.target === productModal) {
+    closeProductModal();
+  }
+});
+
+// Escape key se close
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeProductModal();
+  }
+});
+
 /* =========================================
    HERO SLIDESHOW
 ========================================= */
