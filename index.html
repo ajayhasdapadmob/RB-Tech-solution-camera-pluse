@@ -256,6 +256,120 @@
         padding: 17px;
       }
     }
+    /* MARKETING CONTENT */
+.marketing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 22px;
+  margin-top: 25px;
+}
+
+.marketing-item {
+  background: #fff;
+  border: 1px solid #e2e8e3;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, .06);
+  color: #26352b;
+}
+
+.marketing-item img,
+.marketing-item video {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+  background: #eef2ef;
+}
+
+.marketing-item-body {
+  padding: 17px;
+}
+
+.marketing-item-body h3 {
+  color: #075b30;
+  margin: 0 0 10px;
+}
+
+.marketing-item-body p {
+  color: #555;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.marketing-item button,
+.marketing-item a {
+  display: inline-block;
+  margin: 5px 6px 0 0;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 5px;
+  background: #087f3c;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.marketing-viewer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  background: rgba(0, 0, 0, .88);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketing-viewer.active {
+  display: flex;
+}
+
+.marketing-viewer-box {
+  position: relative;
+  background: white;
+  width: 100%;
+  max-width: 950px;
+  max-height: 92vh;
+  overflow: auto;
+  padding: 45px 18px 18px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+#closeMarketingViewer {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: 0;
+  background: #075b30;
+  color: white;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+#marketingViewerContent img,
+#marketingViewerContent video,
+#marketingViewerContent iframe {
+  max-width: 100%;
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border: 0;
+}
+
+#marketingViewerContent h2 {
+  color: #075b30;
+}
+
+@media(max-width:600px) {
+  .marketing-grid {
+    grid-template-columns: 1fr;
+  }
+}
   </style>
 </head>
 
@@ -321,17 +435,17 @@
           </div>
         </div>
 
-        <!-- MARKETING -->
-        <div class="nav-dropdown">
-          <a href="#marketing" class="dropdown-toggle">Marketing ▾</a>
-          <div class="dropdown-menu">
-            <a href="#marketing">Company News</a>
-            <a href="#marketing">Product Brochures</a>
-            <a href="#marketing">Videos</a>
-            <a href="#marketing">Gallery</a>
-          </div>
-        </div>
-
+    <!-- MARKETING -->
+<div class="nav-dropdown">
+  <a href="#marketing" class="dropdown-toggle">Marketing ▾</a>
+  <div class="dropdown-menu">
+    <a href="#companyNews">Company News</a>
+    <a href="#brochures">Product Brochures</a>
+    <a href="#videos">Videos</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#printPress">Print & Press</a>
+  </div>
+</div>
         <!-- SOLUTIONS -->
         <div class="nav-dropdown">
           <a href="#solutions" class="dropdown-toggle">Solutions ▾</a>
@@ -556,36 +670,78 @@
     </div>
   </section>
 
-  <!-- MARKETING -->
-  <section id="marketing">
-    <div class="section-heading">
-      <h2>Print & Press</h2>
-      <p>Explore company information, product brochures, videos and latest updates.</p>
-    </div>
+<!-- MARKETING CONTENT -->
+<section id="marketing">
+  <div class="section-heading">
+    <h2>News, Media & Resources</h2>
+    <p>Explore the latest company news, brochures, videos, gallery and press updates.</p>
+  </div>
+</section>
 
-    <div class="marketing-grid">
-      <a href="#" class="marketing-card open-contact">
-        <img src="images/products/jaise%20camera-01.jpg.png" alt="Company News">
-        <h3>Company News</h3>
-      </a>
+<!-- COMPANY NEWS -->
+<section id="companyNews">
+  <div class="section-heading">
+    <h2>Company News</h2>
+    <p>Latest news and updates from RB Tech Solution.</p>
+  </div>
+  <div id="companyNewsGrid" class="marketing-grid">
+    <p>Loading company news...</p>
+  </div>
+</section>
 
-      <a href="#products" class="marketing-card">
-        <img src="images/products/jaise%20camera-01.jpg.png" alt="Product Brochures">
-        <h3>Product Brochures</h3>
-      </a>
+<!-- PRODUCT BROCHURES -->
+<section id="brochures">
+  <div class="section-heading">
+    <h2>Product Brochures</h2>
+    <p>View and download product brochures and documents.</p>
+  </div>
+  <div id="brochuresGrid" class="marketing-grid">
+    <p>Loading brochures...</p>
+  </div>
+</section>
 
-      <a href="#" class="marketing-card open-contact">
-        <img src="images/products/jaise%20camera-01.jpg.png" alt="Videos">
-        <h3>Videos</h3>
-      </a>
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="section-heading">
+    <h2>Videos</h2>
+    <p>Watch product demonstrations and security solution videos.</p>
+  </div>
+  <div id="videosGrid" class="marketing-grid">
+    <p>Loading videos...</p>
+  </div>
+</section>
 
-      <a href="#" class="marketing-card open-contact">
-        <img src="images/products/jaise%20camera-01.jpg.png" alt="Gallery">
-        <h3>Gallery</h3>
-      </a>
-    </div>
-  </section>
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="section-heading">
+    <h2>Gallery</h2>
+    <p>Explore photos of products, installations and company activities.</p>
+  </div>
+  <div id="galleryGrid" class="marketing-grid">
+    <p>Loading gallery...</p>
+  </div>
+</section>
 
+<!-- PRINT & PRESS -->
+<section id="printPress">
+  <div class="section-heading">
+    <h2>Print & Press</h2>
+    <p>Company publications, press releases and media resources.</p>
+  </div>
+  <div id="printPressGrid" class="marketing-grid">
+    <p>Loading Print & Press content...</p>
+  </div>
+</section>
+
+<!-- MARKETING MEDIA VIEWER -->
+<div id="marketingViewer" class="marketing-viewer"
+     role="dialog" aria-modal="true" aria-label="Media viewer">
+  <div class="marketing-viewer-box">
+    <button type="button" id="closeMarketingViewer"
+            aria-label="Close">×</button>
+    <div id="marketingViewerContent"></div>
+  </div>
+</div>
   <!-- SUPPORT -->
   <section id="support">
     <div class="section-heading">
