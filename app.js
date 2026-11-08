@@ -4,6 +4,8 @@ import {
   collection,
   getDocs,
   addDoc,
+  where,
+  query,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
@@ -1226,49 +1228,57 @@ async function loadProducts() {
   if (productGrid) {
     productGrid.innerHTML = "<p>Loading products...</p>";
   }
-
+  
   try {
     const [oldProductsSnapshot, customerProductsSnapshot] =
-      await Promise.all([
-        getDocs(collection(db, "products")),
-        getDocs(collection(db, "customerProducts"))
-      ]);
-
+    await Promise.all([
+      getDocs(
+        query(
+          collection(db, "products"),
+          where("active", "==", true)
+        )
+      ),
+      
+      getDocs(
+        query(
+          collection(db, "customerProducts"),
+          where("active", "==", true)
+        )
+      )
+    ]);
+    
     const oldProducts = oldProductsSnapshot.docs.map(item => ({
       id: item.id,
       ...item.data(),
       productSource: "website"
     }));
-
-    const customerProducts = customerProductsSnapshot.docs
-      .map(item => ({
-        id: item.id,
-        ...item.data(),
-        productSource: "customer"
-      }))
-      .filter(product => product.active !== false);
-
+    
+    const customerProducts = customerProductsSnapshot.docs.map(item => ({
+      id: item.id,
+      ...item.data(),
+      productSource: "customer"
+    }));
+    
     allProducts = [
-      ...oldProducts.filter(product => product.active !== false),
+      ...oldProducts,
       ...customerProducts
     ];
-
+    
     displayProducts();
     displayTrendingProducts();
     setupTrendingCarousel();
     createOfferCategoryCards();
     startHeroSlideshow();
-
+    
   } catch (error) {
     console.error("Product loading error:", error);
-
+    
     if (productGrid) {
       productGrid.innerHTML =
         "<p>Unable to load products. Please try again later.</p>";
     }
   }
 }
-
 /* =========================================
    FOOTER YEAR
 ========================================= */
