@@ -1,4 +1,4 @@
-
+import { renderMarketingAdmin } from "./marketing-admin.js";
 import { auth, db, authReady } from "./firebase.js";
 
 import {
@@ -2695,6 +2695,10 @@ async function showSection(section) {
     return;
   }
 
+  // =====================================
+  // ENQUIRIES SECTION
+  // =====================================
+
   if (section === "enquiries") {
     sectionContent.innerHTML = `
       <h2>Customer Enquiries</h2>
@@ -2702,25 +2706,215 @@ async function showSection(section) {
     `;
 
     try {
+      ensureActiveSubscription();
+
       await loadCustomerEnquiries();
       await updateDashboardCounts();
 
       showEnquiries();
-
-      showMessage(dashboardMessage, "");
 
     } catch (error) {
       console.error("Enquiries loading error:", error);
 
       sectionContent.innerHTML = `
         <h2>Customer Enquiries</h2>
-        <p>${escapeHTML(error.message || "Enquiries load nahi hui.")}</p>
+        <p class="message">
+          ${escapeHTML(error.message || "Enquiries load nahi hui.")}
+        </p>
+        <button
+          class="secondary"
+          type="button"
+          id="retryEnquiriesBtn">
+          Try Again
+        </button>
+      `;
+
+      $("retryEnquiriesBtn")?.addEventListener("click", () => {
+        showSection("enquiries");
+      });
+    }
+
+    return;
+  }
+
+  // =====================================
+  // SUBSCRIPTION SECTION
+  // =====================================
+
+  if (section === "subscription") {
+    const subscription = getRenewalStatus();
+    const expiryDate = getExpiryDate(currentCustomer);
+
+    const expiryText = expiryDate
+      ? expiryDate.toLocaleDateString("en-IN")
+      : "Not available";
+
+    const amount = Number(currentCustomer.subscriptionAmount);
+
+    const amountText = Number.isFinite(amount)
+      ? amount.toLocaleString("en-IN")
+      : "Not set";
+
+    const statusText = subscription.active
+      ? "Active"
+      : subscription.message;
+
+    sectionContent.innerHTML = `
+      <h2>Subscription Details</h2>
+
+      <div class="product">
+        <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
+        <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
+        <p><b>Status:</b> ${escapeHTML(statusText)}</p>
+        <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
+      </div>
+
+      <div class="product">
+        <h3>Renew Subscription</h3>
+
+        <p>
+          Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
+        </p>
+
+        <p><b>UPI ID:</b></p>
+
+        <input id="renewalUPI" value="${RENEWAL_UPI_ID}" readonly>
+
+        <button
+          class="secondary"
+          type="button"
+          id="copyRenewalUPI">
+          Copy UPI ID
+        </button>
+
+        <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
+
+        <p class="muted">
+          Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
+          Admin payment verify karne ke baad request approve karega.
+        </p>
+
+        <form id="renewalForm">
+          <label for="renewalUTR">
+            UTR / Transaction Reference Number *
+          </label>
+
+          <input
+            id="renewalUTR"
+            type="text"
+            minlength="6"
+            maxlength="50"
+            required
+            placeholder="Enter payment UTR number"
+          >
+
+          <button
+            class="primary"
+            type="submit"
+            id="submitRenewalBtn">
+            Submit Renewal Request
+          </button>
+        </form>
+      </div>
+
+      <div class="product">
+        <h3>Renewal Request History</h3>
+        <div id="renewalHistory">
+          Loading renewal requests...
+        </div>
+      </div>
+    `;
+
+    $("copyRenewalUPI")?.addEventListener(
+      "click",
+      copyRenewalUPI
+    );
+
+    $("renewalForm")?.addEventListener(
+      "submit",
+      submitRenewalRequest
+    );
+
+    try {
+      const requests = await loadSubscriptionRequests();
+      const history = $("renewalHistory");
+
+      if (history) {
+        history.innerHTML = requests.length
+          ? requests.map(request => {
+              const date = request.createdAt?.toDate
+                ? request.createdAt.toDate().toLocaleString("en-IN")
+                : "Recently submitted";
+
+              const status = String(
+                request.status || "pending"
+              ).toUpperCase();
+
+              return `
+                <article class="product">
+                  <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
+                  <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
+                  <p><b>Date:</b> ${escapeHTML(date)}</p>
+                  <p><b>Status:</b> ${escapeHTML(status)}</p>
+                </article>
+              `;
+            }).join("")
+          : "<p>No renewal requests submitted yet.</p>";
+      }
+
+    } catch (error) {
+      console.error("Renewal history error:", error);
+
+      const history = $("renewalHistory");
+
+      if (history) {
+        history.textContent =
+          "Renewal history load nahi hui: " + error.message;
+      }
+    }
+
+    return;
+  }
+
+  // =====================================
+  // MARKETING SECTIONS
+  // =====================================
+
+  const marketingSections = [
+    "companyNews",
+    "brochures",
+    "videos",
+    "gallery",
+    "printPress"
+  ];
+
+  if (marketingSections.includes(section)) {
+    try {
+      ensureActiveSubscription();
+
+      await renderMarketingAdmin(
+        sectionContent,
+        currentCustomer,
+        section
+      );
+
+    } catch (error) {
+      console.error("Marketing section error:", error);
+
+      sectionContent.innerHTML = `
+        <h2>Marketing Content</h2>
+        <p class="message">
+          ${escapeHTML(error.message || "Marketing section open nahi hua.")}
+        </p>
       `;
     }
 
     return;
   }
 
+  
+  ensureActiveSubscription();
+await renderMarketingAdmin(sectionContent, currentCustomer, section);
   if (section === "subscription") {
     const subscription = getRenewalStatus();
     const expiryDate = getExpiryDate(currentCustomer);
