@@ -185,11 +185,23 @@ function createCard(item, type) {
 
   let mediaHTML = "";
 
-  if (type === "videos") {
-    mediaHTML = image
-      ? `<img src="${escapeHTML(image)}" alt="${title}" loading="lazy">`
-      : `<div style="height:190px;display:grid;place-items:center;background:#edf5ee;font-size:42px">▶</div>`;
-  } else if (image) {
+if (type === "videos") {
+  const videoURL = safeURL(item.mediaUrl);
+  
+  mediaHTML = videoURL ?
+    `<video
+         src="${escapeHTML(videoURL)}"
+         poster="${escapeHTML(image)}"
+         autoplay
+         muted
+         loop
+         playsinline
+         controls
+         preload="metadata"
+         style="width:100%;height:190px;object-fit:cover;background:#000">
+       </video>` :
+    `<div style="height:190px;display:grid;place-items:center;background:#edf5ee;font-size:42px">Video unavailable</div>`;
+} else if (image) {
     mediaHTML = `<img src="${escapeHTML(image)}" alt="${title}" loading="lazy">`;
   }
 
@@ -201,9 +213,9 @@ function createCard(item, type) {
     actionHTML = fileURL
       ? `<a href="${escapeHTML(fileURL)}" target="_blank" rel="noopener">View / Download PDF</a>`
       : "";
-  } else if (type === "videos") {
-    actionHTML = `<button type="button" data-action="video">▶ Watch Video</button>`;
-  } else if (type === "gallery") {
+ } else if (type === "videos") {
+  actionHTML = "";
+} else if (type === "gallery") {
     actionHTML = `<button type="button" data-action="image">View Photo</button>`;
   } else {
     actionHTML = `<button type="button" data-action="article">Read More</button>`;
@@ -213,7 +225,7 @@ function createCard(item, type) {
     ${mediaHTML}
     <div class="marketing-item-body">
       <h3>${title}</h3>
-      ${date ? `<small>${date}</small>` : ""}
+      
       ${description
         ? `<p>${description.length > 160
             ? description.slice(0, 160) + "..."
