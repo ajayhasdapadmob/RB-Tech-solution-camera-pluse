@@ -1,6 +1,6 @@
 
 import { db } from "./firebase.js";
-
+console.log("RB Marketing JS Loaded Successfully");
 import {
   collection,
   getDocs,
@@ -335,3 +335,4 @@ document.addEventListener("keydown", event => {
 
 /* Load public marketing data */
 loadMarketingContent();
+console.log("Marketing documents found:", snapshot.size);
