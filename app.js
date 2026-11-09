@@ -1,3 +1,4 @@
+
 import { db } from "./firebase.js";
 
 import {
@@ -11,7 +12,7 @@ import {
 
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
-   Customer Products + Old Products
+   Old Products + Customer Admin Products
    No Firebase Storage required
 ========================================= */
 
@@ -65,38 +66,38 @@ function escapeHTML(value = "") {
 }
 
 function getProductImage(product) {
-  return product.imageUrl ||
-    product.image ||
-    product.photo ||
+  return product?.imageUrl ||
+    product?.image ||
+    product?.photo ||
     DEFAULT_IMAGE;
 }
 
 function getProductName(product) {
-  return product.name ||
-    product.productName ||
-    product.title ||
+  return product?.name ||
+    product?.productName ||
+    product?.title ||
     "Security Product";
 }
 
 function getProductCategory(product) {
-  return product.category ||
-    product.productCategory ||
+  return product?.category ||
+    product?.productCategory ||
     "Accessories";
 }
 
 function getProductModel(product) {
   return String(
-    product.model ||
-    product.modelNumber ||
-    product.sku ||
+    product?.model ||
+    product?.modelNumber ||
+    product?.sku ||
     ""
   ).trim();
 }
 
 function getProductPrice(product) {
   if (
-    product.price === undefined ||
-    product.price === null ||
+    product?.price === undefined ||
+    product?.price === null ||
     String(product.price).trim() === ""
   ) {
     return "";
@@ -204,7 +205,12 @@ function displayProducts(products = allProducts) {
 
   products.forEach(product => {
     const index = allProducts.indexOf(product);
-    productGrid.appendChild(createProductCard(product, index));
+
+    if (index !== -1) {
+      productGrid.appendChild(
+        createProductCard(product, index)
+      );
+    }
   });
 }
 
@@ -228,7 +234,8 @@ function displayTrendingProducts() {
   ).slice(0, 8);
 
   if (!products.length) {
-    trendingGrid.innerHTML = "<p>No products available.</p>";
+    trendingGrid.innerHTML =
+      "<p>No products available.</p>";
     return;
   }
 
@@ -250,7 +257,10 @@ function displayTrendingProducts() {
 }
 
 function setupTrendingCarousel() {
-  if (!trendingGrid || trendingGrid.dataset.carouselReady === "true") {
+  if (
+    !trendingGrid ||
+    trendingGrid.dataset.carouselReady === "true"
+  ) {
     return;
   }
 
@@ -266,24 +276,30 @@ function setupTrendingCarousel() {
   controls.className = "trending-carousel-controls";
 
   controls.innerHTML = `
-    <button type="button" class="trending-prev" aria-label="Previous products">
-      &#10094;
-    </button>
+    <button type="button" class="trending-prev"
+      aria-label="Previous products">&#10094;</button>
 
-    <button type="button" class="trending-next" aria-label="Next products">
-      &#10095;
-    </button>
+    <button type="button" class="trending-next"
+      aria-label="Next products">&#10095;</button>
   `;
 
   wrapper.appendChild(controls);
 
-  controls.querySelector(".trending-prev").addEventListener("click", () => {
-    trendingGrid.scrollBy({ left: -300, behavior: "smooth" });
-  });
+  controls.querySelector(".trending-prev")
+    .addEventListener("click", () => {
+      trendingGrid.scrollBy({
+        left: -300,
+        behavior: "smooth"
+      });
+    });
 
-  controls.querySelector(".trending-next").addEventListener("click", () => {
-    trendingGrid.scrollBy({ left: 300, behavior: "smooth" });
-  });
+  controls.querySelector(".trending-next")
+    .addEventListener("click", () => {
+      trendingGrid.scrollBy({
+        left: 300,
+        behavior: "smooth"
+      });
+    });
 }
 
 /* =========================================
@@ -317,10 +333,9 @@ function createOfferCategoryCards() {
   container.innerHTML = "";
 
   CATEGORY_NAMES.forEach(category => {
-    const matching = allProducts.find(
-      product =>
-        getProductCategory(product).toLowerCase() ===
-        category.toLowerCase()
+    const matching = allProducts.find(product =>
+      getProductCategory(product).toLowerCase() ===
+      category.toLowerCase()
     );
 
     const card = document.createElement("button");
@@ -329,7 +344,9 @@ function createOfferCategoryCards() {
 
     card.innerHTML = `
       <img
-        src="${escapeHTML(matching ? getProductImage(matching) : DEFAULT_IMAGE)}"
+        src="${escapeHTML(
+          matching ? getProductImage(matching) : DEFAULT_IMAGE
+        )}"
         alt="${escapeHTML(category)}"
         loading="lazy"
       >
@@ -362,7 +379,10 @@ function createOfferCategoryCards() {
 ========================================= */
 
 function filterProducts() {
-  const search = (searchInput?.value || "").trim().toLowerCase();
+  const search = (
+    searchInput?.value || ""
+  ).trim().toLowerCase();
+
   const category = categoryFilter?.value || "";
 
   const filtered = allProducts.filter(product => {
@@ -377,7 +397,8 @@ function filterProducts() {
 
     const matchesCategory =
       !category ||
-      getProductCategory(product).toLowerCase() === category.toLowerCase();
+      getProductCategory(product).toLowerCase() ===
+      category.toLowerCase();
 
     return matchesSearch && matchesCategory;
   });
@@ -390,31 +411,30 @@ function filterProducts() {
 ========================================= */
 
 function getProductFeatures(product) {
-  let features = product.features || [];
+  let features = product?.features || [];
 
   if (typeof features === "string") {
     features = features.split("\n");
   }
 
-  if (!Array.isArray(features)) {
-    return [];
-  }
+  if (!Array.isArray(features)) return [];
 
-  return features
-    .map(feature => {
-      if (typeof feature === "string") {
-        return feature.trim();
-      }
+  return features.map(feature => {
+    if (typeof feature === "string") {
+      return feature.trim();
+    }
 
-      if (feature && typeof feature === "object") {
-        return String(
-          feature.value || feature.name || feature.feature || ""
-        ).trim();
-      }
+    if (feature && typeof feature === "object") {
+      return String(
+        feature.value ||
+        feature.name ||
+        feature.feature ||
+        ""
+      ).trim();
+    }
 
-      return "";
-    })
-    .filter(Boolean);
+    return "";
+  }).filter(Boolean);
 }
 
 /* =========================================
@@ -423,21 +443,28 @@ function getProductFeatures(product) {
 
 function getProductSpecifications(product) {
   const specifications = product?.specifications || {};
-  
+
   let entries = [];
-  
+
   if (Array.isArray(specifications)) {
-    entries = specifications.map(item => ({
-      label: item.label || item.name || item.key || "",
-      value: item.value || item.description || ""
-    }));
-  } else {
-    entries = Object.entries(specifications).map(([label, value]) => ({
-      label,
-      value
-    }));
+    entries = specifications
+      .filter(item => item && typeof item === "object")
+      .map(item => ({
+        label: item.label || item.name || item.key || "",
+        value: item.value ?? item.description ?? ""
+      }));
+  } else if (
+    specifications &&
+    typeof specifications === "object"
+  ) {
+    entries = Object.entries(specifications).map(
+      ([label, value]) => ({
+        label,
+        value
+      })
+    );
   }
-  
+
   return entries.filter(item =>
     String(item.label || "").trim() &&
     String(item.value ?? "").trim()
@@ -445,8 +472,7 @@ function getProductSpecifications(product) {
 }
 
 /* =========================================
-   REQUEST FOR INFORMATION - COUNTRY LIST
-   Existing country options retained
+   RFI COUNTRY LIST
 ========================================= */
 
 const RFI_COUNTRIES = `
@@ -467,7 +493,9 @@ function getCustomerProductId(product) {
 }
 
 function findProductByName(productName) {
-  const search = String(productName || "").trim().toLowerCase();
+  const search = String(productName || "")
+    .trim()
+    .toLowerCase();
 
   if (!search) return null;
 
@@ -493,7 +521,10 @@ function createCaptchaQuestion() {
 function refreshRFICaptcha(form) {
   if (!form) return;
 
-  const questionElement = form.querySelector("#rfiCaptchaQuestion");
+  const questionElement = form.querySelector(
+    "#rfiCaptchaQuestion"
+  );
+
   const answerInput = form.querySelector("#rfiCaptcha");
 
   const captcha = createCaptchaQuestion();
@@ -530,7 +561,8 @@ function createRFIForm(product) {
         Please fill in all required fields marked with *
       </p>
 
-      <form id="rfiForm" data-captcha-answer="${captcha.answer}">
+      <form id="rfiForm"
+        data-captcha-answer="${captcha.answer}">
 
         <input type="hidden" name="productName"
           value="${escapeHTML(getProductName(product))}">
@@ -576,13 +608,15 @@ function createRFIForm(product) {
         <div class="rfi-form-group">
           <label for="rfiState">State *</label>
           <input id="rfiState" name="state" type="text"
-            maxlength="100" required placeholder="Enter your state">
+            maxlength="100" required
+            placeholder="Enter your state">
         </div>
 
         <div class="rfi-form-group">
           <label for="rfiCity">City *</label>
           <input id="rfiCity" name="city" type="text"
-            maxlength="100" required placeholder="Enter your city">
+            maxlength="100" required
+            placeholder="Enter your city">
         </div>
 
         <div class="rfi-form-group">
@@ -604,30 +638,23 @@ function createRFIForm(product) {
           <label>Captcha Code *</label>
 
           <div class="rfi-captcha-row">
-            <span id="rfiCaptchaQuestion" class="rfi-captcha-question">
+            <span id="rfiCaptchaQuestion"
+              class="rfi-captcha-question">
               ${captcha.question}
             </span>
 
-            <button
-              type="button"
+            <button type="button"
               id="rfiCaptchaRefresh"
               class="rfi-captcha-refresh"
-              aria-label="Refresh captcha"
-            >
+              aria-label="Refresh captcha">
               ↻ Refresh
             </button>
           </div>
 
-          <input
-            id="rfiCaptcha"
-            name="captcha"
-            type="text"
-            inputmode="numeric"
-            maxlength="3"
-            autocomplete="off"
-            required
-            placeholder="Enter captcha answer"
-          >
+          <input id="rfiCaptcha" name="captcha"
+            type="text" inputmode="numeric"
+            maxlength="3" autocomplete="off"
+            required placeholder="Enter captcha answer">
         </div>
 
         <div class="rfi-consent">
@@ -642,11 +669,12 @@ function createRFIForm(product) {
           </label>
         </div>
 
-        <button type="submit" id="rfiSubmitBtn">Submit</button>
+        <button type="submit" id="rfiSubmitBtn">
+          Submit
+        </button>
 
         <p id="rfiStatus" class="rfi-status"
           role="status" aria-live="polite"></p>
-
       </form>
     </section>
   `;
@@ -672,9 +700,13 @@ async function submitRFI(form) {
     form.dataset.captchaAnswer || ""
   );
 
-  if (!captchaEntered || captchaEntered !== captchaCorrect) {
+  if (
+    !captchaEntered ||
+    captchaEntered !== captchaCorrect
+  ) {
     if (status) {
-      status.textContent = "Incorrect Captcha Code. Please try again.";
+      status.textContent =
+        "Incorrect Captcha Code. Please try again.";
       status.style.color = "#dc2626";
     }
 
@@ -686,17 +718,21 @@ async function submitRFI(form) {
 
   if (!consent) {
     if (status) {
-      status.textContent = "Please accept the Privacy Policy.";
+      status.textContent =
+        "Please accept the Privacy Policy.";
       status.style.color = "#dc2626";
     }
     return;
   }
 
-  const phone = String(formData.get("phone") || "").trim();
+  const phone = String(
+    formData.get("phone") || ""
+  ).trim();
 
   if (!/^[0-9+\-\s()]{7,25}$/.test(phone)) {
     if (status) {
-      status.textContent = "Please enter a valid contact number.";
+      status.textContent =
+        "Please enter a valid contact number.";
       status.style.color = "#dc2626";
     }
     return;
@@ -712,14 +748,26 @@ async function submitRFI(form) {
     country: String(formData.get("country") || "").trim(),
     state: String(formData.get("state") || "").trim(),
     city: String(formData.get("city") || "").trim(),
+
     phone,
     mobile: phone,
-    message: String(formData.get("message") || "").trim(),
 
-    productName: String(formData.get("productName") || "").trim(),
-    productModel: String(formData.get("productModel") || "").trim(),
+    message: String(
+      formData.get("message") || ""
+    ).trim(),
 
-    customerId: String(formData.get("customerId") || "").trim(),
+    productName: String(
+      formData.get("productName") || ""
+    ).trim(),
+
+    productModel: String(
+      formData.get("productModel") || ""
+    ).trim(),
+
+    customerId: String(
+      formData.get("customerId") || ""
+    ).trim(),
+
     customerProductId: String(
       formData.get("customerProductId") || ""
     ).trim(),
@@ -774,7 +822,6 @@ async function submitRFI(form) {
 
 /* =========================================
    PRODUCT DETAILS MODAL
-   CP PLUS STYLE HORIZONTAL TABS
 ========================================= */
 
 function openProductDetails(index) {
@@ -788,22 +835,23 @@ function openProductDetails(index) {
   const model = getProductModel(product);
   const price = getProductPrice(product);
 
-  const description = String(product.description || "").trim();
-  const note = String(product.note || product.notes || "").trim();
+  const description = String(
+    product.description || ""
+  ).trim();
+
+  const note = String(
+    product.note || product.notes || ""
+  ).trim();
 
   const features = getProductFeatures(product);
   const specifications = getProductSpecifications(product);
 
   modalContent.innerHTML = `
-    <button
-      id="modalClose"
+    <button id="modalClose"
       type="button"
-      aria-label="Close product details"
-    >×</button>
+      aria-label="Close product details">×</button>
 
     <div class="product-detail-page">
-
-      <!-- PRODUCT INFORMATION -->
 
       <div class="modal-product-layout">
 
@@ -822,11 +870,15 @@ function openProductDetails(index) {
           <h2>${escapeHTML(name)}</h2>
 
           ${model ? `
-            <p><strong>Model:</strong> ${escapeHTML(model)}</p>
+            <p><strong>Model:</strong>
+              ${escapeHTML(model)}
+            </p>
           ` : ""}
 
           ${price ? `
-            <p><strong>Price:</strong> ${escapeHTML(price)}</p>
+            <p><strong>Price:</strong>
+              ${escapeHTML(price)}
+            </p>
           ` : ""}
 
           ${description ? `
@@ -858,47 +910,39 @@ function openProductDetails(index) {
         </div>
       ` : ""}
 
-      <!-- HORIZONTAL TABS -->
-
-      <div class="product-detail-tabs" role="tablist"
+      <div class="product-detail-tabs"
+        role="tablist"
         aria-label="Product information">
 
-        <button
-          type="button"
+        <button type="button"
           class="product-detail-tab active"
           id="specificationTab"
           role="tab"
           aria-selected="true"
           aria-controls="specificationPanel"
-          data-detail-tab="specification"
-        >
+          data-detail-tab="specification">
           Specification
         </button>
 
-        <button
-          type="button"
+        <button type="button"
           class="product-detail-tab"
           id="rfiTab"
           role="tab"
           aria-selected="false"
           aria-controls="rfiPanel"
-          data-detail-tab="rfi"
-        >
+          data-detail-tab="rfi">
           Request for Information
         </button>
 
       </div>
 
-      <!-- SPECIFICATION PANEL -->
-
-      <section
-        class="detail-tab-panel"
+      <section class="detail-tab-panel"
         id="specificationPanel"
         role="tabpanel"
-        aria-labelledby="specificationTab"
-      >
+        aria-labelledby="specificationTab">
 
-        <section class="product-specifications" id="Specification">
+        <section class="product-specifications"
+          id="Specification">
 
           <h2>Specification</h2>
 
@@ -906,9 +950,7 @@ function openProductDetails(index) {
             specifications.length
               ? `
                 <div class="specification-table-wrapper">
-
                   <table class="specification-table">
-
                     <tbody>
                       ${specifications.map(item => `
                         <tr>
@@ -917,9 +959,7 @@ function openProductDetails(index) {
                         </tr>
                       `).join("")}
                     </tbody>
-
                   </table>
-
                 </div>
               `
               : `
@@ -931,51 +971,35 @@ function openProductDetails(index) {
           }
 
         </section>
-
       </section>
 
-      <!-- REQUEST INFORMATION PANEL -->
-
-      <div
-        class="detail-tab-panel"
+      <div class="detail-tab-panel"
         id="rfiPanel"
         role="tabpanel"
         aria-labelledby="rfiTab"
-        hidden
-      >
+        hidden>
 
         ${createRFIForm(product)}
 
       </div>
-
     </div>
   `;
 
-  // CLOSE BUTTON
-
   modalContent.querySelector("#modalClose")
     ?.addEventListener("click", closeProductModal);
-
-  // OPEN MODAL
 
   productModal.classList.add("active");
   productModal.style.display = "flex";
   modalContent.scrollTop = 0;
 
-  // WHATSAPP ENQUIRY
-
   modalContent.querySelector("#modalEnquireBtn")
     ?.addEventListener("click", () => {
-
       openWhatsApp(
         "Hello RB Tech Solution,\nI want details about:\n" +
         name +
         (model ? "\nModel: " + model : "")
       );
-
     });
-
-  // HORIZONTAL TAB SWITCHING
 
   const tabButtons = modalContent.querySelectorAll(
     ".product-detail-tab"
@@ -988,13 +1012,10 @@ function openProductDetails(index) {
     modalContent.querySelector("#rfiPanel");
 
   tabButtons.forEach(button => {
-
     button.addEventListener("click", () => {
-
       const selectedTab = button.dataset.detailTab;
 
       tabButtons.forEach(tab => {
-
         const isActive = tab === button;
 
         tab.classList.toggle("active", isActive);
@@ -1003,7 +1024,6 @@ function openProductDetails(index) {
           "aria-selected",
           isActive ? "true" : "false"
         );
-
       });
 
       specificationPanel.hidden =
@@ -1013,33 +1033,22 @@ function openProductDetails(index) {
         selectedTab !== "rfi";
 
       modalContent.scrollTop = 0;
-
     });
-
   });
-
-  // RFI FORM SUBMISSION
 
   const rfiForm = modalContent.querySelector("#rfiForm");
 
   rfiForm?.addEventListener("submit", event => {
-
     event.preventDefault();
-
     submitRFI(event.currentTarget);
-
   });
-
-  // CAPTCHA REFRESH
 
   rfiForm?.querySelector("#rfiCaptchaRefresh")
     ?.addEventListener("click", () => {
-
       refreshRFICaptcha(rfiForm);
-
     });
-
 }
+
 /* =========================================
    CLOSE PRODUCT DETAILS MODAL
 ========================================= */
@@ -1051,17 +1060,14 @@ function closeProductModal() {
   productModal.style.display = "none";
 }
 
-// Close button
 modalClose?.addEventListener("click", closeProductModal);
 
-// Modal ke bahar click karne par close
 productModal?.addEventListener("click", event => {
   if (event.target === productModal) {
     closeProductModal();
   }
 });
 
-// Escape key se close
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
     closeProductModal();
@@ -1090,10 +1096,15 @@ function startHeroSlideshow() {
 
   allProducts.forEach(product => {
     const image = getProductImage(product);
-    if (image && !images.includes(image)) images.push(image);
+
+    if (image && !images.includes(image)) {
+      images.push(image);
+    }
   });
 
-  if (!images.includes(DEFAULT_IMAGE)) images.push(DEFAULT_IMAGE);
+  if (!images.includes(DEFAULT_IMAGE)) {
+    images.push(DEFAULT_IMAGE);
+  }
 
   const slides = images.slice(0, 6);
 
@@ -1105,7 +1116,9 @@ function startHeroSlideshow() {
     slide.className = "hero-slideshow-image";
     slide.loading = index === 0 ? "eager" : "lazy";
 
-    if (index === 0) slide.classList.add("active");
+    if (index === 0) {
+      slide.classList.add("active");
+    }
 
     slide.onerror = () => {
       slide.style.display = "none";
@@ -1127,7 +1140,8 @@ function startHeroSlideshow() {
   heroSlideTimer = setInterval(() => {
     slideElements[currentSlide].classList.remove("active");
 
-    currentSlide = (currentSlide + 1) % slideElements.length;
+    currentSlide =
+      (currentSlide + 1) % slideElements.length;
 
     slideElements[currentSlide].classList.add("active");
   }, 4000);
@@ -1140,7 +1154,10 @@ function startHeroSlideshow() {
 document.querySelectorAll("[data-category]").forEach(link => {
   link.addEventListener("click", event => {
     event.preventDefault();
-    selectProductCategory(link.dataset.category || "");
+
+    selectProductCategory(
+      link.dataset.category || ""
+    );
   });
 });
 
@@ -1149,11 +1166,22 @@ document.querySelectorAll("[data-category]").forEach(link => {
 ========================================= */
 
 document.addEventListener("click", event => {
-  const detailsButton = event.target.closest("[data-product-index]");
-  const enquireButton = event.target.closest("[data-enquire-index]");
+  const target = event.target;
+
+  if (!(target instanceof Element)) return;
+
+  const detailsButton = target.closest(
+    "[data-product-index]"
+  );
+
+  const enquireButton = target.closest(
+    "[data-enquire-index]"
+  );
 
   if (detailsButton) {
-    openProductDetails(Number(detailsButton.dataset.productIndex));
+    openProductDetails(
+      Number(detailsButton.dataset.productIndex)
+    );
   }
 
   if (enquireButton) {
@@ -1180,14 +1208,21 @@ document.addEventListener("click", event => {
 document.addEventListener("keydown", event => {
   if (event.key !== "Enter" && event.key !== " ") return;
 
-  const imageBox = event.target.closest(
+  const target = event.target;
+
+  if (!(target instanceof Element)) return;
+
+  const imageBox = target.closest(
     ".product-image[data-product-index]"
   );
 
   if (!imageBox) return;
 
   event.preventDefault();
-  openProductDetails(Number(imageBox.dataset.productIndex));
+
+  openProductDetails(
+    Number(imageBox.dataset.productIndex)
+  );
 });
 
 /* =========================================
@@ -1221,24 +1256,27 @@ categoryFilter?.addEventListener("change", filterProducts);
 
 /* =========================================
    FIRESTORE PRODUCTS
-   Old products + Customer Admin products
+   Old Products + Customer Admin Products
+
+   IMPORTANT:
+   Both collections are loaded independently.
+   One permission error will not stop the other.
 ========================================= */
 
 async function loadProducts() {
   if (productGrid) {
     productGrid.innerHTML = "<p>Loading products...</p>";
   }
-  
+
   try {
-    const [oldProductsSnapshot, customerProductsSnapshot] =
-    await Promise.all([
+    const results = await Promise.allSettled([
       getDocs(
         query(
           collection(db, "products"),
           where("active", "==", true)
         )
       ),
-      
+
       getDocs(
         query(
           collection(db, "customerProducts"),
@@ -1246,39 +1284,87 @@ async function loadProducts() {
         )
       )
     ]);
-    
-    const oldProducts = oldProductsSnapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data(),
-      productSource: "website"
-    }));
-    
-    const customerProducts = customerProductsSnapshot.docs.map(item => ({
-      id: item.id,
-      ...item.data(),
-      productSource: "customer"
-    }));
-    
+
+    let oldProducts = [];
+    let customerProducts = [];
+
+    /* OLD WEBSITE PRODUCTS */
+
+    if (results[0].status === "fulfilled") {
+      oldProducts = results[0].value.docs.map(item => ({
+        id: item.id,
+        ...item.data(),
+        productSource: "website"
+      }));
+    } else {
+      console.error(
+        "Old products loading error:",
+        results[0].reason
+      );
+    }
+
+    /* CUSTOMER ADMIN PRODUCTS */
+
+    if (results[1].status === "fulfilled") {
+      customerProducts = results[1].value.docs.map(item => ({
+        id: item.id,
+        ...item.data(),
+        productSource: "customer"
+      }));
+    } else {
+      console.error(
+        "Customer Admin products loading error:",
+        results[1].reason
+      );
+    }
+
+    /* COMBINE BOTH COLLECTIONS */
+
     allProducts = [
       ...oldProducts,
       ...customerProducts
     ];
-    
+
+    console.log(
+      "Old website products:",
+      oldProducts.length
+    );
+
+    console.log(
+      "Customer Admin products:",
+      customerProducts.length
+    );
+
+    console.log(
+      "Total active products:",
+      allProducts.length
+    );
+
     displayProducts();
     displayTrendingProducts();
     setupTrendingCarousel();
     createOfferCategoryCards();
     startHeroSlideshow();
-    
+
+    if (
+      results[0].status === "rejected" &&
+      results[1].status === "rejected"
+    ) {
+      console.error(
+        "Both product collections failed to load."
+      );
+    }
+
   } catch (error) {
     console.error("Product loading error:", error);
-    
+
     if (productGrid) {
       productGrid.innerHTML =
         "<p>Unable to load products. Please try again later.</p>";
     }
   }
 }
+
 /* =========================================
    FOOTER YEAR
 ========================================= */
@@ -1291,19 +1377,25 @@ if (footerYear) {
 
 /* =========================================
    WEBSITE CONTACT ENQUIRY FORM
-   Saves customerId for customer products
 ========================================= */
 
 function setupWebsiteInquiryForm() {
-  const form = document.getElementById("websiteInquiryForm");
+  const form = document.getElementById(
+    "websiteInquiryForm"
+  );
 
   if (!form) {
     console.warn("Website enquiry form not found.");
     return;
   }
 
-  const submitButton = document.getElementById("websiteInquirySubmit");
-  const statusBox = document.getElementById("websiteInquiryStatus");
+  const submitButton = document.getElementById(
+    "websiteInquirySubmit"
+  );
+
+  const statusBox = document.getElementById(
+    "websiteInquiryStatus"
+  );
 
   function showStatus(message, success = false) {
     if (!statusBox) {
@@ -1313,43 +1405,54 @@ function setupWebsiteInquiryForm() {
 
     statusBox.textContent = message;
     statusBox.style.display = "block";
-    statusBox.style.color = success ? "#087f3c" : "#d93025";
+    statusBox.style.color =
+      success ? "#087f3c" : "#d93025";
   }
 
-  form.addEventListener("submit", async function (event) {
+  form.addEventListener("submit", async event => {
     event.preventDefault();
 
     if (!form.reportValidity()) return;
 
     const name =
-      document.getElementById("websiteInquiryName")?.value.trim() || "";
+      document.getElementById("websiteInquiryName")
+        ?.value.trim() || "";
 
     const email =
-      document.getElementById("websiteInquiryEmail")?.value.trim() || "";
+      document.getElementById("websiteInquiryEmail")
+        ?.value.trim() || "";
 
     const mobile =
-      document.getElementById("websiteInquiryMobile")?.value.trim() || "";
+      document.getElementById("websiteInquiryMobile")
+        ?.value.trim() || "";
 
     const product =
-      document.getElementById("websiteInquiryProduct")?.value.trim() || "";
+      document.getElementById("websiteInquiryProduct")
+        ?.value.trim() || "";
 
     const country =
-      document.getElementById("contactCountry")?.value.trim() || "";
+      document.getElementById("contactCountry")
+        ?.value.trim() || "";
 
     const state =
-      document.getElementById("contactState")?.value.trim() || "";
+      document.getElementById("contactState")
+        ?.value.trim() || "";
 
     const city =
-      document.getElementById("contactCity")?.value.trim() || "";
+      document.getElementById("contactCity")
+        ?.value.trim() || "";
 
     const pincode =
-      document.getElementById("contactPincode")?.value.trim() || "";
+      document.getElementById("contactPincode")
+        ?.value.trim() || "";
 
     const message =
-      document.getElementById("websiteInquiryMessage")?.value.trim() || "";
+      document.getElementById("websiteInquiryMessage")
+        ?.value.trim() || "";
 
     const privacyAccepted =
-      document.getElementById("contactPrivacy")?.checked || false;
+      document.getElementById("contactPrivacy")
+        ?.checked || false;
 
     if (!name || !mobile || !product || !message) {
       showStatus("Please fill all required fields.");
@@ -1406,7 +1509,10 @@ function setupWebsiteInquiryForm() {
         enquiryData
       );
 
-      console.log("Website enquiry saved:", docRef.id);
+      console.log(
+        "Website enquiry saved:",
+        docRef.id
+      );
 
       showStatus(
         "Thank you! Your enquiry has been submitted successfully.",
@@ -1415,8 +1521,7 @@ function setupWebsiteInquiryForm() {
 
       form.reset();
 
-      document
-        .getElementById("contactCaptchaRefresh")
+      document.getElementById("contactCaptchaRefresh")
         ?.click();
 
     } catch (error) {
@@ -1435,10 +1540,9 @@ function setupWebsiteInquiryForm() {
   });
 }
 
-setupWebsiteInquiryForm();
-
 /* =========================================
-   START WEBSITE
+   INITIALIZE WEBSITE
 ========================================= */
 
+setupWebsiteInquiryForm();
 loadProducts();
