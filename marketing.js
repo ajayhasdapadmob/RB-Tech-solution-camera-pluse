@@ -1,7 +1,8 @@
 
-
 import { db } from "./firebase.js";
+
 console.log("RB Marketing JS Loaded Successfully");
+
 import {
   collection,
   getDocs,
@@ -19,28 +20,27 @@ const MARKETING_COLLECTION = "marketingItems";
 
 const SECTION_CONFIG = {
   companyNews: {
-    grid: "companyNewsGrid",
-    empty: "No company news available."
+    grid: "companyNewsGrid"
   },
   brochures: {
-    grid: "brochuresGrid",
-    empty: "No product brochures available."
+    grid: "brochuresGrid"
   },
   videos: {
-    grid: "videosGrid",
-    empty: "No videos available."
+    grid: "videosGrid"
   },
   gallery: {
-    grid: "galleryGrid",
-    empty: "No gallery photos available."
+    grid: "galleryGrid"
   },
   printPress: {
-    grid: "printPressGrid",
-    empty: "No Print & Press content available."
+    grid: "printPressGrid"
   }
 };
 
 const $ = (id) => document.getElementById(id);
+
+/* =====================================
+   COMMON FUNCTIONS
+===================================== */
 
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({
@@ -55,7 +55,10 @@ function escapeHTML(value = "") {
 function safeURL(value) {
   try {
     const url = new URL(String(value || ""));
-    return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+
+    return ["https:", "http:"].includes(url.protocol)
+      ? url.href
+      : "";
   } catch {
     return "";
   }
@@ -85,11 +88,14 @@ function getImage(item) {
   return safeURL(item.thumbnailUrl || item.mediaUrl);
 }
 
+/* =====================================
+   MARKETING VIEWER
+===================================== */
+
 function getViewerElements() {
   return {
     viewer: $("marketingViewer"),
-    content: $("marketingViewerContent"),
-    close: $("closeMarketingViewer")
+    content: $("marketingViewerContent")
   };
 }
 
@@ -123,6 +129,10 @@ function closeMarketingViewer() {
   document.body.style.overflow = "";
 }
 
+/* =====================================
+   SHOW NEWS / ARTICLE
+===================================== */
+
 function showArticle(item) {
   const title = escapeHTML(item.title || "Untitled");
   const description = escapeHTML(getText(item));
@@ -130,59 +140,92 @@ function showArticle(item) {
   const image = getImage(item);
 
   openMarketingViewer(`
-    ${image ? `<img src="${escapeHTML(image)}" alt="${title}">` : ""}
+    ${image
+      ? `<img src="${escapeHTML(image)}" alt="${title}">`
+      : ""}
+
     <h2>${title}</h2>
+
     ${date ? `<p>${date}</p>` : ""}
+
     <div style="text-align:left;line-height:1.8;white-space:pre-line">
       ${description}
     </div>
   `);
 }
 
+/* =====================================
+   SHOW GALLERY IMAGE
+===================================== */
+
 function showImage(item) {
   const image = safeURL(item.mediaUrl || item.thumbnailUrl);
+
   if (!image) return;
 
   openMarketingViewer(`
-    <img src="${escapeHTML(image)}"
-         alt="${escapeHTML(item.title || "Gallery image")}">
+    <img
+      src="${escapeHTML(image)}"
+      alt="${escapeHTML(item.title || "Gallery image")}">
+
     ${item.title
       ? `<h2>${escapeHTML(item.title)}</h2>`
       : ""}
+
     ${getText(item)
       ? `<p>${escapeHTML(getText(item))}</p>`
       : ""}
   `);
 }
 
+/* =====================================
+   SHOW VIDEO
+===================================== */
+
 function showVideo(item) {
   const video = safeURL(item.mediaUrl);
+
   if (!video) return;
 
   const title = escapeHTML(item.title || "Video");
 
   openMarketingViewer(`
     <h2>${title}</h2>
-    <video controls autoplay playsinline
+
+    <video
+      controls
+      autoplay
+      playsinline
       poster="${escapeHTML(getImage(item))}"
       style="background:#000">
+
       <source src="${escapeHTML(video)}">
+
       Your browser does not support video playback.
     </video>
+
     ${getText(item)
       ? `<p>${escapeHTML(getText(item))}</p>`
       : ""}
   `);
 }
 
+/* =====================================
+   CREATE MARKETING CARD
+===================================== */
 
-function createCard(item, type) {
+function createCard(item, type, index) {
   const title = escapeHTML(item.title || "Untitled");
   const description = escapeHTML(getText(item));
   const image = getImage(item);
 
   const card = document.createElement("article");
+
   card.className = "marketing-item";
+
+  // Image click ke liye data save
+  card.dataset.marketingIndex = index;
+  card.dataset.marketingType = type;
 
   let mediaHTML = "";
 
@@ -190,26 +233,31 @@ function createCard(item, type) {
     const videoURL = safeURL(item.mediaUrl);
 
     mediaHTML = videoURL
-      ? `<video
-           src="${escapeHTML(videoURL)}"
-           poster="${escapeHTML(image)}"
-           autoplay
-           muted
-           loop
-           playsinline
-           webkit-playsinline
-           preload="auto"
-           disablepictureinpicture
-           style="width:100%;height:190px;object-fit:cover;background:#000">
-         </video>`
-      : `<div style="height:190px;display:grid;place-items:center;background:#edf5ee">
-           Video unavailable
-         </div>`;
+      ? `
+        <video
+          src="${escapeHTML(videoURL)}"
+          poster="${escapeHTML(image)}"
+          autoplay
+          muted
+          loop
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          disablepictureinpicture
+          style="width:100%;height:190px;object-fit:cover;background:#000">
+        </video>
+      `
+      : `
+        <div style="height:190px;display:grid;place-items:center;background:#edf5ee">
+          Video unavailable
+        </div>
+      `;
   } else if (image) {
     mediaHTML = `
-      <img src="${escapeHTML(image)}"
-           alt="${title}"
-           loading="lazy">
+      <img
+        src="${escapeHTML(image)}"
+        alt="${title}"
+        loading="lazy">
     `;
   }
 
@@ -219,27 +267,40 @@ function createCard(item, type) {
     const fileURL = safeURL(item.mediaUrl);
 
     actionHTML = fileURL
-      ? `<a href="${escapeHTML(fileURL)}"
-            target="_blank"
-            rel="noopener">View / Download PDF</a>`
+      ? `
+        <a
+          href="${escapeHTML(fileURL)}"
+          target="_blank"
+          rel="noopener">
+          View / Download PDF
+        </a>
+      `
       : "";
   }
 
   card.innerHTML = `
     ${mediaHTML}
+
     <div class="marketing-item-body">
+
       <h3>${title}</h3>
 
       ${type !== "videos" && description
-        ? `<p>${description.length > 160
-            ? description.slice(0, 160) + "..."
-            : description}</p>`
+        ? `
+          <p>
+            ${description.length > 160
+              ? description.slice(0, 160) + "..."
+              : description}
+          </p>
+        `
         : ""}
 
       ${actionHTML}
+
     </div>
   `;
 
+  // Video autoplay
   if (type === "videos") {
     const video = card.querySelector("video");
 
@@ -256,31 +317,31 @@ function createCard(item, type) {
     }
   }
 
-  if (type === "gallery") {
+  // Gallery / News images clickable
+  if (
+    type === "gallery" ||
+    type === "companyNews" ||
+    type === "printPress"
+  ) {
     const photo = card.querySelector("img");
 
-    photo?.addEventListener("click", () => showImage(item));
-
-    if (photo) photo.style.cursor = "pointer";
-  }
-
-  if (type === "companyNews" || type === "printPress") {
-    const photo = card.querySelector("img");
-
-    photo?.addEventListener("click", () => showArticle(item));
-
-    if (photo) photo.style.cursor = "pointer";
+    if (photo) {
+      photo.style.cursor = "pointer";
+    }
   }
 
   return card;
 }
 
-
-
-
+/* =====================================
+   RENDER MARKETING SECTION SLIDER
+===================================== */
 
 function renderSection(type, items) {
   const config = SECTION_CONFIG[type];
+
+  if (!config) return;
+
   const grid = $(config.grid);
 
   if (!grid) return;
@@ -288,7 +349,10 @@ function renderSection(type, items) {
   grid.innerHTML = "";
 
   const filtered = items
-    .filter(item => item.type === type && item.active === true)
+    .filter(item =>
+      item.type === type &&
+      item.active === true
+    )
     .sort((a, b) => {
       const aTime = a.createdAt?.toMillis
         ? a.createdAt.toMillis()
@@ -319,8 +383,9 @@ function renderSection(type, items) {
   slider.appendChild(viewport);
   grid.appendChild(slider);
 
-  // IMPORTANT: Group ko DOM mein attach karne ke baad cards add karein
   track.appendChild(group1);
+
+  /* Fill first group */
 
   function fillGroup(group) {
     let index = 0;
@@ -332,7 +397,11 @@ function renderSection(type, items) {
       group.children.length === 0
     ) {
       group.appendChild(
-        createCard(filtered[index % filtered.length], type)
+        createCard(
+          filtered[index % filtered.length],
+          type,
+          index % filtered.length
+        )
       );
 
       index++;
@@ -343,13 +412,16 @@ function renderSection(type, items) {
 
   fillGroup(group1);
 
-  // Duplicate group for seamless sliding
+  /* Duplicate group for continuous slider */
+
   const group2 = group1.cloneNode(true);
+
   group2.setAttribute("aria-hidden", "true");
 
   track.appendChild(group2);
 
-  // Play every video in both groups
+  /* Play all videos */
+
   function playAllVideos() {
     track.querySelectorAll("video").forEach(video => {
       video.muted = true;
@@ -366,19 +438,25 @@ function renderSection(type, items) {
 
   playAllVideos();
 
+  /* Slider arrows */
+
   const left = document.createElement("button");
+
   left.className = "marketing-arrow marketing-left";
   left.type = "button";
   left.textContent = "❮";
   left.setAttribute("aria-label", "Previous");
 
   const right = document.createElement("button");
+
   right.className = "marketing-arrow marketing-right";
   right.type = "button";
   right.textContent = "❯";
   right.setAttribute("aria-label", "Next");
 
   slider.append(left, right);
+
+  /* Slider movement */
 
   let position = 0;
   let groupWidth = 0;
@@ -405,15 +483,16 @@ function renderSection(type, items) {
       return;
     }
 
-    if (!lastTime) lastTime = timestamp;
+    if (!lastTime) {
+      lastTime = timestamp;
+    }
 
     const elapsed = Math.min(timestamp - lastTime, 50);
+
     lastTime = timestamp;
 
-    // Continuous left-to-right movement
     position += speed * elapsed / 1000;
 
-    // Seamless reset after complete group movement
     if (position >= 0) {
       position -= groupWidth;
     }
@@ -453,23 +532,66 @@ function renderSection(type, items) {
 
     position += direction * (card.offsetWidth + gap);
 
-    if (position >= 0) position -= groupWidth;
+    if (position >= 0) {
+      position -= groupWidth;
+    }
 
-    if (position < -groupWidth) position += groupWidth;
+    if (position < -groupWidth) {
+      position += groupWidth;
+    }
 
     track.style.transform =
       `translate3d(${position}px, 0, 0)`;
   }
 
-  left.addEventListener("click", () => moveCard(1));
-  right.addEventListener("click", () => moveCard(-1));
+  left.addEventListener("click", () => {
+    moveCard(1);
+  });
 
-  // Start after browser calculates the actual group width
+  right.addEventListener("click", () => {
+    moveCard(-1);
+  });
+
+  /* Image click support for original and duplicate cards */
+
+  track.addEventListener("click", event => {
+    const card = event.target.closest(".marketing-item");
+
+    if (!card) return;
+
+    const clickedImage = event.target.closest("img");
+
+    if (!clickedImage) return;
+
+    const cardType = card.dataset.marketingType;
+
+    const itemIndex = Number(card.dataset.marketingIndex);
+
+    const item = filtered[itemIndex];
+
+    if (!item) return;
+
+    if (cardType === "gallery") {
+      showImage(item);
+    }
+
+    if (
+      cardType === "companyNews" ||
+      cardType === "printPress"
+    ) {
+      showArticle(item);
+    }
+  });
+
+  /* Start slider after layout calculation */
+
   requestAnimationFrame(() => {
     measureSlider();
     playAllVideos();
     startSlider();
   });
+
+  /* Responsive slider */
 
   window.addEventListener("resize", () => {
     stopSlider();
@@ -479,8 +601,193 @@ function renderSection(type, items) {
   });
 }
 
+/* =====================================
+   HOMEPAGE HERO MARKETING SLIDER
+===================================== */
 
+function renderHeroSlider(items) {
+  const slider = $("heroMarketingSlider");
 
+  if (!slider) return;
+
+  // Only uploaded photos and videos
+  const mediaItems = items.filter(item => {
+    if (item.active !== true) return false;
+
+    if (item.type === "videos") {
+      return Boolean(safeURL(item.mediaUrl));
+    }
+
+    if (
+      ["companyNews", "gallery", "printPress"].includes(item.type)
+    ) {
+      return Boolean(getImage(item));
+    }
+
+    return false;
+  });
+
+  if (!mediaItems.length) return;
+
+  slider.innerHTML = "";
+
+  let currentIndex = 0;
+  let autoSlideTimer = null;
+
+  const slides = [];
+
+  /* Create slides */
+
+  mediaItems.forEach((item, index) => {
+    const slide = document.createElement("div");
+
+    slide.className = "hero-marketing-slide";
+
+    if (item.type === "videos") {
+      const video = document.createElement("video");
+
+      video.src = safeURL(item.mediaUrl);
+      video.autoplay = true;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+
+      if (item.thumbnailUrl) {
+        video.poster = safeURL(item.thumbnailUrl);
+      }
+
+      slide.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+
+      img.src = getImage(item);
+      img.alt = item.title || "RB Tech Solution";
+      img.loading = index === 0 ? "eager" : "lazy";
+
+      slide.appendChild(img);
+    }
+
+    slider.appendChild(slide);
+
+    slides.push(slide);
+  });
+
+  /* Previous arrow */
+
+  const previous = document.createElement("button");
+
+  previous.type = "button";
+  previous.className =
+    "hero-marketing-arrow hero-marketing-prev";
+  previous.textContent = "‹";
+  previous.setAttribute("aria-label", "Previous slide");
+
+  /* Next arrow */
+
+  const next = document.createElement("button");
+
+  next.type = "button";
+  next.className =
+    "hero-marketing-arrow hero-marketing-next";
+  next.textContent = "›";
+  next.setAttribute("aria-label", "Next slide");
+
+  /* Dots */
+
+  const dots = document.createElement("div");
+
+  dots.className = "hero-marketing-dots";
+
+  const dotButtons = slides.map((slide, index) => {
+    const dot = document.createElement("button");
+
+    dot.type = "button";
+    dot.className = "hero-marketing-dot";
+
+    dot.setAttribute(
+      "aria-label",
+      "Go to slide " + (index + 1)
+    );
+
+    dot.addEventListener("click", () => {
+      showSlide(index);
+      restartAutoSlide();
+    });
+
+    dots.appendChild(dot);
+
+    return dot;
+  });
+
+  slider.append(previous, next, dots);
+
+  /* Show selected slide */
+
+  function showSlide(index) {
+    currentIndex = (index + slides.length) % slides.length;
+
+    slides.forEach((slide, i) => {
+      slide.classList.toggle(
+        "active",
+        i === currentIndex
+      );
+
+      const video = slide.querySelector("video");
+
+      if (video) {
+        if (i === currentIndex) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+          video.currentTime = 0;
+        }
+      }
+    });
+
+    dotButtons.forEach((dot, i) => {
+      dot.classList.toggle(
+        "active",
+        i === currentIndex
+      );
+    });
+  }
+
+  function nextSlide() {
+    showSlide(currentIndex + 1);
+  }
+
+  function previousSlide() {
+    showSlide(currentIndex - 1);
+  }
+
+  /* Automatic slide */
+
+  function restartAutoSlide() {
+    clearInterval(autoSlideTimer);
+
+    if (slides.length > 1) {
+      autoSlideTimer = setInterval(nextSlide, 5000);
+    }
+  }
+
+  previous.addEventListener("click", () => {
+    previousSlide();
+    restartAutoSlide();
+  });
+
+  next.addEventListener("click", () => {
+    nextSlide();
+    restartAutoSlide();
+  });
+
+  showSlide(0);
+  restartAutoSlide();
+}
+
+/* =====================================
+   LOAD MARKETING CONTENT FROM FIRESTORE
+===================================== */
 
 async function loadMarketingContent() {
   const allGrids = Object.values(SECTION_CONFIG)
@@ -502,6 +809,10 @@ async function loadMarketingContent() {
       ...document.data()
     }));
 
+    // Homepage hero slider
+    renderHeroSlider(items);
+
+    // All marketing sliders
     Object.keys(SECTION_CONFIG).forEach(type => {
       renderSection(type, items);
     });
@@ -516,7 +827,10 @@ async function loadMarketingContent() {
   }
 }
 
-/* Viewer close events */
+/* =====================================
+   VIEWER CLOSE EVENTS
+===================================== */
+
 $("closeMarketingViewer")?.addEventListener(
   "click",
   closeMarketingViewer
@@ -537,5 +851,8 @@ document.addEventListener("keydown", event => {
   }
 });
 
-/* Load public marketing data */
+/* =====================================
+   LOAD PUBLIC MARKETING DATA
+===================================== */
+
 loadMarketingContent();
