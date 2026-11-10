@@ -1980,3 +1980,82 @@ select:focus-visible {
   }
 
 }
+
+.marketing-grid,
+.news-grid {
+  display: block !important;
+  width: 100%;
+}
+
+.marketing-slider {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 48px;
+}
+
+.marketing-slider-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.marketing-slider-track {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
+  gap: 0;
+  will-change: transform;
+}
+
+.marketing-slider-group {
+  display: flex;
+  flex: 0 0 auto;
+  width: max-content;
+  gap: 20px;
+  padding-right: 20px;
+  align-items: stretch;
+}
+
+.marketing-slider-group .marketing-item {
+  flex: 0 0 280px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  box-sizing: border-box;
+}
+
+.marketing-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #08a045;
+  color: white;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.marketing-left {
+  left: 3px;
+}
+
+.marketing-right {
+  right: 3px;
+}
+
+@media (max-width: 600px) {
+  .marketing-slider {
+    padding: 10px 38px;
+  }
+
+  .marketing-slider-group .marketing-item {
+    flex: 0 0 245px;
+    width: 245px;
+    min-width: 245px;
+    max-width: 245px;
+  }
+}
