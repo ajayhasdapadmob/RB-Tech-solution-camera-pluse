@@ -16,9 +16,9 @@
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="images/logo.png">
 
-  <!-- CONTACT POPUP CSS -->
   <style>
-  
+    /* CONTACT POPUP */
+
     .contact-popup {
       display: none;
       position: fixed;
@@ -40,7 +40,7 @@
       background: #fff;
       color: #26352b;
       width: 100%;
-      max-width: 1000px;
+      max-width: 750px;
       max-height: 92vh;
       overflow-y: auto;
       padding: 35px;
@@ -84,128 +84,27 @@
       background: #dc2626;
     }
 
+    /* CONTACT DETAILS ONLY */
+
     .contact-popup-layout {
       display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 25px;
-      align-items: start;
+      grid-template-columns: 1fr;
+      width: 100%;
+      gap: 0;
     }
 
-    .contact-form-box,
     .contact-details-box {
       background: #f8faf8;
-      padding: 24px;
+      padding: 25px;
       border-radius: 8px;
       border: 1px solid #e1e9e2;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .contact-form-box h3,
     .contact-details-box h3 {
       color: #075b30;
       margin: 0 0 20px;
-    }
-
-    .contact-form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .contact-field {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      min-width: 0;
-    }
-
-    .contact-field label {
-      font-weight: 600;
-      color: #26352b;
-    }
-
-    .contact-field input,
-    .contact-field select,
-    .contact-field textarea {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 11px 12px;
-      border: 1px solid #ccd6ce;
-      border-radius: 5px;
-      font: inherit;
-      background: #fff;
-      color: #26352b;
-    }
-
-    .contact-field input:focus,
-    .contact-field select:focus,
-    .contact-field textarea:focus {
-      outline: 2px solid #08a045;
-      border-color: #08a045;
-    }
-
-    .contact-field textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .contact-full {
-      grid-column: 1 / -1;
-    }
-
-    .contact-captcha {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding: 12px;
-      background: #edf5ee;
-      border-radius: 6px;
-    }
-
-    .contact-captcha button {
-      padding: 9px 12px;
-      border: 0;
-      background: #075b30;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .contact-privacy {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .contact-privacy input {
-      width: auto;
-      margin-top: 4px;
-    }
-
-    .contact-submit {
-      background: #087f3c;
-      color: #fff;
-      border: 0;
-      border-radius: 5px;
-      padding: 13px 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .contact-submit:hover {
-      background: #075b30;
-    }
-
-    .contact-submit:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    #websiteInquiryStatus {
-      margin-top: 12px;
-      font-weight: 600;
     }
 
     .contact-detail-item {
@@ -225,6 +124,10 @@
       text-decoration: none;
     }
 
+    .contact-detail-item a:hover {
+      text-decoration: underline;
+    }
+
     @media(max-width: 768px) {
       .contact-popup {
         padding: 10px;
@@ -236,265 +139,369 @@
         max-height: 96vh;
       }
 
-      .contact-popup-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .contact-form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .contact-full {
-        grid-column: auto;
-      }
-
       .contact-popup-header h2 {
         font-size: 23px;
       }
 
-      .contact-form-box,
       .contact-details-box {
         padding: 17px;
       }
     }
+
     /* MARKETING CONTENT */
-.marketing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 22px;
-  margin-top: 25px;
-}
 
-.marketing-item {
-  background: #fff;
-  border: 1px solid #e2e8e3;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, .06);
-  color: #26352b;
-}
+    .marketing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 22px;
+      margin-top: 25px;
+    }
 
-.marketing-item img,
-.marketing-item video {
-  width: 100%;
-  height: 190px;
-  object-fit: cover;
-  display: block;
-  background: #eef2ef;
-}
+    .marketing-item {
+      background: #fff;
+      border: 1px solid #e2e8e3;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, .06);
+      color: #26352b;
+    }
 
-.marketing-item-body {
-  padding: 17px;
-}
+    .marketing-item img,
+    .marketing-item video {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      display: block;
+      background: #eef2ef;
+    }
 
-.marketing-item-body h3 {
-  color: #075b30;
-  margin: 0 0 10px;
-}
+    .marketing-item-body {
+      padding: 17px;
+    }
 
-.marketing-item-body p {
-  color: #555;
-  line-height: 1.6;
-  white-space: pre-line;
-}
+    .marketing-item-body h3 {
+      color: #075b30;
+      margin: 0 0 10px;
+    }
 
-.marketing-item button,
-.marketing-item a {
-  display: inline-block;
-  margin: 5px 6px 0 0;
-  padding: 9px 15px;
-  border: 0;
-  border-radius: 5px;
-  background: #087f3c;
-  color: white;
-  text-decoration: none;
-  cursor: pointer;
-}
+    .marketing-item-body p {
+      color: #555;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
 
-.marketing-viewer {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100001;
-  background: rgba(0, 0, 0, .88);
-  padding: 20px;
-  align-items: center;
-  justify-content: center;
-}
+    .marketing-item button,
+    .marketing-item a {
+      display: inline-block;
+      margin: 5px 6px 0 0;
+      padding: 9px 15px;
+      border: 0;
+      border-radius: 5px;
+      background: #087f3c;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+    }
 
-.marketing-viewer.active {
-  display: flex;
-}
+    .marketing-viewer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100001;
+      background: rgba(0, 0, 0, .88);
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
 
-.marketing-viewer-box {
-  position: relative;
-  background: white;
-  width: 100%;
-  max-width: 950px;
-  max-height: 92vh;
-  overflow: auto;
-  padding: 45px 18px 18px;
-  border-radius: 10px;
-  text-align: center;
-}
+    .marketing-viewer.active {
+      display: flex;
+    }
 
-#closeMarketingViewer {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  border: 0;
-  background: #075b30;
-  color: white;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  font-size: 25px;
-  cursor: pointer;
-}
+    .marketing-viewer-box {
+      position: relative;
+      background: white;
+      width: 100%;
+      max-width: 950px;
+      max-height: 92vh;
+      overflow: auto;
+      padding: 45px 18px 18px;
+      border-radius: 10px;
+      text-align: center;
+    }
 
-#marketingViewerContent img,
-#marketingViewerContent video,
-#marketingViewerContent iframe {
-  max-width: 100%;
-  width: 100%;
-  max-height: 75vh;
-  object-fit: contain;
-  border: 0;
-}
+    #closeMarketingViewer {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      border: 0;
+      background: #075b30;
+      color: white;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      font-size: 25px;
+      cursor: pointer;
+    }
 
-#marketingViewerContent h2 {
-  color: #075b30;
-}
+    #marketingViewerContent img,
+    #marketingViewerContent video,
+    #marketingViewerContent iframe {
+      max-width: 100%;
+      width: 100%;
+      max-height: 75vh;
+      object-fit: cover;
+      border: 0;
+    }
 
-@media(max-width:600px) {
-  .marketing-grid {
-    grid-template-columns: 1fr;
-  }
-}
-/* =====================================
-   CONTINUOUS MARKETING SLIDER
-===================================== */
+    #marketingViewerContent h2 {
+      color: #075b30;
+    }
 
+    @media(max-width:600px) {
+      .marketing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
-.marketing-grid,
-.news-grid {
-  display: block !important;
-  width: 100%;
-}
+    /* CONTINUOUS MARKETING SLIDER */
 
-.marketing-slider {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 48px;
-}
+    .marketing-grid,
+    .news-grid {
+      display: block !important;
+      width: 100%;
+    }
 
-.marketing-slider-viewport {
-  width: 100%;
-  overflow: hidden;
-}
+    .marketing-slider {
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 48px;
+    }
 
-.marketing-slider-track {
-  display: flex;
-  width: max-content;
-  align-items: stretch;
-  will-change: transform;
-}
+    .marketing-slider-viewport {
+      width: 100%;
+      overflow: hidden;
+    }
 
-.marketing-slider-group {
-  display: flex;
-  flex: 0 0 auto;
-  width: max-content;
-  gap: 20px;
-  padding-right: 20px;
-  align-items: stretch;
-}
+    .marketing-slider-track {
+      display: flex;
+      width: max-content;
+      align-items: stretch;
+      will-change: transform;
+    }
 
-.marketing-slider-group .marketing-item {
-  flex: 0 0 280px;
-  width: 280px;
-  min-width: 280px;
-  max-width: 280px;
-  box-sizing: border-box;
-}
+    .marketing-slider-group {
+      display: flex;
+      flex: 0 0 auto;
+      width: max-content;
+      gap: 20px;
+      padding-right: 20px;
+      align-items: stretch;
+    }
 
-.marketing-arrow {
-  position: absolute;
-  top: 50%;
-  z-index: 10;
-  transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
-  border: none;
-  border-radius: 50%;
-  background: #08a045;
-  color: white;
-  font-size: 19px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .marketing-slider-group .marketing-item {
+      flex: 0 0 280px;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      box-sizing: border-box;
+    }
 
-.marketing-left {
-  left: 3px;
-}
+    .marketing-arrow {
+      position: absolute;
+      top: 50%;
+      z-index: 10;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: #08a045;
+      color: white;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.marketing-right {
-  right: 3px;
-}
+    .marketing-left {
+      left: 3px;
+    }
 
-.marketing-arrow:hover {
-  background: #075b30;
-}
+    .marketing-right {
+      right: 3px;
+    }
 
-@media (max-width: 600px) {
-  .marketing-slider {
-    padding: 10px 38px;
-  }
+    .marketing-arrow:hover {
+      background: #075b30;
+    }
 
-  .marketing-slider-group .marketing-item {
-    flex: 0 0 245px;
-    width: 245px;
-    min-width: 245px;
-    max-width: 245px;
-  }
+    .marketing-slider-group video {
+      display: block;
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: #000;
+    }
 
-  .marketing-arrow {
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
-  }
-}
+    @media(max-width:600px) {
+      .marketing-slider {
+        padding: 10px 38px;
+      }
 
+      .marketing-slider-group .marketing-item {
+        flex: 0 0 245px;
+        width: 245px;
+        min-width: 245px;
+        max-width: 245px;
+      }
 
-/* Video cards */
+      .marketing-arrow {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+      }
+    }
 
-.marketing-slider-group video {
-  display: block;
-  width: 100%;
-  height: 190px;
-  object-fit: cover;
-  background: #000000;
-}
+    /* HOMEPAGE HERO MARKETING SLIDER */
 
-/* Mobile */
+    .hero-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
 
-@media (max-width: 600px) {
-  .marketing-slider {
-    padding: 10px 38px;
-  }
-  
-  .marketing-slider-group .marketing-item {
-    flex: 0 0 245px;
-    width: 245px;
-    max-width: 245px;
-  }
-  
-  .marketing-arrow {
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
-  }
-}
+    .hero-image-box {
+      position: relative;
+      width: 100%;
+      max-width: 950px;
+      height: 420px;
+      min-height: 420px;
+      margin: 0 auto;
+      padding: 0;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      overflow: hidden;
+    }
+
+    .hero-marketing-slider {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      min-height: 420px;
+      overflow: hidden;
+    }
+
+    .hero-marketing-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .7s ease;
+    }
+
+    .hero-marketing-slide.active {
+      opacity: 1;
+      visibility: visible;
+      z-index: 1;
+    }
+
+    .hero-marketing-slide img,
+    .hero-marketing-slide video,
+    .hero-marketing-slider > .hero-static-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      background: #fff;
+    }
+
+    .hero-marketing-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .65);
+      color: #fff;
+      font-size: 23px;
+      cursor: pointer;
+    }
+
+    .hero-marketing-arrow:hover {
+      background: #087f3c;
+    }
+
+    .hero-marketing-prev {
+      left: 10px;
+    }
+
+    .hero-marketing-next {
+      right: 10px;
+    }
+
+    .hero-marketing-dots {
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      right: 0;
+      z-index: 6;
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .hero-marketing-dot {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .35);
+      cursor: pointer;
+    }
+
+    .hero-marketing-dot.active {
+      background: #08a045;
+      transform: scale(1.3);
+    }
+
+    .hero-image-label {
+      position: absolute;
+      z-index: 7;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+    }
+
+    @media(max-width:768px) {
+      .hero-image-box {
+        max-width: 100%;
+        height: 430px;
+        min-height: 430px;
+      }
+
+      .hero-marketing-slider {
+        height: 430px;
+        min-height: 430px;
+      }
+    }
+
+    @media(max-width:600px) {
+      .hero-marketing-arrow {
+        width: 32px;
+        height: 32px;
+        font-size: 19px;
+      }
+    }
   </style>
 </head>
 
@@ -526,14 +533,11 @@
         aria-label="Open navigation menu" aria-expanded="false">☰</button>
 
       <nav id="mainNav">
-
         <a href="#home">Home</a>
 
-        <!-- PRODUCTS -->
         <div class="nav-dropdown">
           <a href="#products" class="dropdown-toggle">Products ▾</a>
           <div class="mega-menu">
-
             <div>
               <h3>Camera Solutions</h3>
               <a href="#products" data-category="IP Cameras">Network Camera / IP Camera</a>
@@ -556,22 +560,20 @@
               <a href="#products" data-category="Storage">Storage & Memory</a>
               <a href="#products">View All Products →</a>
             </div>
-
           </div>
         </div>
 
-    <!-- MARKETING -->
-<div class="nav-dropdown">
-  <a href="#marketing" class="dropdown-toggle">Marketing ▾</a>
-  <div class="dropdown-menu">
-    <a href="#companyNews">Company News</a>
-    <a href="#brochures">Product Brochures</a>
-    <a href="#videos">Videos</a>
-    <a href="#gallery">Gallery</a>
-    <a href="#printPress">Print & Press</a>
-  </div>
-</div>
-        <!-- SOLUTIONS -->
+        <div class="nav-dropdown">
+          <a href="#marketing" class="dropdown-toggle">Marketing ▾</a>
+          <div class="dropdown-menu">
+            <a href="#companyNews">Company News</a>
+            <a href="#brochures">Product Brochures</a>
+            <a href="#videos">Videos</a>
+            <a href="#gallery">Gallery</a>
+            <a href="#printPress">Print & Press</a>
+          </div>
+        </div>
+
         <div class="nav-dropdown">
           <a href="#solutions" class="dropdown-toggle">Solutions ▾</a>
           <div class="dropdown-menu">
@@ -586,7 +588,6 @@
           </div>
         </div>
 
-        <!-- SUPPORT -->
         <div class="nav-dropdown">
           <a href="#support" class="dropdown-toggle">Support ▾</a>
           <div class="dropdown-menu">
@@ -600,7 +601,6 @@
         <a href="inquiry.html">Inquiry</a>
         <a href="#partner">Partner Connect</a>
         <a href="#" class="open-contact">Contact Us</a>
-
       </nav>
     </div>
   </header>
@@ -610,9 +610,7 @@
     <div class="hero-content">
       <div class="hero-text">
         <span class="hero-tag">YOUR TRUSTED SECURITY PARTNER</span>
-
         <h1>Smart Security Solutions For A Safer Tomorrow</h1>
-
         <p>
           Protect your home, business and organization with
           reliable CCTV cameras, advanced surveillance systems
@@ -628,11 +626,11 @@
 
     <div class="hero-visual">
       <div class="hero-image-box">
-        <img src="images/products/jaise%20camera-01.jpg.png"
-          alt="RB Tech Solution CCTV Camera" class="hero-static-image">
-
-        <div class="hero-image-label">
-          Advanced CCTV & Security Products
+        <div id="heroMarketingSlider" class="hero-marketing-slider">
+          <img
+            src="images/products/jaise%20camera-01.jpg.png"
+            alt="RB Tech Solution CCTV Camera"
+            class="hero-static-image">
         </div>
       </div>
     </div>
@@ -795,78 +793,74 @@
     </div>
   </section>
 
-<!-- MARKETING CONTENT -->
-<section id="marketing">
-  <div class="section-heading">
-    <h2>News, Media & Resources</h2>
-    <p>Explore the latest company news, brochures, videos, gallery and press updates.</p>
-  </div>
-</section>
+  <!-- MARKETING CONTENT -->
+  <section id="marketing">
+    <div class="section-heading">
+      <h2>News, Media & Resources</h2>
+      <p>Explore the latest company news, brochures, videos, gallery and press updates.</p>
+    </div>
+  </section>
 
-<!-- COMPANY NEWS -->
-<section id="companyNews">
-  <div class="section-heading">
-    <h2>Company News</h2>
-    <p>Latest news and updates from RB Tech Solution.</p>
-  </div>
-  <div id="companyNewsGrid" class="marketing-grid">
-    <p>Loading company news...</p>
-  </div>
-</section>
+  <section id="companyNews">
+    <div class="section-heading">
+      <h2>Company News</h2>
+      <p>Latest news and updates from RB Tech Solution.</p>
+    </div>
+    <div id="companyNewsGrid" class="marketing-grid">
+      <p>Loading company news...</p>
+    </div>
+  </section>
 
-<!-- PRODUCT BROCHURES -->
-<section id="brochures">
-  <div class="section-heading">
-    <h2>Product Brochures</h2>
-    <p>View and download product brochures and documents.</p>
-  </div>
-  <div id="brochuresGrid" class="marketing-grid">
-    <p>Loading brochures...</p>
-  </div>
-</section>
+  <section id="brochures">
+    <div class="section-heading">
+      <h2>Product Brochures</h2>
+      <p>View and download product brochures and documents.</p>
+    </div>
+    <div id="brochuresGrid" class="marketing-grid">
+      <p>Loading brochures...</p>
+    </div>
+  </section>
 
-<!-- VIDEOS -->
-<section id="videos">
-  <div class="section-heading">
-    <h2>Videos</h2>
-    <p>Watch product demonstrations and security solution videos.</p>
-  </div>
-  <div id="videosGrid" class="marketing-grid">
-    <p>Loading videos...</p>
-  </div>
-</section>
+  <section id="videos">
+    <div class="section-heading">
+      <h2>Videos</h2>
+      <p>Watch product demonstrations and security solution videos.</p>
+    </div>
+    <div id="videosGrid" class="marketing-grid">
+      <p>Loading videos...</p>
+    </div>
+  </section>
 
-<!-- GALLERY -->
-<section id="gallery">
-  <div class="section-heading">
-    <h2>Gallery</h2>
-    <p>Explore photos of products, installations and company activities.</p>
-  </div>
-  <div id="galleryGrid" class="marketing-grid">
-    <p>Loading gallery...</p>
-  </div>
-</section>
+  <section id="gallery">
+    <div class="section-heading">
+      <h2>Gallery</h2>
+      <p>Explore photos of products, installations and company activities.</p>
+    </div>
+    <div id="galleryGrid" class="marketing-grid">
+      <p>Loading gallery...</p>
+    </div>
+  </section>
 
-<!-- PRINT & PRESS -->
-<section id="printPress">
-  <div class="section-heading">
-    <h2>Print & Press</h2>
-    <p>Company publications, press releases and media resources.</p>
-  </div>
-  <div id="printPressGrid" class="marketing-grid">
-    <p>Loading Print & Press content...</p>
-  </div>
-</section>
+  <section id="printPress">
+    <div class="section-heading">
+      <h2>Print & Press</h2>
+      <p>Company publications, press releases and media resources.</p>
+    </div>
+    <div id="printPressGrid" class="marketing-grid">
+      <p>Loading Print & Press content...</p>
+    </div>
+  </section>
 
-<!-- MARKETING MEDIA VIEWER -->
-<div id="marketingViewer" class="marketing-viewer"
-     role="dialog" aria-modal="true" aria-label="Media viewer">
-  <div class="marketing-viewer-box">
-    <button type="button" id="closeMarketingViewer"
-            aria-label="Close">×</button>
-    <div id="marketingViewerContent"></div>
+  <!-- MARKETING MEDIA VIEWER -->
+  <div id="marketingViewer" class="marketing-viewer"
+    role="dialog" aria-modal="true" aria-label="Media viewer">
+    <div class="marketing-viewer-box">
+      <button type="button" id="closeMarketingViewer"
+        aria-label="Close">×</button>
+      <div id="marketingViewerContent"></div>
+    </div>
   </div>
-</div>
+
   <!-- SUPPORT -->
   <section id="support">
     <div class="section-heading">
@@ -995,136 +989,22 @@
     </div>
   </div>
 
-  <!-- CONTACT POPUP FORM -->
+  <!-- CONTACT POPUP - CONTACT DETAILS ONLY -->
   <div id="contactPopup" class="contact-popup"
     role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
 
     <div class="contact-popup-box">
 
       <button type="button" id="closeContactPopup"
-        class="contact-close" aria-label="Close Contact Form">×</button>
+        class="contact-close" aria-label="Close Contact Popup">×</button>
 
       <div class="contact-popup-header">
         <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
-        <p>We would love to hear from you. Please write to us.</p>
+        <p>We would love to hear from you. Please contact us.</p>
       </div>
 
       <div class="contact-popup-layout">
 
-        <!-- CONTACT FORM -->
-        <div class="contact-form-box">
-          <h3>Write To Us</h3>
-
-          <form id="websiteInquiryForm">
-
-            <div class="contact-form-grid">
-
-              <div class="contact-field">
-                <label for="websiteInquiryName">Name *</label>
-                <input type="text" id="websiteInquiryName"
-                  placeholder="Enter your name" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="websiteInquiryEmail">E-mail *</label>
-                <input type="email" id="websiteInquiryEmail"
-                  placeholder="Enter your e-mail" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="websiteInquiryMobile">Contact No. *</label>
-                <input type="tel" id="websiteInquiryMobile"
-                  placeholder="Enter contact number"
-                  pattern="[0-9+ ()-]{7,20}" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="websiteInquiryProduct">Query Type *</label>
-                <select id="websiteInquiryProduct" required>
-                  <option value="">Select Query Type</option>
-                  <option value="Product Enquiry">Product Enquiry</option>
-                  <option value="CCTV Installation">CCTV Installation</option>
-                  <option value="Technical Support">Technical Support</option>
-                  <option value="Warranty Support">Warranty Support</option>
-                  <option value="Business Partnership">Business Partnership</option>
-                  <option value="Other Enquiry">Other Enquiry</option>
-                </select>
-              </div>
-
-              <div class="contact-field">
-                <label for="contactCountry">Country *</label>
-                <input type="text" id="contactCountry"
-                  value="India" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="contactState">State *</label>
-                <input type="text" id="contactState"
-                  placeholder="Enter state" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="contactCity">City *</label>
-                <input type="text" id="contactCity"
-                  placeholder="Enter city" required>
-              </div>
-
-              <div class="contact-field">
-                <label for="contactPincode">Pincode *</label>
-                <input type="text" id="contactPincode"
-                  placeholder="Enter pincode"
-                  pattern="[0-9]{4,10}" required>
-              </div>
-
-              <div class="contact-field contact-full">
-                <label for="websiteInquiryMessage">Query *</label>
-                <textarea id="websiteInquiryMessage"
-                  placeholder="Write your query here..."
-                  required></textarea>
-              </div>
-
-              <!-- CAPTCHA -->
-              <div class="contact-field contact-full">
-                <label>Security Verification *</label>
-
-                <div class="contact-captcha">
-                  <strong id="contactCaptchaQuestion">Loading...</strong>
-
-                  <input type="number" id="contactCaptchaAnswer"
-                    placeholder="Answer" required
-                    style="max-width:130px;">
-
-                  <button type="button" id="contactCaptchaRefresh">
-                    Refresh
-                  </button>
-                </div>
-              </div>
-
-              <!-- PRIVACY CONSENT -->
-              <div class="contact-field contact-full">
-                <label class="contact-privacy">
-                  <input type="checkbox" id="contactPrivacy" required>
-                  <span>
-                    I agree that RB Tech Solution may use my submitted
-                    information to respond to my enquiry.
-                  </span>
-                </label>
-              </div>
-
-              <div class="contact-field contact-full">
-                <button type="submit" id="websiteInquirySubmit"
-                  class="contact-submit">
-                  SUBMIT
-                </button>
-
-                <p id="websiteInquiryStatus" aria-live="polite"></p>
-              </div>
-
-            </div>
-          </form>
-        </div>
-
-        <!-- CONTACT DETAILS -->
         <div class="contact-details-box">
           <h3>Contact Details</h3>
 
@@ -1168,31 +1048,26 @@
     </div>
   </div>
 
-  <!-- CONTACT POPUP + CAPTCHA JAVASCRIPT -->
+  <!-- CONTACT POPUP JAVASCRIPT -->
   <script>
     (function () {
       const popup = document.getElementById("contactPopup");
       const closeButton = document.getElementById("closeContactPopup");
-      const question = document.getElementById("contactCaptchaQuestion");
-      const answer = document.getElementById("contactCaptchaAnswer");
-      const refresh = document.getElementById("contactCaptchaRefresh");
-      const form = document.getElementById("websiteInquiryForm");
 
-      if (!popup || !closeButton || !form) return;
+      // Form ki zaroorat nahi hai. Sirf popup aur close button check hoga.
+      if (!popup || !closeButton) return;
 
       let previousFocus = null;
-      let correctAnswer = 0;
 
       function openPopup(event) {
         if (event) event.preventDefault();
 
         previousFocus = document.activeElement;
+
         popup.classList.add("active");
         document.body.style.overflow = "hidden";
 
-        setTimeout(() => {
-          document.getElementById("websiteInquiryName")?.focus();
-        }, 50);
+        closeButton.focus();
       }
 
       function closePopup() {
@@ -1204,51 +1079,30 @@
         }
       }
 
+      // Sabhi Contact Us buttons popup kholenge.
       document.querySelectorAll(".open-contact").forEach(link => {
         link.addEventListener("click", openPopup);
       });
 
+      // Close button.
       closeButton.addEventListener("click", closePopup);
 
+      // Popup ke bahar click karne par close.
       popup.addEventListener("click", function (event) {
-        if (event.target === popup) closePopup();
-      });
-
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && popup.classList.contains("active")) {
+        if (event.target === popup) {
           closePopup();
         }
       });
 
-      function generateCaptcha() {
-        const first = Math.floor(Math.random() * 9) + 1;
-        const second = Math.floor(Math.random() * 9) + 1;
-
-        correctAnswer = first + second;
-
-        if (question) {
-          question.textContent = first + " + " + second + " = ?";
-        }
-
-        if (answer) {
-          answer.value = "";
-        }
-      }
-
-      refresh?.addEventListener("click", generateCaptcha);
-
-      form.addEventListener("submit", function (event) {
-        if (Number(answer?.value) !== correctAnswer) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-
-          alert("Incorrect security answer. Please try again.");
-          generateCaptcha();
-          answer?.focus();
+      // Escape key se close.
+      document.addEventListener("keydown", function (event) {
+        if (
+          event.key === "Escape" &&
+          popup.classList.contains("active")
+        ) {
+          closePopup();
         }
       });
-
-      generateCaptcha();
     })();
   </script>
 
@@ -1270,13 +1124,16 @@
 
           const parent = this.closest(".nav-dropdown");
           const menu = parent.querySelector(".mega-menu, .dropdown-menu");
+
           if (!menu) return;
 
           const isOpen = menu.style.display === "block";
 
           document.querySelectorAll(
             "#mainNav .mega-menu, #mainNav .dropdown-menu"
-          ).forEach(item => item.style.display = "none");
+          ).forEach(item => {
+            item.style.display = "none";
+          });
 
           menu.style.display = isOpen ? "none" : "block";
         }
@@ -1296,15 +1153,18 @@
       });
     });
 
-    document.getElementById("footerYear").textContent =
-      new Date().getFullYear();
+    const footerYear = document.getElementById("footerYear");
+
+    if (footerYear) {
+      footerYear.textContent = new Date().getFullYear();
+    }
   </script>
 
- <!-- EXISTING APP JAVASCRIPT -->
-<script type="module" src="app.js"></script>
+  <!-- EXISTING APP JAVASCRIPT -->
+  <script type="module" src="app.js"></script>
 
-<!-- PUBLIC MARKETING JAVASCRIPT -->
-<script type="module" src="marketing.js"></script>
+  <!-- PUBLIC MARKETING JAVASCRIPT -->
+  <script type="module" src="marketing.js"></script>
 
 </body>
 </html>
