@@ -120,6 +120,7 @@ function openWhatsApp(message) {
    PRODUCT CARD
 ========================================= */
 
+
 function createProductCard(product, index) {
   const card = document.createElement("article");
   card.className = "product-card";
@@ -164,24 +165,6 @@ function createProductCard(product, index) {
           ${escapeHTML(price)}
         </p>
       ` : ""}
-
-      <div class="product-actions">
-        <button
-          class="view-details-btn"
-          type="button"
-          data-product-index="${index}"
-        >
-          View Details
-        </button>
-
-        <button
-          class="enquire-btn"
-          type="button"
-          data-enquire-index="${index}"
-        >
-          Enquire
-        </button>
-      </div>
     </div>
   `;
 
