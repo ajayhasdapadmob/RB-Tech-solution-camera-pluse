@@ -26,26 +26,27 @@ const CLOUDINARY_NAME = "ch5mab4a";
 const CLOUDINARY_PRESET = "rbtech_products";
 const CLOUDINARY_FOLDER = "rb-tech-solution/marketing";
 
+
 const MARKETING_TYPES = {
   companyNews: {
     title: "Company News",
     accept: "image/jpeg,image/png,image/webp",
     resource: "image",
-    multiple: false
+    multiple: true
   },
 
   brochures: {
     title: "Product Brochures",
     accept: "application/pdf",
     resource: "raw",
-    multiple: false
+    multiple: true
   },
 
   videos: {
     title: "Videos",
     accept: "video/mp4,video/webm,video/quicktime",
     resource: "video",
-    multiple: false
+    multiple: true
   },
 
   gallery: {
@@ -59,9 +60,10 @@ const MARKETING_TYPES = {
     title: "Print & Press",
     accept: "image/jpeg,image/png,image/webp,application/pdf,video/mp4,video/webm",
     resource: "auto",
-    multiple: false
+    multiple: true
   }
 };
+
 
 let marketingCustomer = null;
 let marketingContainer = null;
@@ -317,7 +319,7 @@ function marketingFormHTML() {
           id="marketingFile"
           type="file"
           accept="${config.accept}"
-          ${config.multiple ? "multiple" : ""}
+         ${config.multiple && !editingItem ? "multiple" : ""}
           ${editingItem ? "" : "required"}
           style="display:block;margin:10px 0 15px"
         >
@@ -648,6 +650,7 @@ function marketingAttachEvents() {
    SAVE MARKETING CONTENT
 ========================================== */
 
+
 async function marketingSave(event) {
   event.preventDefault();
 
@@ -692,17 +695,23 @@ async function marketingSave(event) {
     return;
   }
 
-  if (files.length) {
-    for (const file of files) {
-      const error = marketingValidateFile(
-        marketingType,
-        file
-      );
+  if (existing && files.length > 1) {
+    marketingMessage(
+      "Edit mode mein ek hi file select kijiye.",
+      "error"
+    );
+    return;
+  }
 
-      if (error) {
-        marketingMessage(error, "error");
-        return;
-      }
+  for (const file of files) {
+    const error = marketingValidateFile(
+      marketingType,
+      file
+    );
+
+    if (error) {
+      marketingMessage(error, "error");
+      return;
     }
   }
 
@@ -717,7 +726,6 @@ async function marketingSave(event) {
         "Thumbnail must be JPG, PNG or WebP.",
         "error"
       );
-
       return;
     }
   }
@@ -733,69 +741,78 @@ async function marketingSave(event) {
   saveButton.disabled = true;
 
   try {
-    /* MULTIPLE GALLERY PHOTOS */
+    let thumbnail = null;
 
-    if (
-      marketingType === "gallery" &&
-      files.length > 1
-    ) {
+    if (thumbnailFile) {
+      progress.textContent = "Uploading thumbnail...";
+
+      thumbnail = await uploadMarketingFile(
+        thumbnailFile,
+        "gallery"
+      );
+    }
+
+    /*
+       NEW CONTENT:
+       Har selected file ka alag Firestore record.
+    */
+
+    if (!existing) {
       let completed = 0;
 
       for (const file of files) {
         completed++;
 
         progress.textContent =
-          `Uploading photo ${completed} of ${files.length}...`;
+          `Uploading file ${completed} of ${files.length}: ${file.name}`;
 
         const uploaded = await uploadMarketingFile(
           file,
           marketingType
         );
 
-        await addDoc(marketingCollection(), {
+        const data = {
           customerId: marketingCustomer.id,
           customerUid: marketingCurrentUid(),
+
           type: marketingType,
           title,
           description,
+
           mediaUrl: uploaded.url,
           publicId: uploaded.publicId,
           resourceType: uploaded.resourceType,
+
           fileName: uploaded.fileName,
           fileFormat: uploaded.format,
           fileSize: uploaded.bytes,
+
           active,
+
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
-        });
+        };
+
+        if (thumbnail) {
+          data.thumbnailUrl = thumbnail.url;
+          data.thumbnailPublicId = thumbnail.publicId;
+        }
+
+        await addDoc(marketingCollection(), data);
       }
 
       marketingMessage(
-        `${files.length} gallery photos uploaded successfully.`
+        `${files.length} file(s) uploaded successfully.`
       );
 
     } else {
 
-      let uploaded = null;
-      let thumbnail = null;
+      /*
+         EDIT EXISTING CONTENT:
+         Sirf selected record update hoga.
+      */
 
-      if (files[0]) {
-        progress.textContent = "Uploading file...";
-
-        uploaded = await uploadMarketingFile(
-          files[0],
-          marketingType
-        );
-      }
-
-      if (thumbnailFile) {
-        progress.textContent = "Uploading thumbnail...";
-
-        thumbnail = await uploadMarketingFile(
-          thumbnailFile,
-          "gallery"
-        );
-      }
+      progress.textContent = "Updating content...";
 
       const data = {
         customerId: marketingCustomer.id,
@@ -807,7 +824,12 @@ async function marketingSave(event) {
         updatedAt: serverTimestamp()
       };
 
-      if (uploaded) {
+      if (files[0]) {
+        const uploaded = await uploadMarketingFile(
+          files[0],
+          marketingType
+        );
+
         data.mediaUrl = uploaded.url;
         data.publicId = uploaded.publicId;
         data.resourceType = uploaded.resourceType;
@@ -815,7 +837,7 @@ async function marketingSave(event) {
         data.fileFormat = uploaded.format;
         data.fileSize = uploaded.bytes;
 
-      } else if (existing) {
+      } else {
         data.mediaUrl = existing.mediaUrl || "";
         data.publicId = existing.publicId || "";
         data.resourceType = existing.resourceType || "";
@@ -828,31 +850,21 @@ async function marketingSave(event) {
         data.thumbnailUrl = thumbnail.url;
         data.thumbnailPublicId = thumbnail.publicId;
 
-      } else if (existing) {
+      } else {
         data.thumbnailUrl = existing.thumbnailUrl || "";
-
         data.thumbnailPublicId =
           existing.thumbnailPublicId || "";
       }
 
-      if (existing) {
-        const existingRef = doc(
-          db,
-          "marketingItems",
-          existing.id
-        );
+      const existingRef = doc(
+        db,
+        "marketingItems",
+        existing.id
+      );
 
-        await updateDoc(existingRef, data);
+      await updateDoc(existingRef, data);
 
-        marketingMessage("Content updated successfully.");
-
-      } else {
-        data.createdAt = serverTimestamp();
-
-        await addDoc(marketingCollection(), data);
-
-        marketingMessage("Content added successfully.");
-      }
+      marketingMessage("Content updated successfully.");
     }
 
     editingMarketingId = null;
@@ -877,6 +889,7 @@ async function marketingSave(event) {
     }
   }
 }
+
 
 /* ==========================================
    VIEW MARKETING FILE
