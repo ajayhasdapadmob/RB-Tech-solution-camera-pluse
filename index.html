@@ -17,7 +17,9 @@
   <link rel="icon" href="images/logo.png">
 
   <style>
-    /* CONTACT POPUP */
+    /* =====================================
+       CONTACT POPUP
+    ===================================== */
 
     .contact-popup {
       display: none;
@@ -84,8 +86,6 @@
       background: #dc2626;
     }
 
-    /* CONTACT DETAILS ONLY */
-
     .contact-popup-layout {
       display: grid;
       grid-template-columns: 1fr;
@@ -148,7 +148,9 @@
       }
     }
 
-    /* MARKETING CONTENT */
+    /* =====================================
+       MARKETING CONTENT
+    ===================================== */
 
     .marketing-grid {
       display: grid;
@@ -258,13 +260,15 @@
       color: #075b30;
     }
 
-    @media(max-width:600px) {
+    @media(max-width: 600px) {
       .marketing-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    /* CONTINUOUS MARKETING SLIDER */
+    /* =====================================
+       CONTINUOUS MARKETING SLIDER
+    ===================================== */
 
     .marketing-grid,
     .news-grid {
@@ -344,7 +348,7 @@
       background: #000;
     }
 
-    @media(max-width:600px) {
+    @media(max-width: 600px) {
       .marketing-slider {
         padding: 10px 38px;
       }
@@ -363,35 +367,40 @@
       }
     }
 
-    /* HOMEPAGE HERO MARKETING SLIDER */
+    /* =====================================
+       FULL SCREEN HERO IMAGE / VIDEO SLIDER
+    ===================================== */
 
-    .hero-visual {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-    }
+    .hero-section {
+      position: relative !important;
+      display: block !important;
+      width: 100% !important;
 
-    .hero-image-box {
-      position: relative;
-      width: 100%;
-      max-width: 950px;
-      height: 420px;
-      min-height: 420px;
-      margin: 0 auto;
-      padding: 0;
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-      overflow: hidden;
+      /* Header ke neeche bachi hui poori screen */
+      height: calc(100vh - var(--site-header-height, 0px)) !important;
+      height: calc(100svh - var(--site-header-height, 0px)) !important;
+
+      min-height: 300px;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background: #071b2b;
+      box-sizing: border-box;
     }
 
     .hero-marketing-slider {
-      position: relative;
-      width: 100%;
-      height: 420px;
-      min-height: 420px;
-      overflow: hidden;
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      max-width: none !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      background: #071b2b;
     }
 
     .hero-marketing-slide {
@@ -410,24 +419,103 @@
       z-index: 1;
     }
 
-    .hero-marketing-slide img,
-    .hero-marketing-slide video,
-    .hero-marketing-slider > .hero-static-image {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center center;
-      background: #fff;
-    }
+    
+/* HERO IMAGE AND VIDEO SIZE */
+
+.hero-marketing-slider > .hero-static-image,
+.hero-marketing-slide img,
+.hero-marketing-slide video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center;
+  background: #071b2b;
+  border: 0 !important;
+}
+
+/* HERO SLIDE */
+
+.hero-marketing-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .7s ease;
+  overflow: hidden;
+}
+
+.hero-marketing-slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+/* HERO ARROWS */
+
+.hero-marketing-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.hero-marketing-prev {
+  left: 15px;
+}
+
+.hero-marketing-next {
+  right: 15px;
+}
+
+/* HERO DOTS */
+
+.hero-marketing-dots {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-marketing-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .6);
+  cursor: pointer;
+}
+
+.hero-marketing-dot.active {
+  background: #08a045;
+  transform: scale(1.3);
+}
+
 
     .hero-marketing-arrow {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
       z-index: 5;
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      height: 42px;
       border: 0;
       border-radius: 50%;
       background: rgba(0, 0, 0, .65);
@@ -441,31 +529,31 @@
     }
 
     .hero-marketing-prev {
-      left: 10px;
+      left: 15px;
     }
 
     .hero-marketing-next {
-      right: 10px;
+      right: 15px;
     }
 
     .hero-marketing-dots {
       position: absolute;
-      bottom: 48px;
+      bottom: 18px;
       left: 0;
       right: 0;
       z-index: 6;
       display: flex;
       justify-content: center;
-      gap: 7px;
+      gap: 8px;
     }
 
     .hero-marketing-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       padding: 0;
       border: 0;
       border-radius: 50%;
-      background: rgba(0, 0, 0, .35);
+      background: rgba(255, 255, 255, .6);
       cursor: pointer;
     }
 
@@ -475,46 +563,87 @@
     }
 
     .hero-image-label {
-      position: absolute;
-      z-index: 7;
-      left: 14px;
-      right: 14px;
-      bottom: 12px;
+      display: none !important;
     }
 
-    @media(max-width:768px) {
-      .hero-image-box {
-        max-width: 100%;
-        height: 430px;
-        min-height: 430px;
+    @media(max-width: 768px) {
+      .hero-section {
+        height: calc(100vh - var(--site-header-height, 0px)) !important;
+        height: calc(100svh - var(--site-header-height, 0px)) !important;
+        min-height: 300px;
       }
 
-      .hero-marketing-slider {
-        height: 430px;
-        min-height: 430px;
-      }
-    }
-
-    @media(max-width:600px) {
       .hero-marketing-arrow {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
         font-size: 19px;
       }
+
+      .hero-marketing-prev {
+        left: 8px;
+      }
+
+      .hero-marketing-next {
+        right: 8px;
+      }
     }
+    
+/* =========================================
+   HERO MEDIA BEHIND TOP STRIP AND HEADER
+========================================= */
+
+body {
+  position: relative;
+  padding-top: 0 !important;
+}
+
+/* Top strip and header stay visible */
+.top-strip,
+.site-header {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+/* Hero starts from the very top */
+.hero-section {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 0 !important;
+}
+
+/* Keep the photo/video full screen */
+.hero-marketing-slider {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Other sections remain below the hero */
+.trust-strip {
+  position: relative;
+  z-index: 1;
+  margin-top: 100vh;
+  margin-top: 100svh;
+}
+
   </style>
 </head>
 
 <body>
 
-  <!-- TOP STRIP -->
-  <div class="top-strip">
-    <a href="#about">About Us</a>
-    <a href="#careers">Working With Us</a>
-    <a href="#" class="open-contact">Live Chat</a>
-    <a href="https://wa.me/919663116089" target="_blank" rel="noopener">WhatsApp</a>
-    <span>English</span>
-  </div>
+  
+<!-- TOP STRIP -->
+<div class="top-strip">
+  <a href="tel:+919663116089">+91 96631 16089</a>
+</div>
+
 
   <!-- HEADER -->
   <header class="site-header">
@@ -605,35 +734,16 @@
     </div>
   </header>
 
-  <!-- HERO -->
+  <!-- FULL SCREEN HERO MEDIA SLIDER -->
   <section class="hero-section" id="home">
-    <div class="hero-content">
-      <div class="hero-text">
-        <span class="hero-tag">YOUR TRUSTED SECURITY PARTNER</span>
-        <h1>Smart Security Solutions For A Safer Tomorrow</h1>
-        <p>
-          Protect your home, business and organization with
-          reliable CCTV cameras, advanced surveillance systems
-          and complete security solutions from RB Tech Solution.
-        </p>
 
-        <div class="hero-buttons">
-          <a href="#products">Explore Products</a>
-          <a href="#" class="open-contact">Contact Us</a>
-        </div>
-      </div>
+    <div id="heroMarketingSlider" class="hero-marketing-slider">
+      <img
+        src="images/products/jaise%20camera-01.jpg.png"
+        alt="RB Tech Solution"
+        class="hero-static-image">
     </div>
 
-    <div class="hero-visual">
-      <div class="hero-image-box">
-        <div id="heroMarketingSlider" class="hero-marketing-slider">
-          <img
-            src="images/products/jaise%20camera-01.jpg.png"
-            alt="RB Tech Solution CCTV Camera"
-            class="hero-static-image">
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- TRUST STRIP -->
@@ -794,22 +904,7 @@
   </section>
 
   <!-- MARKETING CONTENT -->
-  <section id="marketing">
-    <div class="section-heading">
-      <h2>News, Media & Resources</h2>
-      <p>Explore the latest company news, brochures, videos, gallery and press updates.</p>
-    </div>
-  </section>
-
-  <section id="companyNews">
-    <div class="section-heading">
-      <h2>Company News</h2>
-      <p>Latest news and updates from RB Tech Solution.</p>
-    </div>
-    <div id="companyNewsGrid" class="marketing-grid">
-      <p>Loading company news...</p>
-    </div>
-  </section>
+  
 
   <section id="brochures">
     <div class="section-heading">
@@ -989,7 +1084,7 @@
     </div>
   </div>
 
-  <!-- CONTACT POPUP - CONTACT DETAILS ONLY -->
+  <!-- CONTACT POPUP -->
   <div id="contactPopup" class="contact-popup"
     role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
 
@@ -1054,7 +1149,6 @@
       const popup = document.getElementById("contactPopup");
       const closeButton = document.getElementById("closeContactPopup");
 
-      // Form ki zaroorat nahi hai. Sirf popup aur close button check hoga.
       if (!popup || !closeButton) return;
 
       let previousFocus = null;
@@ -1079,22 +1173,18 @@
         }
       }
 
-      // Sabhi Contact Us buttons popup kholenge.
       document.querySelectorAll(".open-contact").forEach(link => {
         link.addEventListener("click", openPopup);
       });
 
-      // Close button.
       closeButton.addEventListener("click", closePopup);
 
-      // Popup ke bahar click karne par close.
       popup.addEventListener("click", function (event) {
         if (event.target === popup) {
           closePopup();
         }
       });
 
-      // Escape key se close.
       document.addEventListener("keydown", function (event) {
         if (
           event.key === "Escape" &&
@@ -1160,11 +1250,99 @@
     }
   </script>
 
+  <!-- CALCULATE AVAILABLE HERO SCREEN HEIGHT -->
+  <script>
+    (function () {
+      const hero = document.querySelector(".hero-section");
+      const topStrip = document.querySelector(".top-strip");
+      const header = document.querySelector(".site-header");
+
+      if (!hero) return;
+
+      function updateHeroHeight() {
+        const stripHeight = topStrip
+          ? topStrip.getBoundingClientRect().height
+          : 0;
+
+        const headerHeight = header
+          ? header.getBoundingClientRect().height
+          : 0;
+
+        const availableHeight = Math.max(
+          300,
+          window.innerHeight - stripHeight - headerHeight
+        );
+
+        hero.style.setProperty(
+          "--site-header-height",
+          (window.innerHeight - availableHeight) + "px"
+        );
+
+        hero.style.height = availableHeight + "px";
+      }
+
+      updateHeroHeight();
+
+      window.addEventListener("resize", updateHeroHeight);
+
+      window.addEventListener("orientationchange", function () {
+        setTimeout(updateHeroHeight, 150);
+      });
+    })();
+  </script>
+
   <!-- EXISTING APP JAVASCRIPT -->
   <script type="module" src="app.js"></script>
 
   <!-- PUBLIC MARKETING JAVASCRIPT -->
   <script type="module" src="marketing.js"></script>
+
+<style>
+/* Both header sections transparent */
+.top-strip,
+.site-header,
+.header-inner {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep header content above hero media */
+.top-strip,
+.site-header {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+/* Hero media behind complete header */
+.hero-section {
+  margin-top: calc(-1 * var(--site-header-height, 0px)) !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  position: relative !important;
+  z-index: 0 !important;
+}
+</style>
+
+<style>
+.site-header a[href="#home"],
+.site-header a[href="#products"],
+.site-header a[href="#marketing"],
+.site-header a[href="#solutions"],
+.site-header a[href="#support"],
+.site-header a[href*="inquiry.html"],
+.site-header a[href="#partner"],
+.site-header a[href="#"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #0000ffffff !important;
+  font-weight: bold !important;
+  text-shadow: 1px 2px 5px #000000 !important;
+}
+</style>
+
+.site-header nav a {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
 
 </body>
 </html>
