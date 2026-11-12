@@ -746,30 +746,7 @@ body {
 
   </section>
 
-  <!-- TRUST STRIP -->
-  <div class="trust-strip">
-    <div class="trust-grid">
-      <div><h3>Security</h3><p>Reliable Protection</p></div>
-      <div><h3>Technology</h3><p>Modern Solutions</p></div>
-      <div><h3>Quality</h3><p>Trusted Products</p></div>
-      <div><h3>Support</h3><p>Customer Assistance</p></div>
-    </div>
-  </div>
-
-  <!-- ABOUT -->
-  <section id="about">
-    <div class="section-heading">
-      <h2>What We Offer</h2>
-      <p>Complete CCTV, surveillance and security solutions for homes, offices, shops and industries.</p>
-    </div>
-    <div class="offer-content">
-      <p>
-        RB Tech Solution provides a range of security products
-        designed to help protect people, property and businesses.
-        Explore our product categories below.
-      </p>
-    </div>
-  </section>
+  
 
   <!-- TRENDING PRODUCTS -->
   <section id="trending">
@@ -1313,14 +1290,18 @@ body {
   z-index: 1000 !important;
 }
 
-/* Hero media behind complete header */
+
+/* HERO SLIDER - FULL WIDTH, REDUCED HEIGHT */
 .hero-section {
   margin-top: calc(-1 * var(--site-header-height, 0px)) !important;
-  height: 100vh !important;
-  height: 100svh !important;
+  width: 100% !important;
+  height: 65vh !important;
+  height: 65svh !important;
+  min-height: 300px !important;
   position: relative !important;
   z-index: 0 !important;
 }
+
 </style>
 
 <style>
@@ -1348,6 +1329,10 @@ text-shadow: none !important;
 .site-header #mainNav .dropdown-menu a:hover {
 color: #08a045 !important;
 -webkit-text-fill-color: #08a045 !important;
+}
+/* HEADER CONTENT MOVE UP */
+.site-header .header-inner {
+  transform: translateY(-12px);
 }
 </body>
 </html>
