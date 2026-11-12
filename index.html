@@ -629,8 +629,8 @@ body {
 .trust-strip {
   position: relative;
   z-index: 1;
-  margin-top: 0vh;
-  margin-top: 0svh;
+  margin-top: 00vh;
+  margin-top: 00svh;
 }
 
   </style>
@@ -1324,25 +1324,30 @@ body {
 </style>
 
 <style>
-.site-header a[href="#home"],
-.site-header a[href="#products"],
-.site-header a[href="#marketing"],
-.site-header a[href="#solutions"],
-.site-header a[href="#support"],
-.site-header a[href*="inquiry.html"],
-.site-header a[href="#partner"],
-.site-header a[href="#"] {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #0000ffffff !important;
-  font-weight: bold !important;
-  text-shadow: 1px 2px 5px #000000 !important;
-}
-</style>
-
-.site-header nav a {
-  font-size: 17px !important;
-  font-weight: 700 !important;
+/* MAIN NAVIGATION - WHITE */
+.site-header #mainNav > a,
+.site-header #mainNav > .nav-dropdown > .dropdown-toggle {
+color: #ffffff !important;
+-webkit-text-fill-color: #ffffff !important;
+font-weight: 700 !important;
+text-shadow: 1px 2px 5px #000000 !important;
 }
 
+/* ALL DROPDOWN CONTENT - BLACK */
+.site-header #mainNav .mega-menu,
+.site-header #mainNav .mega-menu *,
+.site-header #mainNav .dropdown-menu,
+.site-header #mainNav .dropdown-menu * {
+color: #000000 !important;
+-webkit-text-fill-color: #000000 !important;
+text-shadow: none !important;
+}
+
+/* DROPDOWN HOVER - GREEN */
+.site-header #mainNav .mega-menu a:hover,
+.site-header #mainNav .dropdown-menu a:hover {
+color: #08a045 !important;
+-webkit-text-fill-color: #08a045 !important;
+}
 </body>
 </html>
