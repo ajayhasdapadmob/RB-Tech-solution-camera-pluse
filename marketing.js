@@ -601,16 +601,16 @@ function renderSection(type, items) {
   });
 }
 
+
 /* =====================================
    HOMEPAGE HERO MARKETING SLIDER
+   VIDEO + IMAGE AUTO SLIDER
 ===================================== */
 
 function renderHeroSlider(items) {
   const slider = $("heroMarketingSlider");
-
   if (!slider) return;
 
-  // Only uploaded photos and videos
   const mediaItems = items.filter(item => {
     if (item.active !== true) return false;
 
@@ -618,9 +618,7 @@ function renderHeroSlider(items) {
       return Boolean(safeURL(item.mediaUrl));
     }
 
-    if (
-      ["companyNews", "gallery", "printPress"].includes(item.type)
-    ) {
+    if (["companyNews", "gallery", "printPress"].includes(item.type)) {
       return Boolean(getImage(item));
     }
 
@@ -636,28 +634,50 @@ function renderHeroSlider(items) {
 
   const slides = [];
 
-  /* Create slides */
-
+  // CREATE SLIDES
   mediaItems.forEach((item, index) => {
     const slide = document.createElement("div");
-
     slide.className = "hero-marketing-slide";
 
     if (item.type === "videos") {
       const video = document.createElement("video");
 
       video.src = safeURL(item.mediaUrl);
-      video.autoplay = true;
+      video.autoplay = false;
       video.muted = true;
-      video.loop = true;
+      video.loop = false;
+      video.controls = false;
       video.playsInline = true;
-      video.preload = "metadata";
+      video.preload = "auto";
 
-      if (item.thumbnailUrl) {
-        video.poster = safeURL(item.thumbnailUrl);
-      }
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+
+      const poster = safeURL(item.thumbnailUrl);
+      if (poster) video.poster = poster;
+
+      video.addEventListener("ended", () => {
+        if (slides[currentIndex] === slide) {
+          nextSlide();
+        }
+      });
+
+      video.addEventListener("error", () => {
+        console.error(
+          "Hero video loading error:",
+          video.src,
+          video.error
+        );
+
+        if (slides[currentIndex] === slide) {
+          clearTimeout(autoSlideTimer);
+          autoSlideTimer = setTimeout(nextSlide, 5000);
+        }
+      });
 
       slide.appendChild(video);
+
     } else {
       const img = document.createElement("img");
 
@@ -665,38 +685,35 @@ function renderHeroSlider(items) {
       img.alt = item.title || "RB Tech Solution";
       img.loading = index === 0 ? "eager" : "lazy";
 
+      img.onerror = () => {
+        console.error("Hero image loading failed:", img.src);
+      };
+
       slide.appendChild(img);
     }
 
     slider.appendChild(slide);
-
     slides.push(slide);
   });
 
-  /* Previous arrow */
-
+  // PREVIOUS BUTTON
   const previous = document.createElement("button");
-
   previous.type = "button";
   previous.className =
     "hero-marketing-arrow hero-marketing-prev";
   previous.textContent = "‹";
   previous.setAttribute("aria-label", "Previous slide");
 
-  /* Next arrow */
-
+  // NEXT BUTTON
   const next = document.createElement("button");
-
   next.type = "button";
   next.className =
     "hero-marketing-arrow hero-marketing-next";
   next.textContent = "›";
   next.setAttribute("aria-label", "Next slide");
 
-  /* Dots */
-
+  // DOTS
   const dots = document.createElement("div");
-
   dots.className = "hero-marketing-dots";
 
   const dotButtons = slides.map((slide, index) => {
@@ -704,40 +721,43 @@ function renderHeroSlider(items) {
 
     dot.type = "button";
     dot.className = "hero-marketing-dot";
-
-    dot.setAttribute(
-      "aria-label",
-      "Go to slide " + (index + 1)
-    );
+    dot.setAttribute("aria-label", "Go to slide " + (index + 1));
 
     dot.addEventListener("click", () => {
       showSlide(index);
-      restartAutoSlide();
     });
 
     dots.appendChild(dot);
-
     return dot;
   });
 
   slider.append(previous, next, dots);
 
-  /* Show selected slide */
-
+  // SHOW SLIDE
   function showSlide(index) {
+    clearTimeout(autoSlideTimer);
+
     currentIndex = (index + slides.length) % slides.length;
 
     slides.forEach((slide, i) => {
-      slide.classList.toggle(
-        "active",
-        i === currentIndex
-      );
+      slide.classList.toggle("active", i === currentIndex);
 
       const video = slide.querySelector("video");
 
       if (video) {
         if (i === currentIndex) {
-          video.play().catch(() => {});
+          video.currentTime = 0;
+
+          video.play().then(() => {
+            console.log("Hero video playing:", video.src);
+          }).catch(error => {
+            console.error("Hero video play failed:", error);
+
+            if (slides[currentIndex] === slide) {
+              autoSlideTimer = setTimeout(nextSlide, 5000);
+            }
+          });
+
         } else {
           video.pause();
           video.currentTime = 0;
@@ -746,11 +766,15 @@ function renderHeroSlider(items) {
     });
 
     dotButtons.forEach((dot, i) => {
-      dot.classList.toggle(
-        "active",
-        i === currentIndex
-      );
+      dot.classList.toggle("active", i === currentIndex);
     });
+
+    // IMAGE: SHOW FOR 5 SECONDS
+    const activeVideo = slides[currentIndex].querySelector("video");
+
+    if (!activeVideo && slides.length > 1) {
+      autoSlideTimer = setTimeout(nextSlide, 5000);
+    }
   }
 
   function nextSlide() {
@@ -761,29 +785,25 @@ function renderHeroSlider(items) {
     showSlide(currentIndex - 1);
   }
 
-  /* Automatic slide */
+  previous.addEventListener("click", previousSlide);
+  next.addEventListener("click", nextSlide);
 
-  function restartAutoSlide() {
-    clearInterval(autoSlideTimer);
+  // PAUSE WHEN TAB IS HIDDEN
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearTimeout(autoSlideTimer);
 
-    if (slides.length > 1) {
-      autoSlideTimer = setInterval(nextSlide, 5000);
+      const video = slides[currentIndex]?.querySelector("video");
+      if (video) video.pause();
+
+    } else {
+      showSlide(currentIndex);
     }
-  }
-
-  previous.addEventListener("click", () => {
-    previousSlide();
-    restartAutoSlide();
-  });
-
-  next.addEventListener("click", () => {
-    nextSlide();
-    restartAutoSlide();
   });
 
   showSlide(0);
-  restartAutoSlide();
 }
+
 
 /* =====================================
    LOAD MARKETING CONTENT FROM FIRESTORE
