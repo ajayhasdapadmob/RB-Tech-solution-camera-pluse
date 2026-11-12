@@ -22,7 +22,7 @@ import {
 
 /* =====================================
    RB TECH SOLUTION - CUSTOMER ADMIN
-   Product Management + Hindi/English OCR
+   Dynamic PDF Specifications + OCR
 ===================================== */
 
 const $ = id => document.getElementById(id);
@@ -40,8 +40,31 @@ let currentCustomer = null;
 let currentProducts = [];
 let currentEnquiries = [];
 let editingProductId = null;
-let authInitialized = false;
 let ocrLibrariesPromise = null;
+
+/* =====================================
+   CLOUDINARY SETTINGS
+===================================== */
+
+const CLOUDINARY_CLOUD_NAME = "ch5mab4a";
+const CLOUDINARY_UPLOAD_PRESET = "rbtech_products";
+const CLOUDINARY_PRODUCT_FOLDER = "rb-tech-solution/products";
+
+const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_PRODUCT_PDF_BYTES = 15 * 1024 * 1024;
+const MAX_OCR_FILE_BYTES = 15 * 1024 * 1024;
+
+const ALLOWED_PRODUCT_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+const ALLOWED_OCR_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
 
 if ($("year")) {
   $("year").textContent = new Date().getFullYear();
@@ -134,47 +157,29 @@ async function getCustomerByUid(uid) {
 ===================================== */
 
 function checkSubscription(customer) {
-  if (
-    String(customer.status || "").toLowerCase() !== "active"
-  ) {
-    return {
-      active: false,
-      message: "Inactive"
-    };
+  if (String(customer.status || "").toLowerCase() !== "active") {
+    return { active: false, message: "Inactive" };
   }
 
   const expiry = customer.subscriptionExpiry;
 
   if (!expiry) {
-    return {
-      active: false,
-      message: "Expiry date missing"
-    };
+    return { active: false, message: "Expiry date missing" };
   }
 
-  const expiryDate =
-    typeof expiry.toDate === "function"
-      ? expiry.toDate()
-      : new Date(expiry);
+  const expiryDate = typeof expiry.toDate === "function"
+    ? expiry.toDate()
+    : new Date(expiry);
 
   if (Number.isNaN(expiryDate.getTime())) {
-    return {
-      active: false,
-      message: "Invalid expiry date"
-    };
+    return { active: false, message: "Invalid expiry date" };
   }
 
   if (expiryDate.getTime() <= Date.now()) {
-    return {
-      active: false,
-      message: "Expired"
-    };
+    return { active: false, message: "Expired" };
   }
 
-  return {
-    active: true,
-    message: "Active"
-  };
+  return { active: true, message: "Active" };
 }
 
 /* =====================================
@@ -329,105 +334,110 @@ async function updateDashboardCounts() {
 }
 
 /* =====================================
-   SPECIFICATION FIELD LIST
+   DYNAMIC SPECIFICATIONS
+   New array + old object support
 ===================================== */
 
-const SPECIFICATION_FIELDS = [
-  "Image Sensor",
-  "Minimum Illumination",
-  "Effective Pixels",
-  "Shutter Speed",
-  "Angle Adjustment",
-  "ROM",
-  "White Balance",
-  "Image Setting",
-  "Lens Type",
-  "Max. Aperture",
-  "Lens Mount",
-  "Smart IR",
-  "IR Number",
-  "IR",
-  "Day/Night",
-  "Close Focus Distance",
-  "DORI Distance",
-  "Gain Control (AGC)",
-  "Lens",
-  "Video Compression",
-  "Back Light Compensation",
-  "S/N Ratio",
-  "Angle of view",
-  "Stream Capability",
-  "Frame Rate",
-  "Resolution",
-  "Noise Reduction",
-  "Defog",
-  "Privacy Mask",
-  "Audio",
-  "Audio Compression",
-  "OSD",
-  "Bit Rate Control",
-  "Bit Rate",
-  "Protocol",
-  "Video Format",
-  "SDK and API",
-  "Event Alarm",
-  "Cyber Security",
-  "Device Search Tool",
-  "OTA (Over-The-Air)",
-  "Audio Sampling Rate",
-  "Image Flip",
-  "Iris Control",
-  "Browser",
-  "User/Host",
-  "Ethernet",
-  "Storage",
-  "Power Source",
-  "Power Consumption",
-  "Operating Temperature",
-  "Operating Humidity",
-  "Storage Temperature",
-  "Storage Humidity",
-  "Certificates",
-  "Casing",
-  "Dimensions",
-  "Weight"
-];
+function normalizeSpecifications(specifications) {
+  if (Array.isArray(specifications)) {
+    return specifications
+      .map(item => ({
+        label: String(item?.label || "").trim(),
+        value: String(item?.value ?? "").trim()
+      }))
+      .filter(item => item.label && item.value);
+  }
 
-const LONG_SPECIFICATION_FIELDS = [
-  "DORI Distance",
-  "Frame Rate",
-  "Video Compression",
-  "Protocol",
-  "Event Alarm",
-  "Cyber Security",
-  "Power Consumption",
-  "Certificates",
-  "White Balance",
-  "Image Setting"
-];
+  if (specifications && typeof specifications === "object") {
+    return Object.entries(specifications)
+      .map(([label, value]) => ({
+        label: String(label || "").trim(),
+        value: String(value ?? "").trim()
+      }))
+      .filter(item => item.label && item.value);
+  }
 
-/* =====================================
-   COLLECT ONLY FILLED SPECIFICATIONS
-===================================== */
+  return [];
+}
 
-function collectSpecifications() {
-  const result = {};
+function collectDynamicSpecifications() {
+  const rows = [];
 
-  document.querySelectorAll("[data-spec-key]").forEach(field => {
-    const key = field.dataset.specKey;
-    const value = field.value.trim();
+  document.querySelectorAll(".dynamic-specification-row")
+    .forEach(row => {
+      const label =
+        row.querySelector("[data-spec-label]")?.value.trim() || "";
 
-    if (key && value) {
-      result[key] = value;
-    }
-  });
+      const value =
+        row.querySelector("[data-spec-value]")?.value.trim() || "";
 
-  return result;
+      if (label && value) {
+        rows.push({ label, value });
+      }
+    });
+
+  return rows;
+}
+
+function addDynamicSpecificationRow(label = "", value = "") {
+  const container = $("dynamicSpecificationRows");
+  if (!container) return;
+
+  const row = document.createElement("div");
+  row.className = "dynamic-specification-row";
+
+  row.innerHTML = `
+    <div class="dynamic-specification-fields">
+
+      <input
+        type="text"
+        data-spec-label
+        value="${escapeHTML(label)}"
+        placeholder="Specification name"
+      >
+
+      <textarea
+        data-spec-value
+        rows="2"
+        placeholder="Specification value"
+      >${escapeHTML(value)}</textarea>
+
+      <button
+        type="button"
+        class="danger"
+        data-remove-spec
+      >Remove</button>
+
+    </div>
+  `;
+
+  row.querySelector("[data-remove-spec]")?.addEventListener(
+    "click",
+    () => row.remove()
+  );
+
+  container.appendChild(row);
+}
+
+function renderDynamicSpecifications(specifications = []) {
+  const container = $("dynamicSpecificationRows");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const rows = normalizeSpecifications(specifications);
+
+  if (rows.length) {
+    rows.forEach(item => {
+      addDynamicSpecificationRow(item.label, item.value);
+    });
+  } else {
+    addDynamicSpecificationRow();
+  }
 }
 
 /* =====================================
    LOAD OCR LIBRARIES
-   Tesseract.js + PDF.js
 ===================================== */
 
 function loadExternalScript(src, globalName) {
@@ -460,11 +470,8 @@ function loadExternalScript(src, globalName) {
     script.dataset.library = globalName;
 
     script.onload = () => {
-      if (window[globalName]) {
-        resolve(window[globalName]);
-      } else {
-        reject(new Error(`${globalName} library unavailable.`));
-      }
+      if (window[globalName]) resolve(window[globalName]);
+      else reject(new Error(`${globalName} library unavailable.`));
     };
 
     script.onerror = () => {
@@ -476,9 +483,7 @@ function loadExternalScript(src, globalName) {
 }
 
 async function loadOCRLibraries() {
-  if (ocrLibrariesPromise) {
-    return ocrLibrariesPromise;
-  }
+  if (ocrLibrariesPromise) return ocrLibrariesPromise;
 
   ocrLibrariesPromise = (async () => {
     const [tesseract, pdfjs] = await Promise.all([
@@ -492,10 +497,8 @@ async function loadOCRLibraries() {
       )
     ]);
 
-    if (pdfjs.GlobalWorkerOptions) {
-      pdfjs.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
     return { tesseract, pdfjs };
   })();
@@ -509,373 +512,128 @@ async function loadOCRLibraries() {
 }
 
 /* =====================================
-   OCR TEXT NORMALIZATION
+   TEXT CLEANING
 ===================================== */
 
 function normalizeOCRText(value) {
   return String(value || "")
     .replace(/\r/g, "\n")
     .replace(/[：]/g, ":")
-    .replace(/[：؛]/g, ":")
     .replace(/[•●▪]/g, "\n")
-    .replace(/[ \t]+/g, " ")
+    .replace(/\u00a0/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-function normalizeOCRKey(value) {
+function cleanSpecificationText(value) {
   return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0900-\u097f]/g, "");
+    .replace(/\*\*/g, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/^\s*[-:|]+\s*/, "")
+    .replace(/\s*[-:|]+\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /* =====================================
-   OCR LABEL ALIASES
+   IGNORE PDF FOOTERS / DISCLAIMERS
 ===================================== */
 
-const OCR_FIELD_ALIASES = {
-  "Image Sensor": [
-    "image sensor",
-    "sensor",
-    "इमेज सेंसर",
-    "सेंसर"
-  ],
-  "Minimum Illumination": [
-    "minimum illumination",
-    "min illumination",
-    "minimum light",
-    "न्यूनतम रोशनी"
-  ],
-  "Effective Pixels": [
-    "effective pixels",
-    "pixels",
-    "resolution",
-    "प्रभावी पिक्सेल"
-  ],
-  "Shutter Speed": [
-    "shutter speed",
-    "शटर स्पीड"
-  ],
-  "Angle Adjustment": [
-    "angle adjustment",
-    "पैन टिल्ट एडजस्टमेंट"
-  ],
-  "ROM": ["rom"],
-  "White Balance": [
-    "white balance",
-    "wb",
-    "व्हाइट बैलेंस"
-  ],
-  "Image Setting": [
-    "image setting",
-    "इमेज सेटिंग"
-  ],
-  "Lens Type": ["lens type", "लेंस टाइप"],
-  "Max. Aperture": [
-    "max aperture",
-    "maximum aperture",
-    "अधिकतम अपर्चर"
-  ],
-  "Lens Mount": ["lens mount"],
-  "Smart IR": ["smart ir"],
-  "IR Number": ["ir number"],
-  "IR": ["ir distance", "ir range", "infrared distance"],
-  "Day/Night": ["day/night", "day night"],
-  "Close Focus Distance": ["close focus distance"],
-  "DORI Distance": ["dori distance", "dori"],
-  "Gain Control (AGC)": [
-    "gain control",
-    "agc",
-    "automatic gain control"
-  ],
-  "Lens": ["lens"],
-  "Video Compression": [
-    "video compression",
-    "video coding",
-    "वीडियो कंप्रेशन"
-  ],
-  "Back Light Compensation": [
-    "back light compensation",
-    "blc"
-  ],
-  "S/N Ratio": ["s/n ratio", "sn ratio", "signal to noise"],
-  "Angle of view": [
-    "angle of view",
-    "field of view",
-    "fov",
-    "viewing angle"
-  ],
-  "Stream Capability": [
-    "stream capability",
-    "stream"
-  ],
-  "Frame Rate": [
-    "frame rate",
-    "fps",
-    "frames per second"
-  ],
-  "Resolution": ["resolution"],
-  "Noise Reduction": [
-    "noise reduction",
-    "3d dnr",
-    "dnr"
-  ],
-  "Defog": ["defog"],
-  "Privacy Mask": ["privacy mask"],
-  "Audio": ["audio"],
-  "Audio Compression": ["audio compression"],
-  "OSD": ["osd"],
-  "Bit Rate Control": ["bit rate control"],
-  "Bit Rate": ["bit rate"],
-  "Protocol": ["protocol", "network protocol"],
-  "Video Format": ["video format"],
-  "SDK and API": ["sdk", "api", "sdk and api"],
-  "Event Alarm": ["event alarm", "alarm event"],
-  "Cyber Security": ["cyber security", "security"],
-  "Device Search Tool": ["device search tool"],
-  "OTA (Over-The-Air)": ["ota", "over the air"],
-  "Audio Sampling Rate": ["audio sampling rate"],
-  "Image Flip": ["image flip"],
-  "Iris Control": ["iris control"],
-  "Browser": ["browser"],
-  "User/Host": ["user/host", "user host"],
-  "Ethernet": ["ethernet"],
-  "Storage": ["storage"],
-  "Power Source": ["power source", "power supply"],
-  "Power Consumption": ["power consumption"],
-  "Operating Temperature": ["operating temperature"],
-  "Operating Humidity": ["operating humidity"],
-  "Storage Temperature": ["storage temperature"],
-  "Storage Humidity": ["storage humidity"],
-  "Certificates": ["certificates", "certification"],
-  "Casing": ["casing", "housing"],
-  "Dimensions": ["dimensions", "dimension"],
-  "Weight": ["weight"]
-};
+function isNonSpecificationLine(line) {
+  const value = String(line || "").trim().toLowerCase();
 
-/* =====================================
-   EXTRACT VALUE AFTER A LABEL
-===================================== */
+  if (!value) return true;
 
-function extractValueAfterLabel(line, aliases) {
-  const normalizedLine = normalizeOCRKey(line);
+  const ignoredPatterns = [
+    /^casing and specifications are subject to change/i,
+    /^specifications are subject to change/i,
+    /^subject to change without prior notice/i,
+    /^all rights reserved/i,
+    /^copyright\b/i,
+    /^www\./i,
+    /^https?:\/\//i,
+    /^page\s+\d+/i,
+    /^\d+\s*\/\s*\d+$/,
+    /^confidential\b/i,
+    /^disclaimer\b/i,
+    /^terms and conditions\b/i,
+    /^[-_=*.\s]+$/
+  ];
 
-  for (const alias of aliases) {
-    const normalizedAlias = normalizeOCRKey(alias);
-
-    if (!normalizedAlias) continue;
-
-    const position = normalizedLine.indexOf(normalizedAlias);
-
-    if (position === -1) continue;
-
-    // Original line mein label ki approximate position.
-    const lowerLine = line.toLowerCase();
-    const lowerAlias = alias.toLowerCase();
-    const originalPosition = lowerLine.indexOf(lowerAlias);
-
-    if (originalPosition >= 0) {
-      let value = line.slice(originalPosition + alias.length);
-
-      value = value
-        .replace(/^[\s:：|=\-–—]+/, "")
-        .replace(/^[.·]+/, "")
-        .trim();
-
-      if (value) return value;
-    }
-
-    // OCR ne label aur value ko bina space joda ho to
-    // normalized position se bhi attempt karein.
-    const compactPosition = position + normalizedAlias.length;
-    const compactLine = normalizeOCRKey(line);
-    const compactValue = compactLine.slice(compactPosition);
-
-    if (compactValue.length > 1) {
-      return compactValue;
-    }
-  }
-
-  return "";
+  return ignoredPatterns.some(pattern => pattern.test(value));
 }
 
 /* =====================================
-   FIND FIELD VALUE FROM OCR TEXT
-===================================== */
-
-function findOCRFieldValue(lines, aliases) {
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-
-    if (!line) continue;
-
-    const value = extractValueAfterLabel(line, aliases);
-
-    if (value) {
-      return value.replace(/^[\s:|=-]+/, "").trim();
-    }
-
-    const normalizedLine = normalizeOCRKey(line);
-
-    for (const alias of aliases) {
-      const normalizedAlias = normalizeOCRKey(alias);
-
-      if (
-        normalizedAlias &&
-        normalizedLine === normalizedAlias &&
-        lines[i + 1]
-      ) {
-        const nextValue = lines[i + 1].trim();
-
-        if (nextValue) return nextValue;
-      }
-    }
-  }
-
-  return "";
-}
-
-/* =====================================
-   OCR CATEGORY DETECTION
-===================================== */
-
-function detectOCRCategory(text) {
-  const value = text.toLowerCase();
-
-  if (/\b(dvr)\b/.test(value)) return "DVR";
-  if (/\b(nvr)\b/.test(value)) return "NVR";
-  if (/video door phone|video doorbell/.test(value)) {
-    return "Video Door Phones";
-  }
-  if (/\bip camera\b/.test(value)) return "IP Cameras";
-  if (/cctv camera|bullet camera|dome camera|turret camera/.test(value)) {
-    return "CCTV Cameras";
-  }
-
-  return "";
-}
-
-/* =====================================
-   PARSE PRODUCT DETAILS FROM OCR
+   GENERIC SPECIFICATION PARSER
+   No fixed specification names
 ===================================== */
 
 function parseOCRProductDetails(rawText) {
   const text = normalizeOCRText(rawText);
+
   const lines = text
     .split("\n")
     .map(line => line.trim())
     .filter(Boolean);
 
   const result = {
-    name: "",
-    category: "",
-    model: "",
+    name: findTextValue(lines, [
+      "Product Name",
+      "Camera Name",
+      "Model Name",
+      "Product"
+    ]),
+
+    model: findTextValue(lines, [
+      "Model Number",
+      "Model No",
+      "Model"
+    ]),
+
     price: "",
-    description: "",
+    category: detectOCRCategory(text),
+
+    description: findTextValue(lines, [
+      "Description",
+      "Product Description"
+    ]),
+
     features: [],
-    specifications: {}
+    specifications: parseDynamicSpecifications(text)
   };
 
-  const productNameAliases = [
-    "product name",
-    "product",
-    "camera name",
-    "model name",
-    "प्रोडक्ट का नाम",
-    "उत्पाद का नाम"
-  ];
+  // Model number detect
+  const modelMatch = text.match(
+    /\b[A-Z]{2,}(?:-[A-Z0-9]+){2,}\b/
+  );
 
-  const modelAliases = [
-    "model number",
-    "model no",
-    "model",
-    "model no.",
-    "मॉडल नंबर",
-    "मॉडल"
-  ];
+  if (modelMatch) {
+    result.model = modelMatch[0];
+  }
 
-  const priceAliases = [
-    "selling price",
-    "product price",
-    "mrp",
-    "price",
-    "कीमत",
-    "मूल्य"
-  ];
+  // Price detect
+  const rawPrice = findTextValue(lines, [
+    "Selling Price",
+    "Product Price",
+    "MRP",
+    "Price"
+  ]);
 
-  result.name = findOCRFieldValue(lines, productNameAliases);
-  result.model = findOCRFieldValue(lines, modelAliases);
-
-  const rawPrice = findOCRFieldValue(lines, priceAliases);
   const priceMatch = rawPrice.match(/[\d,]+(?:\.\d+)?/);
 
   if (priceMatch) {
     result.price = priceMatch[0].replace(/,/g, "");
   }
 
-  result.category = detectOCRCategory(text);
-
-  const descriptionAliases = [
-    "description",
-    "product description",
-    "विवरण",
-    "उत्पाद विवरण"
-  ];
-
-  result.description = findOCRFieldValue(
-    lines,
-    descriptionAliases
-  );
-
-  for (const key of SPECIFICATION_FIELDS) {
-    const aliases = OCR_FIELD_ALIASES[key] || [key];
-
-    const value = findOCRFieldValue(lines, aliases);
-
-    if (value) {
-      result.specifications[key] = value;
-    }
-  }
-
-  // Product name ke liye document ke shuru ke meaningful
-  // lines ko fallback ke roop mein use karein.
-  if (!result.name) {
-    const ignored = [
-      "specification",
-      "technical specification",
-      "product details",
-      "features",
-      "description",
-      "www.",
-      "http"
-    ];
-
-    const candidate = lines.find(line => {
-      const lower = line.toLowerCase();
-
-      return (
-        line.length >= 4 &&
-        line.length <= 100 &&
-        !ignored.some(item => lower.includes(item)) &&
-        !/^\d+$/.test(line) &&
-        !/^[A-Z0-9._-]+$/.test(line)
-      );
-    });
-
-    if (candidate) {
-      result.name = candidate;
-    }
-  }
-
-  // Features section.
+  // Features detect
   const featureStart = lines.findIndex(line =>
-    /^(features|key features|main features|मुख्य विशेषताएं)/i.test(line)
+    /^(features|key features|main features)/i.test(line)
   );
 
   if (featureStart >= 0) {
     for (
       let i = featureStart + 1;
-      i < lines.length && result.features.length < 15;
+      i < lines.length && result.features.length < 20;
       i++
     ) {
       const line = lines[i];
@@ -884,7 +642,11 @@ function parseOCRProductDetails(rawText) {
         break;
       }
 
-      if (line.length > 2 && line.length < 250) {
+      if (
+        line.length > 2 &&
+        line.length < 250 &&
+        !isNonSpecificationLine(line)
+      ) {
         result.features.push(
           line.replace(/^[-*•\d.)\s]+/, "").trim()
         );
@@ -892,169 +654,873 @@ function parseOCRProductDetails(rawText) {
     }
   }
 
+  // Product name detect
+  if (!result.name) {
+    const modelIndex = result.model
+      ? lines.findIndex(line => line.includes(result.model))
+      : -1;
+
+    const candidates = modelIndex >= 0
+      ? lines.slice(modelIndex + 1)
+      : lines;
+
+    const candidate = candidates.find(line =>
+      line.length >= 5 &&
+      line.length <= 120 &&
+      /camera|dome|bullet|turret|wireless|network/i.test(line) &&
+      !/think security|think cp plus|specification|features|www\.|https?:/i.test(line) &&
+      !isNonSpecificationLine(line)
+    );
+
+    if (candidate) {
+      result.name = candidate;
+    }
+  }
+
   return result;
 }
 
-/* =====================================
-   FILL FORM USING OCR RESULT
-===================================== */
 
-function fillProductFormFromOCR(parsed) {
-  const setValueIfFound = (id, value) => {
-    const field = $(id);
 
-    if (field && value !== undefined && value !== null) {
-      const cleanValue = String(value).trim();
 
-      if (cleanValue) {
-        field.value = cleanValue;
-      }
-    }
-  };
 
-  setValueIfFound("productName", parsed.name);
-  setValueIfFound("productModel", parsed.model);
-  setValueIfFound("productPrice", parsed.price);
-  setValueIfFound("productDescription", parsed.description);
+function parseDynamicSpecifications(text) {
 
-  if (parsed.category) {
-    const categorySelect = $("productCategory");
+  const labels = [
+    "Back Light Compensation",
+    "Minimum Illumination",
+    "Effective Pixels",
+    "Angle Adjustment",
+    "White Balance",
+    "Shutter Speed",
+    "DORI Distance",
+    "Gain Control(AGC)",
+    "Gain Control (AGC)",
+    "Close Focus Distance",
+    "Smart Illumination",
+    "Video Compression",
+    "Audio Compression",
+    "Stream Capability",
+    "Bit Rate Control",
+    "Weatherproof Standard",
+    "Operating Temperature",
+    "Operating Humidity",
+    "Storage Temperature",
+    "Storage Humidity",
+    "Power Consumption",
+    "Power Source",
+    "Cyber Security",
+    "Mirror Function",
+    "Motion Detection",
+    "Privacy Mask",
+    "Frame Rate",
+    "Video Format",
+    "Bit Rate",
+    "Image Sensor",
+    "Angle of View",
+    "Lens Type",
+    "Max. Aperture",
+    "Lens Mount",
+    "IR Number",
+    "Warm Light",
+    "IR Control",
+    "Smart IR",
+    "Noise Reduction",
+    "Day/Night",
+    "SDK and API",
+    "User/Host",
+    "Iris Control",
+    "Certificates",
+    "Published Date",
+    "Resolution",
+    "Protocol",
+    "Ethernet",
+    "Audio",
+    "RAM",
+    "ROM",
+    "Lens",
+    "IR",
+    "S/N Ratio",
+    "OSD",
+    "ROI",
+    "Browser",
+    "Casing",
+    "Weight",
+    "Dimension",
+    "Dimensions"
+  ];
 
-    if (categorySelect) {
-      const matchingOption = Array.from(categorySelect.options).find(
-        option =>
-          option.value.toLowerCase() === parsed.category.toLowerCase()
+  const sortedLabels = [...labels].sort(
+    (a, b) => b.length - a.length
+  );
+
+  const ignored = [
+    /^think security/i,
+    /^think cp plus/i,
+    /^system overview/i,
+    /^about cp plus/i,
+    /^functions$/i,
+    /^complete specification$/i,
+    /^feature specification$/i,
+    /^feature$/i,
+    /^specification$/i,
+    /^dimensions?\s*\(mm\/inch\)/i,
+    /^page\s*\d+/i,
+    /^www\./i,
+    /^https?:\/\//i,
+    /^email\s*:/i,
+    /^phone\s*:/i,
+    /^address\s*:/i,
+    /^\*?\s*casing and specifications are subject/i
+  ];
+
+  const rows = [];
+  let current = null;
+
+  function clean(value) {
+    return String(value || "")
+      .replace(/\u00a0/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/^[|:\s]+|[|:\s]+$/g, "")
+      .trim();
+  }
+
+  function isIgnored(line) {
+    if (!line) return true;
+
+    return ignored.some(regex => regex.test(line));
+  }
+
+  function findLabel(line) {
+
+    const normalized = clean(line);
+
+    for (const label of sortedLabels) {
+
+      const escaped = label.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
       );
 
-      if (matchingOption) {
-        categorySelect.value = matchingOption.value;
+      const regex = new RegExp(
+        "^" + escaped + "(?:\\s*:\\s*|\\s+)?(.*)$",
+        "i"
+      );
+
+      const match = normalized.match(regex);
+
+      if (match) {
+        return {
+          label: label,
+          value: clean(match[1])
+        };
       }
     }
+
+    return null;
   }
 
-  if (parsed.features?.length) {
-    const featuresField = $("productFeatures");
+  function addRow(label, value) {
 
-    if (featuresField) {
-      const existingFeatures = featuresField.value
-        .split("\n")
-        .map(item => item.trim())
+    label = clean(label);
+    value = clean(value);
+
+    if (!label) return;
+
+    // Ignore dimensions heading from PDF drawings
+    if (
+      /^dimensions?$/i.test(label) &&
+      /^\(?mm\/inch\)?$/i.test(value)
+    ) {
+      return;
+    }
+
+    // Ignore marketing paragraph incorrectly read as Ethernet
+    if (
+      /^ethernet$/i.test(label) &&
+      /cable to deliver|separate power adapters|cable clutter/i.test(value)
+    ) {
+      return;
+    }
+
+    const existing = rows.find(
+      row => row.label.toLowerCase() === label.toLowerCase()
+    );
+
+    if (existing) {
+
+      // Prefer a clean, shorter duplicate over a contaminated value
+      const badWords =
+        /think security|think cp plus|cable clutter|situational awareness/i;
+
+      if (
+        badWords.test(existing.value) ||
+        (
+          value.length < existing.value.length &&
+          !badWords.test(value)
+        )
+      ) {
+        existing.value = value;
+      }
+
+      current = existing;
+      return;
+    }
+
+    current = {
+      label: label,
+      value: value
+    };
+
+    rows.push(current);
+  }
+
+  function appendValue(value) {
+
+    value = clean(value);
+
+    if (!current || !value || isIgnored(value)) return;
+
+    // Do not add marketing paragraphs to specification values
+    if (
+      /think security|think cp plus|system overview|about cp plus/i.test(value)
+    ) {
+      return;
+    }
+
+    current.value = clean(
+      current.value + " " + value
+    );
+  }
+
+  let lines = String(text || "")
+    .replace(/\r/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .split("\n");
+
+  // Fix common OCR cases where two specifications were merged
+  const preparedLines = [];
+
+  for (let line of lines) {
+
+    line = clean(line);
+
+    if (!line || isIgnored(line)) continue;
+
+    // Split Power Source and Power Consumption
+    if (
+      /^Power Source\b/i.test(line) &&
+      /\bBasic\s*:/i.test(line)
+    ) {
+      const parts = line.split(/\bBasic\s*:/i);
+
+      preparedLines.push(parts[0].trim());
+
+      preparedLines.push(
+        "Power Consumption Basic: " +
+        parts.slice(1).join(" Basic: ")
+      );
+
+      continue;
+    }
+
+    // Split Bit Rate and Protocol
+    if (
+      /^Bit Rate\b/i.test(line) &&
+      /\bSFTP\s*,/i.test(line)
+    ) {
+      const parts = line.split(/\bSFTP\s*,/i);
+
+      preparedLines.push(parts[0].trim());
+
+      preparedLines.push(
+        "Protocol SFTP, " +
+        parts.slice(1).join(" SFTP, ")
+      );
+
+      continue;
+    }
+
+    // Split Back Light Compensation and Resolution
+    if (
+      /^Back Light Compensation\b/i.test(line) &&
+      /\b4MP\s*\(/i.test(line)
+    ) {
+      const index = line.search(/\b4MP\s*\(/i);
+
+      preparedLines.push(line.slice(0, index).trim());
+
+      preparedLines.push(
+        "Resolution " + line.slice(index).trim()
+      );
+
+      continue;
+    }
+
+    preparedLines.push(line);
+  }
+
+  for (let line of preparedLines) {
+
+    line = clean(line);
+
+    if (!line || isIgnored(line)) continue;
+
+    // Remove Markdown table separator rows
+    if (/^[-|:\s]+$/.test(line)) continue;
+
+    // Remove table border characters
+    line = line.replace(/^\|+|\|+$/g, "").trim();
+
+    if (!line) continue;
+
+    const found = findLabel(line);
+
+    if (found) {
+
+      // Skip drawing heading
+      if (
+        /^Dimensions?$/i.test(found.label) &&
+        /^\(?mm\/inch\)?$/i.test(found.value)
+      ) {
+        current = null;
+        continue;
+      }
+
+      addRow(found.label, found.value);
+      continue;
+    }
+
+    // Support PDF table columns separated by tabs
+    if (/\t/.test(line)) {
+
+      const parts = line.split(/\t+/)
+        .map(clean)
         .filter(Boolean);
 
-      const merged = [
-        ...new Set([...existingFeatures, ...parsed.features])
-      ];
+      if (parts.length >= 2) {
 
-      featuresField.value = merged.join("\n");
-    }
-  }
+        const labelPart = parts[0];
+        const valuePart = parts.slice(1).join(" ");
 
-  const specificationFields =
-    document.querySelectorAll("[data-spec-key]");
-
-  specificationFields.forEach(field => {
-    const key = field.dataset.specKey;
-    const value = parsed.specifications?.[key];
-
-    // OCR mein value mili tabhi field fill karein.
-    // Missing value ko blank hi chhodein.
-    if (value && String(value).trim()) {
-      field.value = String(value).trim();
-    }
-  });
-}
-
-/* =====================================
-   TESSERACT IMAGE OCR
-===================================== */
-
-async function recognizeImageText(file, onProgress) {
-  const { tesseract } = await loadOCRLibraries();
-
-  onProgress?.("Hindi + English OCR engine load ho raha hai...");
-
-  const result = await tesseract.recognize(
-    file,
-    "eng+hin",
-    {
-      logger: message => {
-        if (message.status === "recognizing text") {
-          const percent = Math.round(
-            (message.progress || 0) * 100
-          );
-
-          onProgress?.(`Photo scan ho rahi hai: ${percent}%`);
+        if (
+          labelPart.length <= 55 &&
+          !isIgnored(labelPart)
+        ) {
+          addRow(labelPart, valuePart);
+          continue;
         }
       }
     }
-  );
 
-  return result.data?.text || "";
-}
-
-/* =====================================
-   PDF TEXT EXTRACTION
-===================================== */
-
-async function extractPDFText(file, onProgress) {
-  const { pdfjs } = await loadOCRLibraries();
-
-  const buffer = await file.arrayBuffer();
-
-  const pdf = await pdfjs.getDocument({
-    data: new Uint8Array(buffer)
-  }).promise;
-
-  let fullText = "";
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-    onProgress?.(
-      `PDF page ${pageNumber}/${pdf.numPages} read ho raha hai...`
-    );
-
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-
-    let lastY = null;
-    const pageLines = [];
-
-    for (const item of content.items) {
-      if (!item.str) continue;
-
-      const y = item.transform?.[5];
-
-      if (
-        lastY !== null &&
-        typeof y === "number" &&
-        Math.abs(y - lastY) > 3
-      ) {
-        pageLines.push("\n");
-      }
-
-      pageLines.push(item.str + " ");
-      lastY = y;
-    }
-
-    fullText += "\n" + pageLines.join("");
+    // Continue wrapped specification value
+    appendValue(line);
   }
 
-  return {
-    text: normalizeOCRText(fullText),
-    pdf
-  };
+  // =========================================
+  // REPAIR MERGED OCR SPECIFICATIONS
+  // =========================================
+
+  function getRow(label) {
+    return rows.find(
+      r => r.label.toLowerCase() === label.toLowerCase()
+    );
+  }
+
+  function setRow(label, value) {
+    let row = getRow(label);
+
+    if (!row) {
+      row = { label, value: "" };
+      rows.push(row);
+    }
+
+    row.value = clean(value);
+  }
+
+  function removeRow(label) {
+    const index = rows.findIndex(
+      r => r.label.toLowerCase() === label.toLowerCase()
+    );
+
+    if (index !== -1) rows.splice(index, 1);
+  }
+
+  function splitAt(label, marker, newLabel) {
+    const row = getRow(label);
+    if (!row) return;
+
+    const index = row.value.search(marker);
+    if (index === -1) return;
+
+    const first = row.value.slice(0, index);
+    const second = row.value.slice(index);
+
+    row.value = clean(first);
+
+    const match = second.match(
+      new RegExp("^" + marker.source, marker.flags)
+    );
+
+    if (match) {
+      setRow(newLabel, second.replace(marker, "").trim());
+    }
+  }
+
+  // 1. Back Light Compensation / Resolution
+  splitAt(
+    "Back Light Compensation",
+    /\b4MP\s*\(/i,
+    "Resolution"
+  );
+
+  // 2. Remove disclaimer from Resolution
+  const resolution = getRow("Resolution");
+
+  if (resolution) {
+    resolution.value = resolution.value
+      .replace(/\*?\s*Product casing and specifications.*$/i, "")
+      .trim();
+  }
+
+  // 3. Stream Capability / Main Stream / Sub Streams
+  const stream = getRow("Stream Capability");
+
+  if (stream) {
+    const value = stream.value;
+
+    const mainIndex = value.search(/\bMain\s+stream\s*:/i);
+
+    if (mainIndex !== -1) {
+      stream.value = clean(value.slice(0, mainIndex));
+
+      const remaining = value.slice(mainIndex);
+
+      const sub1Index = remaining.search(/\bSub\s+stream\s*1\s*:/i);
+
+      if (sub1Index !== -1) {
+        const mainText = remaining.slice(0, sub1Index)
+          .replace(/^Main\s+stream\s*:/i, "");
+
+        const subRemaining = remaining.slice(sub1Index);
+
+        const sub2Index = subRemaining.search(/\bSub\s+stream\s*2\s*:/i);
+
+        if (sub2Index !== -1) {
+          setRow("Main Stream", mainText);
+
+          setRow(
+            "Sub Stream 1",
+            subRemaining.slice(0, sub2Index)
+              .replace(/^Sub\s+stream\s*1\s*:/i, "")
+          );
+
+          setRow(
+            "Sub Stream 2",
+            subRemaining.slice(sub2Index)
+              .replace(/^Sub\s+stream\s*2\s*:/i, "")
+          );
+        } else {
+          setRow("Main Stream", mainText);
+          setRow(
+            "Sub Stream 1",
+            subRemaining.replace(/^Sub\s+stream\s*1\s*:/i, "")
+          );
+        }
+      }
+    }
+  }
+
+  // 4. Move Frame Rate continuation into Sub Stream 1
+  const frameRate = getRow("Frame Rate");
+
+  if (frameRate) {
+    const sub2Index = frameRate.value.search(
+      /\bSub\s+stream\s*2\s*:/i
+    );
+
+    if (sub2Index !== -1) {
+      const firstPart = clean(
+        frameRate.value.slice(0, sub2Index)
+      );
+
+      const sub2Part = clean(
+        frameRate.value.slice(sub2Index)
+          .replace(/^Sub\s+stream\s*2\s*:/i, "")
+      );
+
+      const sub1 = getRow("Sub Stream 1");
+
+      if (sub1) {
+        sub1.value = clean(sub1.value + " " + firstPart);
+      }
+
+      setRow("Sub Stream 2", sub2Part);
+      removeRow("Frame Rate");
+    }
+  }
+
+  // 5. Bit Rate / Protocol
+  splitAt(
+    "Bit Rate",
+    /\bSFTP\s*,/i,
+    "Protocol"
+  );
+
+  // 6. Ethernet / Alarm Event / Cyber Security
+  const ethernet = getRow("Ethernet");
+
+  if (ethernet) {
+    const marker = /\bNetwork disconnection\b/i;
+    const index = ethernet.value.search(marker);
+
+    if (index !== -1) {
+      const original = ethernet.value;
+
+      ethernet.value = clean(original.slice(0, index));
+
+      const rest = original.slice(index);
+      const securityIndex = rest.search(/\bAES\s+256-bit\s+Encryption\b/i);
+
+      if (securityIndex !== -1) {
+        setRow(
+          "Alarm Event",
+          rest.slice(0, securityIndex)
+        );
+
+        const securityText = rest.slice(securityIndex);
+        const oldSecurity = getRow("Cyber Security");
+
+        setRow(
+          "Cyber Security",
+          securityText + " " + (oldSecurity?.value || "")
+        );
+      } else {
+        setRow("Alarm Event", rest);
+      }
+    }
+  }
+
+  // 7. Smart IR / Image Rotation
+  splitAt(
+    "Smart IR",
+    /\b4MP\s+only\s+support\b/i,
+    "Image Rotation"
+  );
+
+  // 8. Power Source / Power Consumption
+  const powerSource = getRow("Power Source");
+
+  if (powerSource) {
+    const index = powerSource.value.search(/\bBasic\s*:/i);
+
+    if (index !== -1) {
+      const basic = powerSource.value.slice(index);
+
+      powerSource.value = clean(
+        powerSource.value.slice(0, index)
+      );
+
+      const powerConsumption = getRow("Power Consumption");
+
+      setRow(
+        "Power Consumption",
+        basic + " " + (powerConsumption?.value || "")
+      );
+    }
+  }
+
+  // 9. Remove company details and disclaimer from Published Date
+  const published = getRow("Published Date");
+
+  if (published) {
+    published.value = published.value
+      .replace(/\*?\s*Product casing and specifications.*$/i, "")
+      .replace(/\bCompany Name\b.*$/i, "")
+      .replace(/\bContact Mail ID\b.*$/i, "")
+      .trim();
+  }
+
+  // 10. Remove empty rows
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (!clean(rows[i].value)) {
+      rows.splice(i, 1);
+    }
+  }
+
+  // Final cleanup
+  return rows
+    .map(row => ({
+      label: clean(row.label),
+      value: clean(row.value)
+    }))
+    .filter(row => row.label && row.value)
+    .filter(row => {
+      if (
+        /^dimensions?$/i.test(row.label) &&
+        /^\(?mm\/inch\)?$/i.test(row.value)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
 }
 
 /* =====================================
-   OCR SCANNED PDF PAGE
+   PDF.JS TABLE ROW RECONSTRUCTION
+   Uses actual text positions
+===================================== */
+
+function reconstructPDFPageText(items) {
+  const usableItems = items
+    .filter(item => item.str && item.str.trim())
+    .map(item => ({
+      text: item.str.trim(),
+      x: Number(item.transform?.[4] || 0),
+      y: Number(item.transform?.[5] || 0),
+      width: Number(item.width || 0)
+    }))
+    .sort((a, b) => {
+      if (Math.abs(b.y - a.y) > 3) return b.y - a.y;
+      return a.x - b.x;
+    });
+  
+  const lines = [];
+  
+  for (const item of usableItems) {
+    let line = lines.find(
+      existing => Math.abs(existing.y - item.y) <= 3
+    );
+    
+    if (!line) {
+      line = { y: item.y, items: [] };
+      lines.push(line);
+    }
+    
+    line.items.push(item);
+  }
+  
+  lines.sort((a, b) => b.y - a.y);
+  
+  return lines.map(line => {
+    line.items.sort((a, b) => a.x - b.x);
+    
+    let output = "";
+    let previous = null;
+    
+    for (const item of line.items) {
+      if (previous) {
+        const gap = item.x - (previous.x + previous.width);
+        
+        const previousCharWidth =
+          previous.width / Math.max(previous.text.length, 1);
+        
+        const currentCharWidth =
+          item.width / Math.max(item.text.length, 1);
+        
+        const averageCharWidth =
+          (previousCharWidth + currentCharWidth) / 2;
+        
+        const columnGap = Math.max(
+          10,
+          averageCharWidth * 2.2
+        );
+        
+        if (gap > columnGap) {
+          output += "\t";
+        } else if (gap > 2) {
+          output += " ";
+        }
+      }
+      
+      output += item.text;
+      previous = item;
+    }
+    
+    return output.trim();
+  }).filter(Boolean).join("\n");
+}
+/* =====================================
+   OCR LANGUAGE FALLBACK
+===================================== */
+
+function formatTesseractWords(data) {
+  const words = (data?.words || [])
+    .filter(word =>
+      word.text &&
+      word.text.trim() &&
+      word.bbox
+    )
+    .map(word => ({
+      text: word.text.trim(),
+      x0: Number(word.bbox.x0 || 0),
+      x1: Number(word.bbox.x1 || 0),
+      y: (
+        Number(word.bbox.y0 || 0) +
+        Number(word.bbox.y1 || 0)
+      ) / 2
+    }))
+    .sort((a, b) => {
+      if (Math.abs(a.y - b.y) > 8) {
+        return a.y - b.y;
+      }
+      
+      return a.x0 - b.x0;
+    });
+  
+  if (!words.length) {
+    return normalizeOCRText(data?.text || "");
+  }
+  
+  const lines = [];
+  
+  for (const word of words) {
+    let line = lines.find(
+      item => Math.abs(item.y - word.y) <= 8
+    );
+    
+    if (!line) {
+      line = {
+        y: word.y,
+        words: []
+      };
+      
+      lines.push(line);
+    }
+    
+    line.words.push(word);
+  }
+  
+  lines.sort((a, b) => a.y - b.y);
+  
+  return lines.map(line => {
+    line.words.sort((a, b) => a.x0 - b.x0);
+    
+    let output = "";
+    let previous = null;
+    
+    for (const word of line.words) {
+      if (previous) {
+        const gap = word.x0 - previous.x1;
+        
+        const previousWidth =
+          (previous.x1 - previous.x0) /
+          Math.max(previous.text.length, 1);
+        
+        const currentWidth =
+          (word.x1 - word.x0) /
+          Math.max(word.text.length, 1);
+        
+        const averageWidth =
+          (previousWidth + currentWidth) / 2;
+        
+        const columnGap = Math.max(
+          14,
+          averageWidth * 2.5
+        );
+        
+        output += gap > columnGap ? "\t" : " ";
+      }
+      
+      output += word.text;
+      previous = word;
+    }
+    
+    return output.trim();
+  }).filter(Boolean).join("\n");
+}
+
+async function recognizeWithFallback(
+  source,
+  onProgress,
+  label = "Document"
+) {
+  const { tesseract } = await loadOCRLibraries();
+  
+  const languages = ["eng+hin", "eng"];
+  
+  let lastError = null;
+  
+  for (const language of languages) {
+    try {
+      onProgress?.(
+        `${label}: ${language} OCR start ho raha hai...`
+      );
+      
+      const result = await tesseract.recognize(
+        source,
+        language,
+        {
+          logger: message => {
+            if (message.status === "recognizing text") {
+              onProgress?.(
+                `${label}: ${language} OCR ${Math.round(
+                  (message.progress || 0) * 100
+                )}%`
+              );
+            }
+          }
+        }
+      );
+      
+      const formattedText = formatTesseractWords(
+        result.data
+      );
+      
+      const finalText = formattedText ||
+        result.data?.text ||
+        "";
+      
+      if (finalText.trim()) {
+        return normalizeOCRText(finalText);
+      }
+      
+    } catch (error) {
+      lastError = error;
+      
+      console.warn(
+        `OCR ${language} failed:`,
+        error
+      );
+    }
+  }
+  
+  if (lastError) {
+    throw new Error(
+      "Hindi + English aur English OCR dono fail hue: " +
+      lastError.message
+    );
+  }
+  
+  return "";
+}
+/* =====================================
+   IMAGE OCR
+===================================== */
+
+async function recognizeImageText(file, onProgress) {
+  return recognizeWithFallback(
+    file,
+    onProgress,
+    "Photo"
+  );
+}
+
+/* =====================================
+   PDF PAGE OCR
 ===================================== */
 
 async function recognizePDFPage(page, onProgress, pageNumber) {
-  const { tesseract } = await loadOCRLibraries();
-
-  const viewport = page.getViewport({ scale: 1.6 });
-
+  const viewport = page.getViewport({ scale: 2 });
   const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  if (!context) {
+    throw new Error("PDF canvas create nahi hua.");
+  }
 
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
@@ -1064,34 +1530,21 @@ async function recognizePDFPage(page, onProgress, pageNumber) {
     viewport
   }).promise;
 
-  onProgress?.(`PDF page ${pageNumber} ka OCR scan ho raha hai...`);
-
-  const result = await tesseract.recognize(
+  const text = await recognizeWithFallback(
     canvas,
-    "eng+hin",
-    {
-      logger: message => {
-        if (message.status === "recognizing text") {
-          const percent = Math.round(
-            (message.progress || 0) * 100
-          );
-
-          onProgress?.(
-            `PDF page ${pageNumber}: OCR ${percent}%`
-          );
-        }
-      }
-    }
+    onProgress,
+    `PDF page ${pageNumber}`
   );
 
   canvas.width = 0;
   canvas.height = 0;
 
-  return result.data?.text || "";
+  return text;
 }
 
 /* =====================================
-   PDF OCR HANDLER
+   PDF TEXT EXTRACTION
+   Text layer first, OCR fallback
 ===================================== */
 
 async function recognizePDF(file, onProgress) {
@@ -1105,25 +1558,41 @@ async function recognizePDF(file, onProgress) {
 
   let fullText = "";
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+  if (!pdf.numPages) {
+    throw new Error("PDF mein koi page nahi mila.");
+  }
+
+  for (
+    let pageNumber = 1;
+    pageNumber <= pdf.numPages;
+    pageNumber++
+  ) {
+    onProgress?.(
+      `PDF page ${pageNumber}/${pdf.numPages} read ho raha hai...`
+    );
+
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
 
-    const pageText = content.items
-      .map(item => item.str || "")
-      .join(" ")
-      .trim();
+    const pageText = reconstructPDFPageText(content.items || []);
 
-    if (pageText.length > 30) {
+    /* Text layer readable hai to usko use karein.
+       Lekin text bahut kam ya empty hai to OCR chalega. */
+
+    if (pageText.trim().length >= 30) {
       fullText += "\n" + pageText;
     } else {
-      const scannedText = await recognizePDFPage(
+      onProgress?.(
+        `PDF page ${pageNumber} mein readable text kam hai. OCR chalu...`
+      );
+
+      const ocrText = await recognizePDFPage(
         page,
         onProgress,
         pageNumber
       );
 
-      fullText += "\n" + scannedText;
+      fullText += "\n" + (ocrText || pageText);
     }
   }
 
@@ -1131,20 +1600,12 @@ async function recognizePDF(file, onProgress) {
 }
 
 /* =====================================
-   OCR FILE VALIDATION
+   FILE VALIDATION
 ===================================== */
-
-const MAX_OCR_FILE_BYTES = 15 * 1024 * 1024;
-
-const ALLOWED_OCR_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp"
-];
 
 function validateOCRFile(file) {
   if (!file) {
-    throw new Error("PDF ya photo select kijiye.");
+    throw new Error("Pehle PDF ya photo select kijiye.");
   }
 
   const isPDF =
@@ -1154,98 +1615,196 @@ function validateOCRFile(file) {
   const isImage = ALLOWED_OCR_IMAGE_TYPES.includes(file.type);
 
   if (!isPDF && !isImage) {
-    throw new Error(
-      "OCR ke liye PDF, JPG, PNG ya WEBP file select kijiye."
-    );
+    throw new Error("PDF, JPG, PNG ya WEBP file select kijiye.");
   }
 
   if (file.size > MAX_OCR_FILE_BYTES) {
-    throw new Error(
-      "OCR file 15 MB se chhoti honi chahiye."
-    );
+    throw new Error("OCR file 15 MB se chhoti honi chahiye.");
   }
 
   return isPDF ? "pdf" : "image";
 }
 
 /* =====================================
-   RUN OCR
+   OCR PRODUCT DETAILS
+===================================== */
+
+function findTextValue(lines, labels) {
+  for (const line of lines) {
+    for (const label of labels) {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const regex = new RegExp(
+        "^" + escaped + "\\s*[:：-]\\s*(.+)$",
+        "i"
+      );
+
+      const match = line.match(regex);
+
+      if (match?.[1]?.trim()) {
+        return match[1].trim();
+      }
+    }
+  }
+
+  return "";
+}
+
+
+function detectOCRCategory(text) {
+  const value = String(text || "").toLowerCase();
+
+  if (/bullet camera|bullet network camera/.test(value)) {
+    return "CCTV Cameras";
+  }
+
+  if (/dome camera|turret camera/.test(value)) {
+    return "CCTV Cameras";
+  }
+
+  if (/video door phone|video doorbell/.test(value)) {
+    return "Video Door Phones";
+  }
+
+  if (/\bip camera\b|network camera/.test(value)) {
+    return "IP Cameras";
+  }
+
+  if (/\bnvr\b/.test(value)) return "NVR";
+  if (/\bdvr\b/.test(value)) return "DVR";
+
+  return "";
+}
+
+/* =====================================
+   FILL PRODUCT FORM
+===================================== */
+
+function fillProductFormFromOCR(parsed) {
+  const setValue = (id, value) => {
+    const field = $(id);
+
+    if (field && value) {
+      field.value = String(value).trim();
+    }
+  };
+
+  setValue("productName", parsed.name);
+  setValue("productModel", parsed.model);
+  setValue("productPrice", parsed.price);
+  setValue("productDescription", parsed.description);
+
+  if (parsed.category) {
+    const categorySelect = $("productCategory");
+
+    const option = Array.from(categorySelect?.options || []).find(
+      item => item.value.toLowerCase() === parsed.category.toLowerCase()
+    );
+
+    if (option) {
+      categorySelect.value = option.value;
+    }
+  }
+
+  if (parsed.features?.length) {
+    const field = $("productFeatures");
+
+    if (field) {
+      const existing = field.value
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      field.value = [
+        ...new Set([...existing, ...parsed.features])
+      ].join("\n");
+    }
+  }
+
+  if (parsed.specifications?.length) {
+    renderDynamicSpecifications(parsed.specifications);
+  }
+}
+
+/* =====================================
+   OCR SCAN HANDLER
+   Same PDF field also works for brochure
 ===================================== */
 
 async function scanProductDocument() {
-  const input = $("productOCRFile");
+  const ocrInput = $("productOCRFile");
+  const brochureInput = $("productPDFFile");
+
   const button = $("scanOCRBtn");
   const status = $("ocrStatus");
   const resultBox = $("ocrExtractedText");
 
-  const file = input?.files?.[0];
+  /* First use OCR input.
+     If empty, use the brochure PDF input. */
+
+  const file =
+    ocrInput?.files?.[0] ||
+    brochureInput?.files?.[0];
 
   if (!file) {
     if (status) {
-      status.textContent = "Pehle PDF ya photo select kijiye.";
+      status.textContent =
+        "Pehle Product PDF ya OCR PDF/Photo select kijiye.";
     }
+
     return;
   }
 
-  let originalButtonText = "Scan & Auto Fill";
+  const originalText = button?.textContent || "Scan & Auto Fill";
 
   try {
-    const fileType = validateOCRFile(file);
+    const type = validateOCRFile(file);
 
     if (button) {
-      originalButtonText = button.textContent;
       button.disabled = true;
       button.textContent = "Scanning...";
     }
 
     if (status) {
-      status.textContent =
-        "OCR start ho raha hai. File size aur pages ke hisaab se samay lag sakta hai.";
+      status.textContent = "OCR start ho raha hai...";
     }
 
-    let extractedText = "";
+    if (resultBox) {
+      resultBox.style.display = "block";
+      resultBox.value = "";
+    }
 
     const progress = message => {
       if (status) status.textContent = message;
     };
 
-    if (fileType === "pdf") {
-      extractedText = await recognizePDF(file, progress);
-    } else {
-      extractedText = await recognizeImageText(file, progress);
-    }
+    const text = type === "pdf"
+      ? await recognizePDF(file, progress)
+      : await recognizeImageText(file, progress);
 
-    if (!extractedText.trim()) {
+    if (!text.trim()) {
       throw new Error(
-        "Document se text read nahi hua. Clear photo ya PDF try kijiye."
+        "PDF se text nahi mila. PDF scanned, protected ya image-only ho sakti hai."
       );
     }
 
-    const parsed = parseOCRProductDetails(extractedText);
-
-    fillProductFormFromOCR(parsed);
-
     if (resultBox) {
-      resultBox.value = extractedText;
+      resultBox.value = text;
       resultBox.style.display = "block";
     }
 
-    const filledSpecs = Object.keys(
-      parsed.specifications || {}
-    ).length;
-
-    const filledFields = [
-      parsed.name,
-      parsed.model,
-      parsed.price,
-      parsed.category,
-      parsed.description
-    ].filter(Boolean).length;
+    const parsed = parseOCRProductDetails(text);
+console.log("OCR total characters:", text.length);
+console.log("OCR parsed specifications:", parsed.specifications);
+    fillProductFormFromOCR(parsed);
 
     if (status) {
       status.textContent =
-        `OCR complete! ${filledFields} product fields aur ${filledSpecs} specifications identify hui hain. Save karne se pehle details check kar lijiye.`;
+        `OCR complete! ${parsed.specifications.length} dynamic specifications identify hui. Extracted text check kijiye.`;
     }
+
+    console.log("OCR extracted text:", text);
+    console.log("OCR specifications:", parsed.specifications);
 
   } catch (error) {
     console.error("OCR error:", error);
@@ -1255,16 +1814,135 @@ async function scanProductDocument() {
         error.message || "OCR scan failed.";
     }
 
+    if (resultBox) {
+      resultBox.style.display = "block";
+      resultBox.value =
+        "OCR ERROR: " + (error.message || "Unknown error");
+    }
+
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = originalButtonText;
+      button.textContent = originalText;
     }
   }
 }
 
 /* =====================================
-   PRODUCT FORM
+   CLOUDINARY IMAGE UPLOAD
+===================================== */
+
+async function uploadProductImage(file) {
+  if (!file) return "";
+
+  if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
+    throw new Error("Sirf JPG, PNG ya WEBP photo upload kijiye.");
+  }
+
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+    throw new Error("Photo ka size 5 MB se kam hona chahiye.");
+  }
+
+  const status = $("imageUploadStatus");
+
+  if (status) {
+    status.textContent = "Photo Cloudinary par upload ho rahi hai...";
+  }
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", CLOUDINARY_PRODUCT_FOLDER);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.secure_url) {
+    console.error("Cloudinary image upload:", result);
+
+    throw new Error(
+      result.error?.message ||
+      "Photo upload nahi hui. Cloudinary unsigned preset check kijiye."
+    );
+  }
+
+  if (status) {
+    status.textContent = "Photo upload successful.";
+  }
+
+  return result.secure_url;
+}
+
+/* =====================================
+   CLOUDINARY PDF UPLOAD
+===================================== */
+
+async function uploadProductPDF(file) {
+  if (!file) return null;
+
+  const isPDF =
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf");
+
+  if (!isPDF) {
+    throw new Error("Product brochure ke liye PDF file select kijiye.");
+  }
+
+  if (file.size > MAX_PRODUCT_PDF_BYTES) {
+    throw new Error("PDF ka size 15 MB se kam hona chahiye.");
+  }
+
+  const status = $("productPDFStatus");
+
+  if (status) {
+    status.textContent = "PDF Cloudinary par upload ho rahi hai...";
+  }
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", CLOUDINARY_PRODUCT_FOLDER);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.secure_url) {
+    console.error("Cloudinary PDF upload:", result);
+
+    throw new Error(
+      result.error?.message ||
+      "PDF upload nahi hui. Cloudinary preset mein PDF/raw upload permission enable kijiye."
+    );
+  }
+
+  if (status) {
+    status.textContent = "PDF upload successful.";
+  }
+
+  return {
+    url: result.secure_url,
+    name: file.name
+  };
+}
+
+/* =====================================
+   PRODUCT FORM HTML
 ===================================== */
 
 function productFormHTML(product = {}) {
@@ -1287,51 +1965,7 @@ function productFormHTML(product = {}) {
 
   const features = Array.isArray(product.features)
     ? product.features.join("\n")
-    : "";
-
-  const specifications =
-    product.specifications &&
-    typeof product.specifications === "object"
-      ? product.specifications
-      : {};
-
-  const allSpecificationFields = [
-    ...SPECIFICATION_FIELDS,
-    ...Object.keys(specifications).filter(
-      key => !SPECIFICATION_FIELDS.includes(key)
-    )
-  ];
-
-  const specificationInputs = allSpecificationFields.map(key => {
-    const value = specifications[key] ?? "";
-    const fieldLabel = escapeHTML(key);
-    const fieldValue = escapeHTML(value);
-
-    if (LONG_SPECIFICATION_FIELDS.includes(key)) {
-      return `
-        <div class="specification-input">
-          <label>${fieldLabel}</label>
-          <textarea
-            data-spec-key="${fieldLabel}"
-            rows="3"
-            placeholder="Enter ${fieldLabel}"
-          >${fieldValue}</textarea>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="specification-input">
-        <label>${fieldLabel}</label>
-        <input
-          type="text"
-          data-spec-key="${fieldLabel}"
-          value="${fieldValue}"
-          placeholder="Enter ${fieldLabel}"
-        >
-      </div>
-    `;
-  }).join("");
+    : String(product.features || "");
 
   return `
     <h2>${product.id ? "Edit Product" : "Add New Product"}</h2>
@@ -1365,8 +1999,10 @@ function productFormHTML(product = {}) {
 
         <div>
           <label>Price (₹)</label>
-          <input id="productPrice" type="number"
-            min="0" step="0.01"
+          <input id="productPrice"
+            type="number"
+            min="0"
+            step="0.01"
             value="${escapeHTML(product.price ?? "")}">
         </div>
 
@@ -1376,220 +2012,196 @@ function productFormHTML(product = {}) {
 
       <h3>Product Photo</h3>
 
-      <div>
-        <label for="productImageFile">
-          Product Photo (Mobile / Computer se upload karein)
-        </label>
+      <label for="productImageFile">Product Photo</label>
 
-        <input id="productImageFile" type="file"
-          accept="image/jpeg,image/png,image/webp">
+      <input id="productImageFile"
+        type="file"
+        accept="image/jpeg,image/png,image/webp">
 
-        <small class="muted">
-          JPG, PNG ya WEBP. Maximum file size 5 MB.
-        </small>
+      <small class="muted">
+        JPG, PNG ya WEBP. Maximum 5 MB.
+      </small>
 
-        <div style="margin:12px 0;">
-          <img id="productImagePreview"
-            src="${escapeHTML(product.imageUrl || "")}"
-            alt="Product photo preview"
-            style="display:${product.imageUrl ? "block" : "none"};max-width:180px;max-height:150px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:5px;">
-        </div>
+      <div style="margin:12px 0;">
 
-        <label for="productImage">Existing Image URL (optional)</label>
+        <img id="productImagePreview"
+          src="${escapeHTML(product.imageUrl || "")}"
+          alt="Product photo preview"
+          style="
+            display:${product.imageUrl ? "block" : "none"};
+            max-width:180px;
+            max-height:150px;
+            object-fit:contain;
+            border:1px solid #e2e8f0;
+            border-radius:8px;
+            padding:5px;
+          ">
 
-        <input id="productImage" type="url"
-          value="${escapeHTML(product.imageUrl || "")}"
-          placeholder="Optional: paste an existing image URL">
-
-        <small class="muted">
-          Nayi photo select karenge to Cloudinary par upload hogi.
-        </small>
-
-        <p id="imageUploadStatus" class="muted"
-          aria-live="polite"></p>
       </div>
+
+      <label for="productImage">
+        Existing Image URL (optional)
+      </label>
+
+      <input id="productImage"
+        type="url"
+        value="${escapeHTML(product.imageUrl || "")}"
+        placeholder="Optional image URL">
+
+      <p id="imageUploadStatus"
+        class="muted"
+        aria-live="polite"></p>
 
       <hr>
 
-      <h3>Hindi + English OCR Document Scanner</h3>
+      <h3>Product PDF Brochure / Datasheet</h3>
+
+      ${
+        product.pdfUrl
+          ? `
+            <p>
+              Existing PDF:
+              <a href="${escapeHTML(product.pdfUrl)}"
+                target="_blank"
+                rel="noopener">
+                ${escapeHTML(product.pdfName || "View existing PDF")}
+              </a>
+            </p>
+          `
+          : `<p class="muted">Abhi koi PDF brochure upload nahi hai.</p>`
+      }
+
+      <label for="productPDFFile">
+        Upload Product PDF
+      </label>
+
+      <input id="productPDFFile"
+        type="file"
+        accept=".pdf,application/pdf">
+
+      <small class="muted">
+        PDF maximum 15 MB. Original PDF product ke saath save hoga.
+        Isi PDF ko OCR scanner bhi read karega.
+      </small>
+
+      <p id="productPDFStatus"
+        class="muted"
+        aria-live="polite"></p>
+
+      <hr>
+
+      <h3>Hindi + English OCR Scanner</h3>
 
       <p class="muted">
-        Product ki specification PDF ya photo upload karke
-        details automatically form mein fill karein.
+        Product PDF ya photo scan karke product details aur
+        specifications automatically nikaaliye.
       </p>
 
-      <div class="product" style="margin:12px 0;">
+      <label for="productOCRFile">
+        OCR PDF / Photo (optional)
+      </label>
 
-        <label for="productOCRFile">
-          OCR PDF / Photo Upload
-        </label>
+      <input id="productOCRFile"
+        type="file"
+        accept=".pdf,application/pdf,image/jpeg,image/png,image/webp">
 
-        <input
-          id="productOCRFile"
-          type="file"
-          accept=".pdf,application/pdf,image/jpeg,image/png,image/webp"
-        >
+      <small class="muted">
+        PDF, JPG, PNG, WEBP. Maximum 15 MB.
+        Agar yahan file select nahi karenge toh upar wali Product PDF scan hogi.
+      </small>
 
-        <small class="muted">
-          PDF, JPG, PNG, WEBP. Maximum file size 15 MB.
-          English aur Hindi dono supported hain.
-        </small>
+      <button class="secondary"
+        type="button"
+        id="scanOCRBtn"
+        style="margin-top:12px;">
+        Scan & Auto Fill
+      </button>
 
-        <button
-          class="secondary"
-          type="button"
-          id="scanOCRBtn"
-          style="margin-top:12px;">
-          Scan & Auto Fill
-        </button>
+      <p id="ocrStatus"
+        class="muted"
+        aria-live="polite"></p>
 
-        <p id="ocrStatus" class="muted"
-          aria-live="polite"></p>
+      <label for="ocrExtractedText">
+        Extracted OCR Text
+      </label>
 
-        <label for="ocrExtractedText">
-          Extracted OCR Text (Review)
-        </label>
-
-        <textarea
-          id="ocrExtractedText"
-          rows="8"
-          readonly
-          style="display:none;width:100%;"
-          placeholder="OCR se nikla text yahan dikhega."
-        ></textarea>
-
-        <p class="muted">
-          OCR ke baad product details check aur edit kijiye.
-          Original OCR document permanent upload nahi hota.
-        </p>
-
-      </div>
+      <textarea id="ocrExtractedText"
+        rows="8"
+        readonly
+        style="display:none;width:100%;"></textarea>
 
       <hr>
 
       <h3>Description</h3>
 
-      <div>
-        <label>Description</label>
-        <textarea id="productDescription">${escapeHTML(product.description || "")}</textarea>
-      </div>
+      <textarea id="productDescription">${escapeHTML(product.description || "")}</textarea>
 
-      <div>
-        <label>Features (one per line)</label>
-        <textarea id="productFeatures">${escapeHTML(features)}</textarea>
-      </div>
+      <label>Features (one per line)</label>
+
+      <textarea id="productFeatures">${escapeHTML(features)}</textarea>
 
       <hr>
 
       <h3>Technical Specifications</h3>
 
       <p class="muted">
-        Har specification ki value alag field mein enter karein.
-        Jo specification available nahi hai use blank chhod sakte hain.
+        PDF se mili specifications yahan automatically aayengi.
+        Aap label aur value edit kar sakte hain.
+        Zaroorat ke mutabik nayi row bhi jod sakte hain.
       </p>
 
-      <div class="grid specification-grid">
-        ${specificationInputs}
-      </div>
+      <div id="dynamicSpecificationRows"></div>
+
+      <button type="button"
+        class="secondary"
+        id="addDynamicSpecificationBtn">
+        + Add Specification
+      </button>
 
       <hr>
 
       <div class="checkbox-row">
 
         <label>
-          <input type="checkbox" id="productNew"
+          <input type="checkbox"
+            id="productNew"
             ${product.isNew ? "checked" : ""}>
           New Product
         </label>
 
         <label>
-          <input type="checkbox" id="productTrending"
+          <input type="checkbox"
+            id="productTrending"
             ${product.trending ? "checked" : ""}>
           Trending
         </label>
 
         <label>
-          <input type="checkbox" id="productActive"
+          <input type="checkbox"
+            id="productActive"
             ${product.active !== false ? "checked" : ""}>
           Active
         </label>
 
       </div>
 
-      <button class="primary" id="saveProductBtn"
+      <button class="primary"
+        id="saveProductBtn"
         data-original-label="${product.id ? "Update Product" : "Save Product"}"
         type="submit">
+
         ${product.id ? "Update Product" : "Save Product"}
+
       </button>
 
-      <button class="secondary" type="button" id="cancelProduct">
+      <button class="secondary"
+        type="button"
+        id="cancelProduct">
         Cancel
       </button>
 
     </form>
   `;
-}
-
-/* =====================================
-   CLOUDINARY IMAGE UPLOAD
-===================================== */
-
-const CLOUDINARY_CLOUD_NAME = "ch5mab4a";
-const CLOUDINARY_UPLOAD_PRESET = "rbtech_products";
-const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
-
-const ALLOWED_PRODUCT_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp"
-];
-
-async function uploadProductImage(file) {
-  if (!file) return "";
-
-  if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
-    throw new Error("Sirf JPG, PNG ya WEBP photo upload kijiye.");
-  }
-
-  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
-    throw new Error("Photo ka size 5 MB se kam hona chahiye.");
-  }
-
-  const status = $("imageUploadStatus");
-
-  if (status) {
-    status.textContent = "Photo Cloudinary par upload ho rahi hai...";
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", "rb-tech-solution/products");
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    {
-      method: "POST",
-      body: formData
-    }
-  );
-
-  const result = await response.json().catch(() => ({}));
-
-  if (!response.ok || !result.secure_url) {
-    console.error("Cloudinary upload error:", result);
-
-    throw new Error(
-      result.error?.message ||
-      "Photo upload nahi hui. Cloudinary Upload Preset ka Unsigned mode check kijiye."
-    );
-  }
-
-  if (status) {
-    status.textContent = "Photo upload successful.";
-  }
-
-  return result.secure_url;
 }
 
 /* =====================================
@@ -1605,7 +2217,6 @@ async function saveProduct(event) {
   }
 
   const saveButton = $("saveProductBtn");
-  const imageFileInput = $("productImageFile");
 
   if (saveButton) {
     saveButton.disabled = true;
@@ -1623,7 +2234,9 @@ async function saveProduct(event) {
       throw new Error("Product name aur category required hain.");
     }
 
-    const price = priceValue === "" ? null : Number(priceValue);
+    const price = priceValue === ""
+      ? null
+      : Number(priceValue);
 
     if (
       price !== null &&
@@ -1643,16 +2256,13 @@ async function saveProduct(event) {
       throw new Error("Aap is product ko edit nahi kar sakte.");
     }
 
+    /* IMAGE */
+
     let imageUrl = $("productImage").value.trim();
 
-    if (imageFileInput?.files?.[0]) {
-      showMessage(
-        dashboardMessage,
-        "Product photo upload ho rahi hai..."
-      );
-
+    if ($("productImageFile")?.files?.[0]) {
       imageUrl = await uploadProductImage(
-        imageFileInput.files[0]
+        $("productImageFile").files[0]
       );
 
       $("productImage").value = imageUrl;
@@ -1661,25 +2271,53 @@ async function saveProduct(event) {
       imageUrl = existing.imageUrl;
     }
 
+    /* PDF */
+
+    let pdfUrl = existing?.pdfUrl || "";
+    let pdfName = existing?.pdfName || "";
+
+    const pdfFile = $("productPDFFile")?.files?.[0];
+
+    if (pdfFile) {
+      const uploadedPDF = await uploadProductPDF(pdfFile);
+
+      pdfUrl = uploadedPDF.url;
+      pdfName = uploadedPDF.name;
+    }
+
+    /* FEATURES */
+
     const features = $("productFeatures").value
       .split("\n")
       .map(item => item.trim())
       .filter(Boolean);
 
+    /* DYNAMIC SPECIFICATIONS */
+
+    const specifications = collectDynamicSpecifications();
+
     const productData = {
       customerId: currentCustomer.id,
       customerUid: currentUser.uid,
+
       name,
       category,
       model: $("productModel").value.trim(),
       price,
+
       imageUrl,
+
+      pdfUrl,
+      pdfName,
+
       description: $("productDescription").value.trim(),
       features,
-      specifications: collectSpecifications(),
+      specifications,
+
       isNew: $("productNew").checked,
       trending: $("productTrending").checked,
       active: $("productActive").checked,
+
       updatedAt: serverTimestamp()
     };
 
@@ -1693,6 +2331,7 @@ async function saveProduct(event) {
         doc(db, "customerProducts", editingProductId),
         productData
       );
+
     } else {
       productData.createdAt = serverTimestamp();
 
@@ -1709,7 +2348,7 @@ async function saveProduct(event) {
 
     showMessage(
       dashboardMessage,
-      "Product and photo successfully saved.",
+      "Product, specifications and PDF successfully saved.",
       true
     );
 
@@ -1722,12 +2361,6 @@ async function saveProduct(event) {
       dashboardMessage,
       error.message || "Product save nahi hua."
     );
-
-    const status = $("imageUploadStatus");
-
-    if (status) {
-      status.textContent = error.message || "Upload/save failed.";
-    }
 
   } finally {
     if (saveButton) {
@@ -1753,10 +2386,7 @@ async function deleteProduct(productId) {
       item => item.id === productId
     );
 
-    if (
-      !product ||
-      product.customerId !== currentCustomer.id
-    ) {
+    if (!product || product.customerId !== currentCustomer.id) {
       throw new Error("Aap is product ko delete nahi kar sakte.");
     }
 
@@ -1789,11 +2419,8 @@ async function deleteProduct(productId) {
   }
 }
 
-
-
-
 /* =====================================
-   VIEW COMPLETE PRODUCT DETAILS
+   VIEW PRODUCT DETAILS
 ===================================== */
 
 function closeProductDetails() {
@@ -1820,7 +2447,6 @@ function viewProductDetails(productId) {
 
   closeProductDetails();
 
-  // Internal fields jo customer ko nahi dikhane hain
   const hiddenFields = [
     "id",
     "customerId",
@@ -1830,11 +2456,12 @@ function viewProductDetails(productId) {
     "updatedAt",
     "timestamp",
     "imageUrl",
+    "pdfUrl",
+    "pdfName",
     "features",
     "specifications"
   ];
 
-  // Field name ko readable label mein badlein
   function makeLabel(key) {
     return String(key)
       .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -1842,7 +2469,6 @@ function viewProductDetails(productId) {
       .replace(/\b\w/g, char => char.toUpperCase());
   }
 
-  // Kisi bhi saved value ko readable banayein
   function formatValue(value) {
     if (value === null || value === undefined) return "";
 
@@ -1851,33 +2477,39 @@ function viewProductDetails(productId) {
     }
 
     if (Array.isArray(value)) {
-      return value
-        .map(item => typeof item === "object"
+      return value.map(item =>
+        typeof item === "object"
           ? JSON.stringify(item)
           : String(item)
-        )
-        .filter(Boolean)
-        .join(", ");
+      ).filter(Boolean).join(", ");
     }
 
     if (typeof value === "object") {
       return Object.entries(value)
-        .map(([key, val]) => `${makeLabel(key)}: ${String(val)}`)
+        .map(([key, val]) =>
+          `${makeLabel(key)}: ${String(val)}`
+        )
         .join(" | ");
     }
 
     return String(value).trim();
   }
 
-  // Product ke saare filled normal fields
   const generalRows = Object.entries(product)
     .filter(([key, value]) => {
       if (hiddenFields.includes(key)) return false;
       if (value === null || value === undefined) return false;
-      if (typeof value === "string" && !value.trim()) return false;
-      if (typeof value === "object" &&
-          !Array.isArray(value) &&
-          Object.keys(value).length === 0) return false;
+
+      if (
+        typeof value === "string" &&
+        !value.trim()
+      ) return false;
+
+      if (
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Object.keys(value).length === 0
+      ) return false;
 
       return true;
     })
@@ -1886,14 +2518,11 @@ function viewProductDetails(productId) {
         <th>${escapeHTML(makeLabel(key))}</th>
         <td>${escapeHTML(formatValue(value))}</td>
       </tr>
-    `)
-    .join("");
+    `).join("");
 
-  // Features
   const features = Array.isArray(product.features)
     ? product.features
-    : String(product.features || "")
-        .split("\n");
+    : String(product.features || "").split("\n");
 
   const featuresHTML = features
     .map(item => String(item).trim())
@@ -1901,40 +2530,48 @@ function viewProductDetails(productId) {
     .map(item => `<li>${escapeHTML(item)}</li>`)
     .join("");
 
-  // Saari filled specifications
-  const specifications =
-    product.specifications &&
-    typeof product.specifications === "object"
-      ? product.specifications
-      : {};
+  const specifications = normalizeSpecifications(
+    product.specifications
+  );
 
-  const specificationRows = Object.entries(specifications)
-    .filter(([key, value]) =>
-      key &&
-      value !== null &&
-      value !== undefined &&
-      String(value).trim() !== ""
-    )
-    .map(([key, value]) => `
-      <tr>
-        <th>${escapeHTML(makeLabel(key))}</th>
-        <td>${escapeHTML(formatValue(value))}</td>
-      </tr>
-    `)
-    .join("");
+  const specificationRows = specifications.map(item => `
+    <tr>
+      <th>${escapeHTML(item.label)}</th>
+      <td>${escapeHTML(item.value)}</td>
+    </tr>
+  `).join("");
+
+  const pdfHTML = product.pdfUrl
+    ? `
+      <div class="product-details-pdf">
+        <h3>Product PDF Brochure / Datasheet</h3>
+
+        <p>
+          ${escapeHTML(product.pdfName || "Product Datasheet PDF")}
+        </p>
+
+        <a href="${escapeHTML(product.pdfUrl)}"
+          target="_blank"
+          rel="noopener">
+          Open / View PDF
+        </a>
+      </div>
+    `
+    : "";
 
   const modal = document.createElement("div");
   modal.id = "productDetailsModal";
 
   modal.innerHTML = `
     <div class="product-details-overlay">
+
       <div class="product-details-box">
 
-        <button
-          class="product-details-close"
+        <button class="product-details-close"
           type="button"
-          data-close-details
-        >&times;</button>
+          data-close-details>
+          &times;
+        </button>
 
         <h2>Complete Product Details</h2>
 
@@ -1942,10 +2579,8 @@ function viewProductDetails(productId) {
           product.imageUrl
             ? `
               <div class="product-details-image">
-                <img
-                  src="${escapeHTML(product.imageUrl)}"
-                  alt="${escapeHTML(product.name || "Product")}"
-                >
+                <img src="${escapeHTML(product.imageUrl)}"
+                  alt="${escapeHTML(product.name || "Product")}">
               </div>
             `
             : ""
@@ -1957,6 +2592,7 @@ function viewProductDetails(productId) {
           generalRows
             ? `
               <h3>Product Information</h3>
+
               <div class="product-details-table-wrap">
                 <table class="product-details-table">
                   <tbody>${generalRows}</tbody>
@@ -1981,20 +2617,23 @@ function viewProductDetails(productId) {
           specificationRows
             ? `
               <h3>Complete Specification</h3>
+
               <div class="product-details-table-wrap">
                 <table class="product-details-table">
                   <tbody>${specificationRows}</tbody>
                 </table>
               </div>
             `
-            : ""
+            : "<p>No specifications added.</p>"
         }
 
-        <button
-          type="button"
+        ${pdfHTML}
+
+        <button type="button"
           class="product-details-bottom-close"
-          data-close-details
-        >Close</button>
+          data-close-details>
+          Close
+        </button>
 
       </div>
     </div>
@@ -2002,41 +2641,34 @@ function viewProductDetails(productId) {
 
   document.body.appendChild(modal);
 
-  // Close buttons
-  modal.querySelectorAll("[data-close-details]")
-    .forEach(button => {
-      button.addEventListener("click", closeProductDetails);
-    });
+  modal.querySelectorAll("[data-close-details]").forEach(button => {
+    button.addEventListener("click", closeProductDetails);
+  });
 
-  // Overlay par click karne se close
   modal.addEventListener("click", event => {
     if (
-      event.target.classList.contains(
-        "product-details-overlay"
-      )
+      event.target.classList.contains("product-details-overlay")
     ) {
       closeProductDetails();
     }
   });
 
-  // Escape key se close
-  document.addEventListener("keydown", function escapeHandler(event) {
+  function escapeHandler(event) {
     if (event.key === "Escape") {
       closeProductDetails();
       document.removeEventListener("keydown", escapeHandler);
     }
-  });
-}
+  }
 
+  document.addEventListener("keydown", escapeHandler);
+}
 
 /* =====================================
    SHOW PRODUCTS
 ===================================== */
 
 function showProducts() {
-
   const productCards = currentProducts.map(product => `
-
     <article class="product">
 
       ${
@@ -2079,92 +2711,78 @@ function showProducts() {
         ${product.active === false ? "Inactive" : "Active"}
       </p>
 
-      <button
-        type="button"
+      <p>
+        <b>Specifications:</b>
+        ${normalizeSpecifications(product.specifications).length}
+      </p>
+
+      <p>
+        <b>PDF:</b>
+        ${product.pdfUrl ? "Uploaded" : "Not uploaded"}
+      </p>
+
+      <button type="button"
         class="secondary"
-        data-view="${escapeHTML(product.id)}"
-      >
+        data-view="${escapeHTML(product.id)}">
         View Details
       </button>
 
-      <button
-        type="button"
+      <button type="button"
         class="primary"
-        data-edit="${escapeHTML(product.id)}"
-      >
+        data-edit="${escapeHTML(product.id)}">
         Edit
       </button>
 
-      <button
-        type="button"
+      <button type="button"
         class="danger"
-        data-delete="${escapeHTML(product.id)}"
-      >
+        data-delete="${escapeHTML(product.id)}">
         Delete
       </button>
 
     </article>
-
   `).join("");
 
   sectionContent.innerHTML = `
-
     <h2>My Products</h2>
 
     <p class="muted">
       Add and manage your business products.
     </p>
 
-    <button
-      type="button"
+    <button type="button"
       class="primary"
-      id="addProductBtn"
-    >
+      id="addProductBtn">
       + Add Product
     </button>
 
     <div id="productFormArea"></div>
 
     <div class="product-list">
-      ${
-        productCards ||
-        "<p>No products added yet.</p>"
-      }
+      ${productCards || "<p>No products added yet.</p>"}
     </div>
-
   `;
 
-  // ADD PRODUCT
   $("addProductBtn")?.addEventListener("click", () => {
-
     editingProductId = null;
 
     $("productFormArea").innerHTML = productFormHTML();
 
+    renderDynamicSpecifications([]);
     attachProductFormEvents();
 
     $("productFormArea").scrollIntoView({
       behavior: "smooth"
     });
-
   });
 
-  // VIEW DETAILS
   sectionContent.querySelectorAll("[data-view]").forEach(button => {
-
     button.addEventListener("click", () => {
-
       viewProductDetails(button.dataset.view);
-
     });
-
   });
 
-  // EDIT PRODUCT
   sectionContent.querySelectorAll("[data-edit]").forEach(button => {
-
     button.addEventListener("click", () => {
-
       const product = currentProducts.find(
         item => item.id === button.dataset.edit
       );
@@ -2173,32 +2791,26 @@ function showProducts() {
 
       editingProductId = product.id;
 
-      $("productFormArea").innerHTML =
-        productFormHTML(product);
+      $("productFormArea").innerHTML = productFormHTML(product);
+
+      renderDynamicSpecifications(
+        product.specifications || []
+      );
 
       attachProductFormEvents();
 
       $("productFormArea").scrollIntoView({
         behavior: "smooth"
       });
-
     });
-
   });
 
-  // DELETE PRODUCT
   sectionContent.querySelectorAll("[data-delete]").forEach(button => {
-
     button.addEventListener("click", () => {
-
       deleteProduct(button.dataset.delete);
-
     });
-
   });
-
 }
-
 
 /* =====================================
    PRODUCT FORM EVENTS
@@ -2213,6 +2825,11 @@ function attachProductFormEvents() {
   $("scanOCRBtn")?.addEventListener(
     "click",
     scanProductDocument
+  );
+
+  $("addDynamicSpecificationBtn")?.addEventListener(
+    "click",
+    () => addDynamicSpecificationRow()
   );
 
   $("productImageFile")?.addEventListener("change", event => {
@@ -2249,8 +2866,10 @@ function attachProductFormEvents() {
         URL.revokeObjectURL(preview.dataset.objectUrl);
       }
 
-      preview.dataset.objectUrl = URL.createObjectURL(file);
-      preview.src = preview.dataset.objectUrl;
+      const objectUrl = URL.createObjectURL(file);
+
+      preview.dataset.objectUrl = objectUrl;
+      preview.src = objectUrl;
       preview.style.display = "block";
     }
 
@@ -2260,8 +2879,74 @@ function attachProductFormEvents() {
     }
   });
 
+  $("productPDFFile")?.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    const status = $("productPDFStatus");
+
+    if (!file) return;
+
+    const isPDF =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPDF) {
+      event.target.value = "";
+
+      if (status) {
+        status.textContent = "Sirf PDF file select kijiye.";
+      }
+
+      return;
+    }
+
+    if (file.size > MAX_PRODUCT_PDF_BYTES) {
+      event.target.value = "";
+
+      if (status) {
+        status.textContent =
+          "PDF ka size 15 MB se kam hona chahiye.";
+      }
+
+      return;
+    }
+
+    if (status) {
+      status.textContent =
+        `${file.name} ready hai. Scan & Auto Fill dabakar isi PDF ko scan kar sakte hain. Save Product karne par upload hogi.`;
+    }
+  });
+
+  $("productOCRFile")?.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    const status = $("ocrStatus");
+
+    if (!file) return;
+
+    try {
+      validateOCRFile(file);
+
+      if (status) {
+        status.textContent =
+          `${file.name} ready hai. Scan & Auto Fill dabaiye.`;
+      }
+
+    } catch (error) {
+      event.target.value = "";
+
+      if (status) {
+        status.textContent = error.message;
+      }
+    }
+  });
+
   $("cancelProduct")?.addEventListener("click", () => {
     editingProductId = null;
+
+    const preview = $("productImagePreview");
+
+    if (preview?.dataset.objectUrl) {
+      URL.revokeObjectURL(preview.dataset.objectUrl);
+    }
 
     $("productFormArea").innerHTML = "";
   });
@@ -2299,10 +2984,7 @@ async function markEnquiryAsRead(enquiryId) {
       item => item.id === enquiryId
     );
 
-    if (
-      !enquiry ||
-      enquiry.customerId !== currentCustomer.id
-    ) {
+    if (!enquiry || enquiry.customerId !== currentCustomer.id) {
       throw new Error("Aap is enquiry ko access nahi kar sakte.");
     }
 
@@ -2343,33 +3025,84 @@ function showEnquiries() {
   const enquiryCards = currentEnquiries.map(enquiry => `
     <article class="product enquiry-card">
 
-      <h3>${escapeHTML(
-        enquiry.productName ||
-        enquiry.product ||
-        "General Enquiry"
-      )}</h3>
+      <h3>
+        ${escapeHTML(
+          enquiry.productName ||
+          enquiry.product ||
+          "General Enquiry"
+        )}
+      </h3>
 
-      <p><b>Customer:</b> ${escapeHTML(enquiry.name || "Not provided")}</p>
-      <p><b>Email:</b> ${escapeHTML(enquiry.email || "Not provided")}</p>
-      <p><b>Phone:</b> ${escapeHTML(enquiry.mobile || enquiry.phone || "Not provided")}</p>
-      <p><b>Company:</b> ${escapeHTML(enquiry.company || "-")}</p>
+      <p>
+        <b>Customer:</b>
+        ${escapeHTML(enquiry.name || "Not provided")}
+      </p>
 
-      <p><b>Location:</b> ${escapeHTML([
-        enquiry.city,
-        enquiry.state,
-        enquiry.country
-      ].filter(Boolean).join(", ") || "-")}</p>
+      <p>
+        <b>Email:</b>
+        ${escapeHTML(enquiry.email || "Not provided")}
+      </p>
 
-      <p><b>Pincode:</b> ${escapeHTML(enquiry.pincode || "-")}</p>
-      <p><b>Model:</b> ${escapeHTML(enquiry.productModel || "-")}</p>
-      <p><b>Message:</b> ${escapeHTML(enquiry.message || "No message")}</p>
-      <p><b>Received:</b> ${escapeHTML(formatEnquiryDate(enquiry.createdAt))}</p>
-      <p><b>Status:</b> ${escapeHTML(enquiry.status || "new")}</p>
-      <p><b>Read:</b> ${enquiry.read === true ? "Yes" : "No"}</p>
+      <p>
+        <b>Phone:</b>
+        ${escapeHTML(
+          enquiry.mobile ||
+          enquiry.phone ||
+          "Not provided"
+        )}
+      </p>
+
+      <p>
+        <b>Company:</b>
+        ${escapeHTML(enquiry.company || "-")}
+      </p>
+
+      <p>
+        <b>Location:</b>
+        ${escapeHTML([
+          enquiry.city,
+          enquiry.state,
+          enquiry.country
+        ].filter(Boolean).join(", ") || "-")}
+      </p>
+
+      <p>
+        <b>Pincode:</b>
+        ${escapeHTML(enquiry.pincode || "-")}
+      </p>
+
+      <p>
+        <b>Model:</b>
+        ${escapeHTML(enquiry.productModel || "-")}
+      </p>
+
+      <p>
+        <b>Message:</b>
+        ${escapeHTML(enquiry.message || "No message")}
+      </p>
+
+      <p>
+        <b>Received:</b>
+        ${escapeHTML(formatEnquiryDate(enquiry.createdAt))}
+      </p>
+
+      <p>
+        <b>Status:</b>
+        ${escapeHTML(enquiry.status || "new")}
+      </p>
+
+      <p>
+        <b>Read:</b>
+        ${enquiry.read === true ? "Yes" : "No"}
+      </p>
 
       ${
         enquiry.read === true
-          ? `<button class="secondary" disabled>Already Read</button>`
+          ? `
+            <button class="secondary" disabled>
+              Already Read
+            </button>
+          `
           : `
             <button class="primary"
               type="button"
@@ -2389,9 +3122,14 @@ function showEnquiries() {
       Website par aapke products ke liye aayi enquiries yahan dikhengi.
     </p>
 
-    <p><b>Total Enquiries:</b> ${currentEnquiries.length}</p>
+    <p>
+      <b>Total Enquiries:</b>
+      ${currentEnquiries.length}
+    </p>
 
-    <button class="secondary" id="refreshEnquiriesBtn" type="button">
+    <button class="secondary"
+      id="refreshEnquiriesBtn"
+      type="button">
       Refresh Enquiries
     </button>
 
@@ -2431,8 +3169,7 @@ function showEnquiries() {
     }
   );
 
-  sectionContent
-    .querySelectorAll("[data-enquiry-read]")
+  sectionContent.querySelectorAll("[data-enquiry-read]")
     .forEach(button => {
       button.addEventListener("click", () => {
         markEnquiryAsRead(button.dataset.enquiryRead);
@@ -2526,7 +3263,6 @@ async function submitRenewalRequest(event) {
       dashboardMessage,
       "Valid UTR enter kijiye (6–50 characters)."
     );
-
     return;
   }
 
@@ -2537,7 +3273,6 @@ async function submitRenewalRequest(event) {
       dashboardMessage,
       "Subscription amount valid nahi hai. Admin se contact kijiye."
     );
-
     return;
   }
 
@@ -2565,15 +3300,19 @@ async function submitRenewalRequest(event) {
       {
         customerId: currentCustomer.id,
         customerUid: currentUser.uid,
+
         businessName:
           currentCustomer.businessName ||
           currentCustomer.ownerName ||
           "Customer",
+
         plan: currentCustomer.plan || "monthly",
         amount,
         utr,
+
         paymentMethod: "UPI",
         upiId: RENEWAL_UPI_ID,
+
         status: "pending",
         createdAt: serverTimestamp()
       }
@@ -2604,6 +3343,63 @@ async function submitRenewalRequest(event) {
 }
 
 /* =====================================
+   RENEWAL HISTORY
+===================================== */
+
+async function renderRenewalHistory() {
+  const history = $("renewalHistory");
+  if (!history) return;
+
+  try {
+    const requests = await loadSubscriptionRequests();
+
+    history.innerHTML = requests.length
+      ? requests.map(request => {
+          const date = request.createdAt?.toDate
+            ? request.createdAt.toDate().toLocaleString("en-IN")
+            : "Recently submitted";
+
+          const status = String(
+            request.status || "pending"
+          ).toUpperCase();
+
+          return `
+            <article class="product">
+
+              <p>
+                <b>Amount:</b>
+                ₹${escapeHTML(request.amount ?? "-")}
+              </p>
+
+              <p>
+                <b>UTR:</b>
+                ${escapeHTML(request.utr || "-")}
+              </p>
+
+              <p>
+                <b>Date:</b>
+                ${escapeHTML(date)}
+              </p>
+
+              <p>
+                <b>Status:</b>
+                ${escapeHTML(status)}
+              </p>
+
+            </article>
+          `;
+        }).join("")
+      : "<p>No renewal requests submitted yet.</p>";
+
+  } catch (error) {
+    console.error("Renewal history error:", error);
+
+    history.textContent =
+      "Renewal history load nahi hui: " + error.message;
+  }
+}
+
+/* =====================================
    DASHBOARD SECTIONS
 ===================================== */
 
@@ -2616,6 +3412,8 @@ async function showSection(section) {
       button.dataset.section === section
     );
   });
+
+  /* OVERVIEW */
 
   if (section === "overview") {
     sectionContent.innerHTML = `
@@ -2638,23 +3436,52 @@ async function showSection(section) {
 
       sectionContent.innerHTML = `
         <h2>Overview</h2>
-        <p>Welcome to your RB Tech Solution Customer Admin Panel.</p>
 
-        <p>Total products: <b>${currentProducts.length}</b></p>
-        <p>Total enquiries: <b>${currentEnquiries.length}</b></p>
-        <p>Subscription: <b>Active</b></p>
+        <p>
+          Welcome to your RB Tech Solution Customer Admin Panel.
+        </p>
+
+        <p>
+          Total products:
+          <b>${currentProducts.length}</b>
+        </p>
+
+        <p>
+          Total enquiries:
+          <b>${currentEnquiries.length}</b>
+        </p>
+
+        <p>
+          Subscription:
+          <b>Active</b>
+        </p>
 
         ${
           productResult.status === "rejected"
-            ? `<p class="message">${escapeHTML(productResult.reason?.message || "Products load failed.")}</p>`
+            ? `
+              <p class="message">
+                ${escapeHTML(
+                  productResult.reason?.message ||
+                  "Products load failed."
+                )}
+              </p>
+            `
             : ""
         }
 
         ${
           enquiryResult.status === "rejected"
-            ? `<p class="message">${escapeHTML(enquiryResult.reason?.message || "Enquiries load failed.")}</p>`
+            ? `
+              <p class="message">
+                ${escapeHTML(
+                  enquiryResult.reason?.message ||
+                  "Enquiries load failed."
+                )}
+              </p>
+            `
             : ""
         }
+
       `;
 
     } catch (error) {
@@ -2668,6 +3495,8 @@ async function showSection(section) {
 
     return;
   }
+
+  /* PRODUCTS */
 
   if (section === "products") {
     sectionContent.innerHTML = `
@@ -2688,16 +3517,19 @@ async function showSection(section) {
 
       sectionContent.innerHTML = `
         <h2>My Products</h2>
-        <p>${escapeHTML(error.message || "Products load nahi hue.")}</p>
+
+        <p>
+          ${escapeHTML(
+            error.message || "Products load nahi hue."
+          )}
+        </p>
       `;
     }
 
     return;
   }
 
-  // =====================================
-  // ENQUIRIES SECTION
-  // =====================================
+  /* ENQUIRIES */
 
   if (section === "enquiries") {
     sectionContent.innerHTML = `
@@ -2718,28 +3550,30 @@ async function showSection(section) {
 
       sectionContent.innerHTML = `
         <h2>Customer Enquiries</h2>
+
         <p class="message">
-          ${escapeHTML(error.message || "Enquiries load nahi hui.")}
+          ${escapeHTML(
+            error.message || "Enquiries load nahi hui."
+          )}
         </p>
-        <button
-          class="secondary"
+
+        <button class="secondary"
           type="button"
           id="retryEnquiriesBtn">
           Try Again
         </button>
       `;
 
-      $("retryEnquiriesBtn")?.addEventListener("click", () => {
-        showSection("enquiries");
-      });
+      $("retryEnquiriesBtn")?.addEventListener(
+        "click",
+        () => showSection("enquiries")
+      );
     }
 
     return;
   }
 
-  // =====================================
-  // SUBSCRIPTION SECTION
-  // =====================================
+  /* SUBSCRIPTION */
 
   if (section === "subscription") {
     const subscription = getRenewalStatus();
@@ -2763,65 +3597,92 @@ async function showSection(section) {
       <h2>Subscription Details</h2>
 
       <div class="product">
-        <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
-        <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
-        <p><b>Status:</b> ${escapeHTML(statusText)}</p>
-        <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
+
+        <p>
+          <b>Plan:</b>
+          ${escapeHTML(currentCustomer.plan || "-")}
+        </p>
+
+        <p>
+          <b>Amount:</b>
+          ₹${escapeHTML(amountText)}
+        </p>
+
+        <p>
+          <b>Status:</b>
+          ${escapeHTML(statusText)}
+        </p>
+
+        <p>
+          <b>Expiry Date:</b>
+          ${escapeHTML(expiryText)}
+        </p>
+
       </div>
 
       <div class="product">
+
         <h3>Renew Subscription</h3>
 
         <p>
-          Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
+          Apne subscription ko renew karne ke liye
+          neeche diye gaye UPI ID par payment kijiye.
         </p>
 
         <p><b>UPI ID:</b></p>
 
-        <input id="renewalUPI" value="${RENEWAL_UPI_ID}" readonly>
+        <input id="renewalUPI"
+          value="${RENEWAL_UPI_ID}"
+          readonly>
 
-        <button
-          class="secondary"
+        <button class="secondary"
           type="button"
           id="copyRenewalUPI">
           Copy UPI ID
         </button>
 
-        <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
+        <p>
+          <b>Payment Amount:</b>
+          ₹${escapeHTML(amountText)}
+        </p>
 
         <p class="muted">
-          Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
-          Admin payment verify karne ke baad request approve karega.
+          Payment karne ke baad UTR / Transaction Reference
+          Number submit kijiye. Admin payment verify karne ke
+          baad request approve karega.
         </p>
 
         <form id="renewalForm">
+
           <label for="renewalUTR">
             UTR / Transaction Reference Number *
           </label>
 
-          <input
-            id="renewalUTR"
+          <input id="renewalUTR"
             type="text"
             minlength="6"
             maxlength="50"
             required
-            placeholder="Enter payment UTR number"
-          >
+            placeholder="Enter payment UTR number">
 
-          <button
-            class="primary"
+          <button class="primary"
             type="submit"
             id="submitRenewalBtn">
             Submit Renewal Request
           </button>
+
         </form>
+
       </div>
 
       <div class="product">
+
         <h3>Renewal Request History</h3>
+
         <div id="renewalHistory">
           Loading renewal requests...
         </div>
+
       </div>
     `;
 
@@ -2835,50 +3696,12 @@ async function showSection(section) {
       submitRenewalRequest
     );
 
-    try {
-      const requests = await loadSubscriptionRequests();
-      const history = $("renewalHistory");
-
-      if (history) {
-        history.innerHTML = requests.length
-          ? requests.map(request => {
-              const date = request.createdAt?.toDate
-                ? request.createdAt.toDate().toLocaleString("en-IN")
-                : "Recently submitted";
-
-              const status = String(
-                request.status || "pending"
-              ).toUpperCase();
-
-              return `
-                <article class="product">
-                  <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
-                  <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
-                  <p><b>Date:</b> ${escapeHTML(date)}</p>
-                  <p><b>Status:</b> ${escapeHTML(status)}</p>
-                </article>
-              `;
-            }).join("")
-          : "<p>No renewal requests submitted yet.</p>";
-      }
-
-    } catch (error) {
-      console.error("Renewal history error:", error);
-
-      const history = $("renewalHistory");
-
-      if (history) {
-        history.textContent =
-          "Renewal history load nahi hui: " + error.message;
-      }
-    }
+    await renderRenewalHistory();
 
     return;
   }
 
-  // =====================================
-  // MARKETING SECTIONS
-  // =====================================
+  /* MARKETING SECTIONS */
 
   const marketingSections = [
     "companyNews",
@@ -2903,8 +3726,12 @@ async function showSection(section) {
 
       sectionContent.innerHTML = `
         <h2>Marketing Content</h2>
+
         <p class="message">
-          ${escapeHTML(error.message || "Marketing section open nahi hua.")}
+          ${escapeHTML(
+            error.message ||
+            "Marketing section open nahi hua."
+          )}
         </p>
       `;
     }
@@ -2912,151 +3739,14 @@ async function showSection(section) {
     return;
   }
 
-  
-  ensureActiveSubscription();
-await renderMarketingAdmin(sectionContent, currentCustomer, section);
-  if (section === "subscription") {
-    const subscription = getRenewalStatus();
-    const expiryDate = getExpiryDate(currentCustomer);
-
-    const expiryText = expiryDate
-      ? expiryDate.toLocaleDateString("en-IN")
-      : "Not available";
-
-    const amount = Number(currentCustomer.subscriptionAmount);
-
-    const amountText = Number.isFinite(amount)
-      ? amount.toLocaleString("en-IN")
-      : "Not set";
-
-    const statusText = subscription.active
-      ? "Active"
-      : subscription.message;
-
-    sectionContent.innerHTML = `
-      <h2>Subscription Details</h2>
-
-      <div class="product">
-        <p><b>Plan:</b> ${escapeHTML(currentCustomer.plan || "-")}</p>
-        <p><b>Amount:</b> ₹${escapeHTML(amountText)}</p>
-        <p><b>Status:</b> ${escapeHTML(statusText)}</p>
-        <p><b>Expiry Date:</b> ${escapeHTML(expiryText)}</p>
-      </div>
-
-      <div class="product">
-        <h3>Renew Subscription</h3>
-
-        <p>
-          Apne subscription ko renew karne ke liye neeche diye gaye UPI ID par payment kijiye.
-        </p>
-
-        <p><b>UPI ID:</b></p>
-
-        <input
-          id="renewalUPI"
-          value="${RENEWAL_UPI_ID}"
-          readonly
-        >
-
-        <button
-          class="secondary"
-          type="button"
-          id="copyRenewalUPI">
-          Copy UPI ID
-        </button>
-
-        <p><b>Payment Amount:</b> ₹${escapeHTML(amountText)}</p>
-
-        <p class="muted">
-          Payment karne ke baad UTR / Transaction Reference Number submit kijiye.
-          Admin payment verify karne ke baad request approve karega.
-        </p>
-
-        <form id="renewalForm">
-          <label for="renewalUTR">
-            UTR / Transaction Reference Number *
-          </label>
-
-          <input
-            id="renewalUTR"
-            type="text"
-            minlength="6"
-            maxlength="50"
-            required
-            placeholder="Enter payment UTR number"
-          >
-
-          <button
-            class="primary"
-            type="submit"
-            id="submitRenewalBtn">
-            Submit Renewal Request
-          </button>
-        </form>
-      </div>
-
-      <div class="product">
-        <h3>Renewal Request History</h3>
-        <div id="renewalHistory">
-          Loading renewal requests...
-        </div>
-      </div>
-    `;
-
-    $("copyRenewalUPI")?.addEventListener(
-      "click",
-      copyRenewalUPI
-    );
-
-    $("renewalForm")?.addEventListener(
-      "submit",
-      submitRenewalRequest
-    );
-
-    try {
-      const requests = await loadSubscriptionRequests();
-      const history = $("renewalHistory");
-
-      if (history) {
-        history.innerHTML = requests.length
-          ? requests.map(request => {
-              const date = request.createdAt?.toDate
-                ? request.createdAt.toDate().toLocaleString("en-IN")
-                : "Recently submitted";
-
-              const status = String(
-                request.status || "pending"
-              ).toUpperCase();
-
-              return `
-                <article class="product">
-                  <p><b>Amount:</b> ₹${escapeHTML(request.amount ?? "-")}</p>
-                  <p><b>UTR:</b> ${escapeHTML(request.utr || "-")}</p>
-                  <p><b>Date:</b> ${escapeHTML(date)}</p>
-                  <p><b>Status:</b> ${escapeHTML(status)}</p>
-                </article>
-              `;
-            }).join("")
-          : "<p>No renewal requests submitted yet.</p>";
-      }
-
-    } catch (error) {
-      console.error("Renewal history error:", error);
-
-      const history = $("renewalHistory");
-
-      if (history) {
-        history.textContent =
-          "Renewal history load nahi hui: " + error.message;
-      }
-    }
-
-    return;
-  }
+  sectionContent.innerHTML = `
+    <h2>Section Not Found</h2>
+    <p>Selected section available nahi hai.</p>
+  `;
 }
 
 /* =====================================
-   SINGLE LOGIN HANDLER
+   LOGIN HANDLER
 ===================================== */
 
 loginForm?.addEventListener("submit", async event => {
@@ -3177,8 +3867,6 @@ async function initializeCustomerAdmin() {
     await authReady;
 
     onAuthStateChanged(auth, async user => {
-      authInitialized = true;
-
       if (!user) {
         resetCustomerData();
         showLogin();
