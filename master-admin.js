@@ -311,144 +311,90 @@ async function loadEnquiries() {
 // ========================================
 
 function createSubscriptionPanel() {
-  if (document.getElementById("subscriptionRequestsPanel")) {
-    subscriptionRequestsContainer = document.getElementById(
-      "subscriptionRequestsList"
-    );
-    return;
-  }
-
-  const panel = document.createElement("section");
-
-  panel.id = "subscriptionRequestsPanel";
-
-  panel.style.cssText = `
-    margin:30px 0;
-    padding:22px;
-    background:#ffffff;
-    color:#172033;
-    border:1px solid #e2e8f0;
-    border-radius:14px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.05);
-  `;
-
-  panel.innerHTML = `
-    <div style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:12px;
-      margin-bottom:15px;
-    ">
-      <div>
-        <h2 style="margin:0 0 6px;font-size:22px;">
-          Subscription Payment Requests
-        </h2>
-        <p style="margin:0;color:#64748b;">
-          Verify customer UTR and approve or reject renewal requests.
-        </p>
-      </div>
-
-      <button
-        type="button"
-        id="refreshSubscriptionRequests"
-        style="
-          padding:10px 16px;
-          border:0;
-          border-radius:8px;
-          background:#075b30;
-          color:white;
-          cursor:pointer;
-        "
-      >
-        Refresh Requests
-      </button>
-    </div>
-
-    <div style="
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      margin-bottom:18px;
-    ">
-      <div style="flex:1;min-width:130px;padding:14px;background:#f1f5f9;border-radius:10px;">
-        <div style="color:#64748b;font-size:13px;">Total Requests</div>
-        <strong id="totalSubscriptionRequests" style="font-size:24px;">0</strong>
-      </div>
-
-      <div style="flex:1;min-width:130px;padding:14px;background:#fff7ed;border-radius:10px;">
-        <div style="color:#9a3412;font-size:13px;">Pending Requests</div>
-        <strong id="pendingSubscriptionRequests" style="font-size:24px;">0</strong>
-      </div>
-
-      <div style="flex:1;min-width:130px;padding:14px;background:#f0fdf4;border-radius:10px;">
-        <div style="color:#166534;font-size:13px;">Approved Requests</div>
-        <strong id="approvedSubscriptionRequests" style="font-size:24px;">0</strong>
-      </div>
-    </div>
-
-    <div id="subscriptionRequestsList">
-      Loading subscription requests...
-    </div>
-
-    <p style="
-      margin:18px 0 0;
-      padding:12px;
-      background:#fff7ed;
-      color:#9a3412;
-      border-radius:8px;
-      font-size:13px;
-    ">
-      Verify the UTR in your UPI or bank app before approving payment.
-      UPI ID: ${escapeHTML(UPI_ID)}
-    </p>
-  `;
-
-  const target =
-    document.querySelector("main") ||
-    document.querySelector(".container") ||
-    document.body;
-
-  target.appendChild(panel);
-
-  subscriptionRequestsContainer = document.getElementById(
-    "subscriptionRequestsList"
+  
+  const panel = document.getElementById(
+    "subscriptionRequestsPanel"
   );
-
-  document
-    .getElementById("refreshSubscriptionRequests")
-    .addEventListener("click", async () => {
+  
+  if (!panel) {
+    throw new Error(
+      "Subscription Requests panel not found in HTML."
+    );
+  }
+  
+  subscriptionRequestsContainer = panel.querySelector(
+    "#subscriptionRequestsList"
+  );
+  
+  const refreshButton = panel.querySelector(
+    "#refreshSubscriptionRequests"
+  );
+  
+  // Refresh button event
+  if (
+    refreshButton &&
+    refreshButton.dataset.bound !== "true"
+  ) {
+    
+    refreshButton.dataset.bound = "true";
+    
+    refreshButton.addEventListener("click", async () => {
+      
       if (isMasterAdminVerified) {
         await loadSubscriptionRequests();
       }
+      
     });
-
-  subscriptionRequestsContainer.addEventListener("click", async event => {
-    const button = event.target.closest("[data-request-action]");
-
-    if (!button) return;
-
-    if (!isMasterAdminVerified) {
-      showMessage("Master Admin verification is required.");
-      return;
-    }
-
-    const action = button.dataset.requestAction;
-    const requestId = button.dataset.requestId;
-
-    if (!requestId) return;
-
-    if (action === "approve") {
-      await approveSubscriptionRequest(requestId, button);
-    }
-
-    if (action === "reject") {
-      await rejectSubscriptionRequest(requestId, button);
-    }
-  });
+  }
+  
+  // Approve / Reject event
+  if (
+    subscriptionRequestsContainer &&
+    subscriptionRequestsContainer.dataset.bound !== "true"
+  ) {
+    
+    subscriptionRequestsContainer.dataset.bound = "true";
+    
+    subscriptionRequestsContainer.addEventListener(
+      "click",
+      async event => {
+        
+        const button = event.target.closest(
+          "[data-request-action]"
+        );
+        
+        if (!button) return;
+        
+        if (!isMasterAdminVerified) {
+          showMessage(
+            "Master Admin verification is required."
+          );
+          return;
+        }
+        
+        const action = button.dataset.requestAction;
+        const requestId = button.dataset.requestId;
+        
+        if (!requestId) return;
+        
+        if (action === "approve") {
+          await approveSubscriptionRequest(
+            requestId,
+            button
+          );
+        }
+        
+        if (action === "reject") {
+          await rejectSubscriptionRequest(
+            requestId,
+            button
+          );
+        }
+        
+      }
+    );
+  }
 }
-
 // ========================================
 // LOAD SUBSCRIPTION REQUESTS
 // ========================================
@@ -834,7 +780,7 @@ async function createCustomer(event) {
     return;
   }
 
-  if (!Number.isFinite(amount) || amount < 0) {
+ if (!Number.isFinite(amount) || amount <= 0) {
     showMessage("Please enter a valid subscription amount.");
     return;
   }
