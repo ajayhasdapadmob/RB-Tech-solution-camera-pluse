@@ -388,20 +388,41 @@
         </table>
       </div>
     </section>
-    <section class="section">
+   <section class="section" id="subscriptionRequestsPanel">
+  
   <h2>Subscription Payment Requests</h2>
-
+  
   <p class="help">
     Customer ke UTR number aur payment details verify karke request Approve ya Reject karein.
   </p>
-
+  
+  <div class="stats" style="margin-top:15px;">
+    
+    <div class="stat-card">
+      <h3>Total Requests</h3>
+      <strong id="totalSubscriptionRequests">0</strong>
+    </div>
+    
+    <div class="stat-card">
+      <h3>Pending Requests</h3>
+      <strong id="pendingSubscriptionRequests">0</strong>
+    </div>
+    
+    <div class="stat-card">
+      <h3>Approved Requests</h3>
+      <strong id="approvedSubscriptionRequests">0</strong>
+    </div>
+    
+  </div>
+  
   <button type="button" id="refreshSubscriptionRequests">
     Refresh Requests
   </button>
-
-  <div id="subscriptionRequestsList">
+  
+  <div id="subscriptionRequestsList" style="margin-top:18px;">
     Loading subscription requests...
   </div>
+  
 </section>
     <footer>
       © <span id="year"></span> RB Tech Solution. All rights reserved.
