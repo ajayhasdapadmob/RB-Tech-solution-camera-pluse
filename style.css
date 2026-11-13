@@ -2059,3 +2059,63 @@ select:focus-visible {
     max-width: 245px;
   }
 }
+/* PRODUCTS DROPDOWN TEXT - BLACK */
+.dropdown-menu h3,
+.dropdown-menu h4,
+.dropdown-menu a,
+.dropdown-menu a strong,
+.dropdown-menu a b,
+.mega-menu h3,
+.mega-menu h4,
+.mega-menu a,
+.mega-menu a strong,
+.mega-menu a b {
+  color: #000000 !important;
+}
+
+/* DROPDOWN HOVER */
+.dropdown-menu a:hover,
+.mega-menu a:hover {
+  color: #08a045 !important;
+}
+.marketing-gallery-slider {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.marketing-gallery-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.marketing-gallery-track {
+  display: flex;
+  width: max-content;
+  gap: 0;
+  animation: marketingGalleryMove
+    var(--gallery-duration, 20s) linear infinite;
+  will-change: transform;
+}
+
+.marketing-gallery-group {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 20px;
+  padding-right: 20px;
+}
+
+.marketing-gallery-group .marketing-item {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+@keyframes marketingGalleryMove {
+  from {
+    transform: translateX(-50%);
+  }
+  
+  to {
+    transform: translateX(0);
+  }
+}
