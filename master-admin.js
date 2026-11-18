@@ -1,4 +1,3 @@
-
 import { auth, db, authReady } from "./firebase.js";
 
 import {
@@ -15,7 +14,6 @@ import {
   query,
   where,
   setDoc,
-  updateDoc,
   serverTimestamp,
   Timestamp,
   writeBatch
@@ -33,7 +31,7 @@ let isMasterAdminVerified = false;
 let subscriptionRequestsContainer = null;
 
 // ========================================
-// ELEMENTS
+// HTML ELEMENTS
 // ========================================
 
 const logoutBtn = document.getElementById("logoutBtn");
@@ -51,30 +49,15 @@ const masterPassword = document.getElementById("masterPassword");
 const masterLoginBtn = document.getElementById("masterLoginBtn");
 const loginMessage = document.getElementById("loginMessage");
 
-// Website Management Elements
-const websiteManagementForm =
-  document.getElementById("websiteManagementForm");
-
-const websiteCustomerSelect =
-  document.getElementById("websiteCustomerSelect");
-
-const customDomainInput =
-  document.getElementById("customDomain");
-
-const websiteLogoInput =
-  document.getElementById("websiteLogo");
-
-const websiteActiveInput =
-  document.getElementById("websiteActive");
-
-const domainVerificationStatus =
-  document.getElementById("domainVerificationStatus");
-
-const saveWebsiteSettingsBtn =
-  document.getElementById("saveWebsiteSettingsBtn");
-
-const websiteManagementMessage =
-  document.getElementById("websiteManagementMessage");
+// Website Management
+const websiteManagementForm = document.getElementById("websiteManagementForm");
+const websiteCustomerSelect = document.getElementById("websiteCustomerSelect");
+const customDomainInput = document.getElementById("customDomain");
+const websiteLogoInput = document.getElementById("websiteLogo");
+const websiteActiveInput = document.getElementById("websiteActive");
+const domainVerificationStatus = document.getElementById("domainVerificationStatus");
+const saveWebsiteSettingsBtn = document.getElementById("saveWebsiteSettingsBtn");
+const websiteManagementMessage = document.getElementById("websiteManagementMessage");
 
 // ========================================
 // HELPERS
@@ -82,14 +65,12 @@ const websiteManagementMessage =
 
 function showMessage(message, color = "#b91c1c") {
   if (!messageBox) return;
-
   messageBox.textContent = message;
   messageBox.style.color = color;
 }
 
 function showWebsiteMessage(message, color = "#b91c1c") {
   if (!websiteManagementMessage) return;
-
   websiteManagementMessage.textContent = message;
   websiteManagementMessage.style.color = color;
 }
@@ -98,19 +79,13 @@ function setDashboardEnabled(enabled) {
   [customerForm, websiteManagementForm].forEach(form => {
     if (!form) return;
 
-    form.querySelectorAll("input, select, textarea, button")
-      .forEach(element => {
-        element.disabled = !enabled;
-      });
+    form.querySelectorAll("input, select, textarea, button").forEach(element => {
+      element.disabled = !enabled;
+    });
   });
 
-  const refreshButton = document.getElementById(
-    "refreshSubscriptionRequests"
-  );
-
-  if (refreshButton) {
-    refreshButton.disabled = !enabled;
-  }
+  const refreshButton = document.getElementById("refreshSubscriptionRequests");
+  if (refreshButton) refreshButton.disabled = !enabled;
 }
 
 function setStat(id, value) {
@@ -130,19 +105,14 @@ function escapeHTML(value) {
 
 function getDate(value) {
   if (!value) return null;
-
-  if (typeof value.toDate === "function") {
-    return value.toDate();
-  }
+  if (typeof value.toDate === "function") return value.toDate();
 
   const date = new Date(value);
-
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function formatDate(value) {
   const date = getDate(value);
-
   if (!date) return "Not set";
 
   return date.toLocaleDateString("en-IN", {
@@ -154,7 +124,6 @@ function formatDate(value) {
 
 function formatDateTime(value) {
   const date = getDate(value);
-
   if (!date) return "Not available";
 
   return date.toLocaleString("en-IN", {
@@ -179,21 +148,15 @@ function getTodayInputDate() {
 function calculateExpiry(startDate, plan) {
   const expiry = new Date(startDate);
   const originalDay = expiry.getDate();
-
   const monthsToAdd = plan === "yearly" ? 12 : 1;
 
   const targetYear =
     expiry.getFullYear() +
     Math.floor((expiry.getMonth() + monthsToAdd) / 12);
 
-  const targetMonth =
-    (expiry.getMonth() + monthsToAdd) % 12;
+  const targetMonth = (expiry.getMonth() + monthsToAdd) % 12;
 
-  const lastDay = new Date(
-    targetYear,
-    targetMonth + 1,
-    0
-  ).getDate();
+  const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
 
   expiry.setFullYear(targetYear, targetMonth, 1);
   expiry.setDate(Math.min(originalDay, lastDay));
@@ -212,6 +175,32 @@ function normalizeDomain(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function isValidDomain(domain) {
+  if (!domain) return true;
+
+  if (
+    domain.includes("://") ||
+    domain.includes("/") ||
+    domain.includes(":") ||
+    domain.includes(" ")
+  ) {
+    return false;
+  }
+
+  return /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(domain);
+}
+
+function isValidLogoURL(url) {
+  if (!url) return true;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 // ========================================
 // MASTER ADMIN VERIFICATION
 // ========================================
@@ -221,43 +210,29 @@ async function checkMasterAdmin(user) {
     throw new Error("Please login with your Master Admin account.");
   }
 
-  console.log("MASTER ADMIN LOGIN UID:", user.uid);
-  console.log("EXPECTED MASTER ADMIN UID:", MASTER_ADMIN_UID);
-  console.log("FIREBASE PROJECT ID:", db.app.options.projectId);
-
   if (user.uid !== MASTER_ADMIN_UID) {
-    throw new Error(
-      "Login UID mismatch. Please login with the correct Master Admin account."
-    );
+    throw new Error("Login UID mismatch. Please use the correct Master Admin account.");
   }
 
   if (db.app.options.projectId !== FIREBASE_PROJECT_ID) {
-    throw new Error(
-      "Wrong Firebase project connected. Expected " + FIREBASE_PROJECT_ID
-    );
+    throw new Error("Wrong Firebase project connected.");
   }
 
   const adminRef = doc(db, "admin", MASTER_ADMIN_UID);
   const adminSnap = await getDoc(adminRef);
 
   if (!adminSnap.exists()) {
-    throw new Error(
-      "Master Admin document not found in Firestore admin collection."
-    );
+    throw new Error("Master Admin document not found.");
   }
 
   const adminData = adminSnap.data();
 
   if (adminData.Active !== true) {
-    throw new Error(
-      "Admin account inactive. Firestore Active field must be Boolean true."
-    );
+    throw new Error("Admin account is inactive. Active must be Boolean true.");
   }
 
   if (adminData.Role !== "MasterAdmin") {
-    throw new Error(
-      'Firestore Role must be exactly "MasterAdmin".'
-    );
+    throw new Error('Firestore Role must be exactly "MasterAdmin".');
   }
 
   return true;
@@ -270,9 +245,8 @@ async function checkMasterAdmin(user) {
 async function loadCustomers() {
   if (!customerTableBody) return;
 
-  customerTableBody.innerHTML = `
-    <tr><td colspan="7">Loading customers...</td></tr>
-  `;
+  customerTableBody.innerHTML =
+    `<tr><td colspan="7">Loading customers...</td></tr>`;
 
   const snapshot = await getDocs(collection(db, "customers"));
 
@@ -284,9 +258,9 @@ async function loadCustomers() {
 
   const rows = [];
 
-  snapshot.forEach(documentSnapshot => {
-    const customer = documentSnapshot.data();
-    const customerId = documentSnapshot.id;
+  snapshot.forEach(item => {
+    const customer = item.data();
+    const customerId = item.id;
 
     total++;
 
@@ -305,8 +279,7 @@ async function loadCustomers() {
         ? "Active"
         : "Inactive";
 
-    const statusColor =
-      statusText === "Active" ? "#087f3c" : "#b91c1c";
+    const statusColor = statusText === "Active" ? "#087f3c" : "#b91c1c";
 
     rows.push(`
       <tr>
@@ -336,8 +309,6 @@ async function loadCustomers() {
   customerTableBody.innerHTML = rows.length
     ? rows.join("")
     : `<tr><td colspan="7">No customer records found.</td></tr>`;
-
-  console.log("Customers loaded:", total);
 }
 
 // ========================================
@@ -346,14 +317,11 @@ async function loadCustomers() {
 
 async function loadEnquiries() {
   const snapshot = await getDocs(collection(db, "enquiries"));
-
   setStat("totalEnquiries", snapshot.size);
-
-  console.log("Enquiries loaded:", snapshot.size);
 }
 
 // ========================================
-// WEBSITE & DOMAIN MANAGEMENT
+// WEBSITE CUSTOMER OPTIONS
 // ========================================
 
 async function loadWebsiteCustomerOptions() {
@@ -370,8 +338,8 @@ async function loadWebsiteCustomerOptions() {
 
     snapshot.forEach(item => {
       const customer = item.data();
-
       const option = document.createElement("option");
+
       option.value = item.id;
       option.textContent =
         `${customer.businessName || "Unnamed Business"} (${item.id})`;
@@ -389,16 +357,17 @@ async function loadWebsiteCustomerOptions() {
   }
 }
 
+// ========================================
+// LOAD SELECTED WEBSITE SETTINGS
+// ========================================
+
 async function loadSelectedWebsiteSettings() {
   const customerId = websiteCustomerSelect?.value;
 
   if (!customerId) {
     if (customDomainInput) customDomainInput.value = "";
     if (websiteLogoInput) websiteLogoInput.value = "";
-
-    if (websiteActiveInput) {
-      websiteActiveInput.value = "true";
-    }
+    if (websiteActiveInput) websiteActiveInput.value = "true";
 
     if (domainVerificationStatus) {
       domainVerificationStatus.value = "Select a customer";
@@ -417,16 +386,25 @@ async function loadSelectedWebsiteSettings() {
 
     const customer = customerSnap.data();
 
-    customDomainInput.value = customer.customDomain || "";
-    websiteLogoInput.value = customer.websiteLogo || "";
+    if (customDomainInput) {
+      customDomainInput.value = customer.customDomain || "";
+    }
 
-    websiteActiveInput.value =
-      customer.websiteActive === false ? "false" : "true";
+    if (websiteLogoInput) {
+      websiteLogoInput.value = customer.websiteLogo || "";
+    }
 
-    domainVerificationStatus.value =
-      customer.domainVerified === true
-        ? "Verified"
-        : "Pending verification";
+    if (websiteActiveInput) {
+      websiteActiveInput.value =
+        customer.websiteActive === false ? "false" : "true";
+    }
+
+    if (domainVerificationStatus) {
+      domainVerificationStatus.value =
+        customer.domainVerified === true
+          ? "Verified"
+          : "Pending verification";
+    }
 
     showWebsiteMessage("");
 
@@ -436,76 +414,138 @@ async function loadSelectedWebsiteSettings() {
   }
 }
 
-      // =====================================
-      // SAVE CUSTOMER + PUBLIC DOMAIN MAPPING
-      // =====================================
+// ========================================
+// SAVE WEBSITE SETTINGS
+// ========================================
 
-      const batch = writeBatch(db);
+async function saveWebsiteSettings(event) {
+  event.preventDefault();
 
-      const domainVerified =
-        Boolean(domain) &&
-        oldDomain === domain &&
-        oldCustomer.domainVerified === true;
+  if (!isMasterAdminVerified || !auth.currentUser) {
+    showWebsiteMessage("Master Admin verification is required.");
+    return;
+  }
 
-      // Update customer settings
-      batch.update(customerRef, updateData);
+  const customerId = websiteCustomerSelect?.value;
+  const domain = normalizeDomain(customDomainInput?.value);
+  const logo = String(websiteLogoInput?.value || "").trim();
+  const websiteActive = websiteActiveInput?.value === "true";
 
-      // Remove old mapping if domain changed or removed
-      if (oldDomain && oldDomain !== domain) {
-        const oldDomainRef = doc(
-          db,
-          "publicWebsites",
-          oldDomain
-        );
+  if (!customerId) {
+    showWebsiteMessage("Please select a customer.");
+    return;
+  }
 
-        batch.delete(oldDomainRef);
-      }
+  if (!isValidDomain(domain)) {
+    showWebsiteMessage("Please enter a valid domain, e.g. example.com");
+    return;
+  }
 
-      // Create mapping only when a domain is entered
-      if (domain) {
-        const publicWebsiteRef = doc(
-          db,
-          "publicWebsites",
-          domain
-        );
+  if (!isValidLogoURL(logo)) {
+    showWebsiteMessage("Logo URL must be a valid HTTPS URL.");
+    return;
+  }
 
-        batch.set(publicWebsiteRef, {
-          customerId: customerId,
-          active: websiteActive && domainVerified,
-          domainVerified: domainVerified,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      }
+  if (saveWebsiteSettingsBtn) {
+    saveWebsiteSettingsBtn.disabled = true;
+    saveWebsiteSettingsBtn.textContent = "Saving...";
+  }
 
-      // Save both changes together
-      await batch.commit();
+  try {
+    await checkMasterAdmin(auth.currentUser);
 
-      if (domainVerificationStatus) {
-        domainVerificationStatus.value = !domain
-          ? "No domain assigned"
-          : domainVerified
-            ? "Verified"
-            : "Pending verification";
-      }
+    const customersSnapshot = await getDocs(collection(db, "customers"));
 
-      showWebsiteMessage(
-        "Website settings saved successfully for " + customerId,
-        "#087f3c"
-      );
+    for (const item of customersSnapshot.docs) {
+      if (item.id === customerId) continue;
 
-      await loadCustomers();
+      const existingDomain = normalizeDomain(item.data().customDomain);
 
-    } catch (error) {
-      console.error("Website settings save error:", error);
-
-      showWebsiteMessage("Save failed: " + error.message);
-
-    } finally {
-      if (saveWebsiteSettingsBtn) {
-        saveWebsiteSettingsBtn.disabled = false;
-        saveWebsiteSettingsBtn.textContent = "Save Website Settings";
+      if (domain && existingDomain === domain) {
+        throw new Error("This domain is already assigned to another customer.");
       }
     }
+
+    const customerRef = doc(db, "customers", customerId);
+    const customerSnap = await getDoc(customerRef);
+
+    if (!customerSnap.exists()) {
+      throw new Error("Customer record not found.");
+    }
+
+    const oldCustomer = customerSnap.data();
+    const oldDomain = normalizeDomain(oldCustomer.customDomain);
+
+    const domainVerified =
+      Boolean(domain) &&
+      oldDomain === domain &&
+      oldCustomer.domainVerified === true;
+
+    const updateData = {
+      customDomain: domain,
+      websiteLogo: logo,
+      websiteActive,
+      updatedAt: serverTimestamp()
+    };
+
+    if (oldDomain !== domain) {
+      updateData.domainVerified = false;
+      updateData.domainVerifiedAt = null;
+    }
+
+    // =====================================
+    // SAVE CUSTOMER + PUBLIC DOMAIN MAPPING
+    // =====================================
+
+    const batch = writeBatch(db);
+
+    batch.update(customerRef, updateData);
+
+    // Remove old domain mapping if domain changed or removed
+    if (oldDomain && oldDomain !== domain) {
+      const oldDomainRef = doc(db, "publicWebsites", oldDomain);
+      batch.delete(oldDomainRef);
+    }
+
+    // Save new domain mapping
+    if (domain) {
+      const publicWebsiteRef = doc(db, "publicWebsites", domain);
+
+      batch.set(publicWebsiteRef, {
+        customerId,
+        active: websiteActive && domainVerified,
+        domainVerified,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    await batch.commit();
+
+    if (domainVerificationStatus) {
+      domainVerificationStatus.value = !domain
+        ? "No domain assigned"
+        : domainVerified
+          ? "Verified"
+          : "Pending verification";
+    }
+
+    showWebsiteMessage(
+      "Website settings saved successfully for " + customerId,
+      "#087f3c"
+    );
+
+    await loadCustomers();
+
+  } catch (error) {
+    console.error("Website settings save error:", error);
+    showWebsiteMessage("Save failed: " + error.message);
+
+  } finally {
+    if (saveWebsiteSettingsBtn) {
+      saveWebsiteSettingsBtn.disabled = false;
+      saveWebsiteSettingsBtn.textContent = "Save Website Settings";
+    }
+  }
 }
 
 // ========================================
@@ -525,47 +565,25 @@ if (websiteManagementForm) {
     saveWebsiteSettings
   );
 }
-function isValidDomain(domain) {
-  if (!domain) return true;
-  
-  if (
-    domain.includes("://") ||
-    domain.includes("/") ||
-    domain.includes(":") ||
-    domain.includes(" ")
-  ) {
-    return false;
-  }
-  
-  return /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(domain);
-}
+
 // ========================================
 // SUBSCRIPTION REQUEST PANEL
 // ========================================
 
 function createSubscriptionPanel() {
-  const panel = document.getElementById(
-    "subscriptionRequestsPanel"
-  );
+  const panel = document.getElementById("subscriptionRequestsPanel");
 
   if (!panel) {
-    throw new Error(
-      "Subscription Requests panel not found in HTML."
-    );
+    throw new Error("Subscription Requests panel not found in HTML.");
   }
 
-  subscriptionRequestsContainer = panel.querySelector(
-    "#subscriptionRequestsList"
-  );
+  subscriptionRequestsContainer =
+    panel.querySelector("#subscriptionRequestsList");
 
-  const refreshButton = panel.querySelector(
-    "#refreshSubscriptionRequests"
-  );
+  const refreshButton =
+    panel.querySelector("#refreshSubscriptionRequests");
 
-  if (
-    refreshButton &&
-    refreshButton.dataset.bound !== "true"
-  ) {
+  if (refreshButton && refreshButton.dataset.bound !== "true") {
     refreshButton.dataset.bound = "true";
 
     refreshButton.addEventListener("click", async () => {
@@ -581,42 +599,28 @@ function createSubscriptionPanel() {
   ) {
     subscriptionRequestsContainer.dataset.bound = "true";
 
-    subscriptionRequestsContainer.addEventListener(
-      "click",
-      async event => {
-        const button = event.target.closest(
-          "[data-request-action]"
-        );
+    subscriptionRequestsContainer.addEventListener("click", async event => {
+      const button = event.target.closest("[data-request-action]");
+      if (!button) return;
 
-        if (!button) return;
-
-        if (!isMasterAdminVerified) {
-          showMessage(
-            "Master Admin verification is required."
-          );
-          return;
-        }
-
-        const action = button.dataset.requestAction;
-        const requestId = button.dataset.requestId;
-
-        if (!requestId) return;
-
-        if (action === "approve") {
-          await approveSubscriptionRequest(
-            requestId,
-            button
-          );
-        }
-
-        if (action === "reject") {
-          await rejectSubscriptionRequest(
-            requestId,
-            button
-          );
-        }
+      if (!isMasterAdminVerified) {
+        showMessage("Master Admin verification is required.");
+        return;
       }
-    );
+
+      const action = button.dataset.requestAction;
+      const requestId = button.dataset.requestId;
+
+      if (!requestId) return;
+
+      if (action === "approve") {
+        await approveSubscriptionRequest(requestId, button);
+      }
+
+      if (action === "reject") {
+        await rejectSubscriptionRequest(requestId, button);
+      }
+    });
   }
 }
 
@@ -628,6 +632,8 @@ async function loadSubscriptionRequests() {
   if (!subscriptionRequestsContainer) {
     createSubscriptionPanel();
   }
+
+  if (!subscriptionRequestsContainer) return;
 
   subscriptionRequestsContainer.innerHTML =
     `<p style="color:#64748b;">Loading subscription requests...</p>`;
@@ -648,13 +654,11 @@ async function loadSubscriptionRequests() {
       return dateB - dateA;
     });
 
-    const pendingCount = requests.filter(
-      item => item.status === "pending"
-    ).length;
+    const pendingCount =
+      requests.filter(item => item.status === "pending").length;
 
-    const approvedCount = requests.filter(
-      item => item.status === "approved"
-    ).length;
+    const approvedCount =
+      requests.filter(item => item.status === "approved").length;
 
     setStat("totalSubscriptionRequests", requests.length);
     setStat("pendingSubscriptionRequests", pendingCount);
@@ -662,7 +666,13 @@ async function loadSubscriptionRequests() {
 
     if (!requests.length) {
       subscriptionRequestsContainer.innerHTML = `
-        <div style="padding:20px;text-align:center;background:#f8fafc;border-radius:10px;color:#64748b;">
+        <div style="
+          padding:20px;
+          text-align:center;
+          background:#f8fafc;
+          border-radius:10px;
+          color:#64748b;
+        ">
           No subscription renewal requests found.
         </div>
       `;
@@ -710,18 +720,42 @@ async function loadSubscriptionRequests() {
         `;
 
       return `
-        <article style="padding:17px;margin-bottom:13px;border:1px solid #e2e8f0;border-radius:11px;background:white;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <article style="
+          padding:17px;
+          margin-bottom:13px;
+          border:1px solid #e2e8f0;
+          border-radius:11px;
+          background:white;
+        ">
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+          ">
             <h3 style="margin:0;font-size:18px;">
               ${escapeHTML(request.businessName || "Customer")}
             </h3>
 
-            <span style="padding:6px 11px;border-radius:20px;background:${statusBackground};color:${statusColor};font-size:12px;font-weight:bold;">
+            <span style="
+              padding:6px 11px;
+              border-radius:20px;
+              background:${statusBackground};
+              color:${statusColor};
+              font-size:12px;
+              font-weight:bold;
+            ">
               ${escapeHTML(status.toUpperCase())}
             </span>
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:15px;">
+          <div style="
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:12px;
+            margin-top:15px;
+          ">
             <div><small>Customer ID</small><div>${escapeHTML(request.customerId || "—")}</div></div>
             <div><small>Customer UID</small><div style="word-break:break-all;">${escapeHTML(request.customerUid || "—")}</div></div>
             <div><small>Plan</small><div>${escapeHTML(request.plan || "—")}</div></div>
@@ -737,14 +771,18 @@ async function loadSubscriptionRequests() {
       `;
     }).join("");
 
-    console.log("Subscription requests loaded:", requests.length);
-
   } catch (error) {
     console.error("Subscription request loading error:", error);
 
     subscriptionRequestsContainer.innerHTML = `
-      <div style="padding:15px;background:#fee2e2;color:#991b1b;border-radius:9px;">
-        Unable to load subscription requests: ${escapeHTML(error.message)}
+      <div style="
+        padding:15px;
+        background:#fee2e2;
+        color:#991b1b;
+        border-radius:9px;
+      ">
+        Unable to load subscription requests:
+        ${escapeHTML(error.message)}
       </div>
     `;
   }
@@ -933,7 +971,11 @@ async function loadDashboard() {
 
     if (customerTableBody) {
       customerTableBody.innerHTML = `
-        <tr><td colspan="7">Unable to load customers: ${escapeHTML(error.message)}</td></tr>
+        <tr>
+          <td colspan="7">
+            Unable to load customers: ${escapeHTML(error.message)}
+          </td>
+        </tr>
       `;
     }
   }
@@ -1128,30 +1170,52 @@ if (masterLoginForm) {
   masterLoginForm.addEventListener("submit", async event => {
     event.preventDefault();
 
-    masterLoginBtn.disabled = true;
-    masterLoginBtn.textContent = "Checking...";
+    if (!masterEmail?.value.trim() || !masterPassword?.value) {
+      if (loginMessage) {
+        loginMessage.textContent = "Please enter your email and password.";
+        loginMessage.style.color = "#b91c1c";
+      }
+      return;
+    }
 
-    loginMessage.textContent = "Verifying Master Admin...";
-    loginMessage.style.color = "#64748b";
+    if (masterLoginBtn) {
+      masterLoginBtn.disabled = true;
+      masterLoginBtn.textContent = "Checking...";
+    }
+
+    if (loginMessage) {
+      loginMessage.textContent = "Verifying Master Admin...";
+      loginMessage.style.color = "#64748b";
+    }
 
     try {
+      await authReady;
+
       await signInWithEmailAndPassword(
         auth,
         masterEmail.value.trim(),
         masterPassword.value
       );
 
+      // onAuthStateChanged will verify UID and permissions.
+
     } catch (error) {
       console.error("Master Admin login error:", error);
 
-      loginMessage.textContent = error.message;
-      loginMessage.style.color = "#b91c1c";
+      if (loginMessage) {
+        loginMessage.textContent = error.message;
+        loginMessage.style.color = "#b91c1c";
+      }
 
     } finally {
-      masterLoginBtn.disabled = false;
-      masterLoginBtn.textContent = "Master Admin Login";
+      if (masterLoginBtn) {
+        masterLoginBtn.disabled = false;
+        masterLoginBtn.textContent = "Master Admin Login";
+      }
     }
   });
+} else {
+  console.error("Master Admin login form not found. Check masterLoginForm ID in HTML.");
 }
 
 // ========================================
@@ -1166,18 +1230,13 @@ async function initializeMasterAdmin() {
     setDashboardEnabled(false);
 
     if (!user) {
-      dashboardSection.style.display = "none";
-      loginSection.style.display = "block";
+      if (dashboardSection) dashboardSection.style.display = "none";
+      if (loginSection) loginSection.style.display = "block";
 
       showMessage("");
 
-      if (loginMessage) {
-        loginMessage.textContent = "";
-      }
-
-      if (masterPassword) {
-        masterPassword.value = "";
-      }
+      if (loginMessage) loginMessage.textContent = "";
+      if (masterPassword) masterPassword.value = "";
 
       return;
     }
@@ -1191,13 +1250,12 @@ async function initializeMasterAdmin() {
 
       isMasterAdminVerified = true;
 
-      loginSection.style.display = "none";
-      dashboardSection.style.display = "block";
+      if (loginSection) loginSection.style.display = "none";
+      if (dashboardSection) dashboardSection.style.display = "block";
 
       setDashboardEnabled(true);
 
-      const startInput =
-        document.getElementById("subscriptionStart");
+      const startInput = document.getElementById("subscriptionStart");
 
       if (startInput && !startInput.value) {
         startInput.value = getTodayInputDate();
@@ -1213,8 +1271,8 @@ async function initializeMasterAdmin() {
       isMasterAdminVerified = false;
       setDashboardEnabled(false);
 
-      dashboardSection.style.display = "none";
-      loginSection.style.display = "block";
+      if (dashboardSection) dashboardSection.style.display = "none";
+      if (loginSection) loginSection.style.display = "block";
 
       if (loginMessage) {
         loginMessage.textContent = error.message;
@@ -1228,8 +1286,8 @@ async function initializeMasterAdmin() {
   }, error => {
     console.error("Authentication error:", error);
 
-    dashboardSection.style.display = "none";
-    loginSection.style.display = "block";
+    if (dashboardSection) dashboardSection.style.display = "none";
+    if (loginSection) loginSection.style.display = "block";
 
     if (loginMessage) {
       loginMessage.textContent = error.message;
@@ -1264,7 +1322,7 @@ if (logoutBtn) {
 }
 
 // ========================================
-// FORM SUBMIT
+// CUSTOMER FORM EVENT
 // ========================================
 
 if (customerForm) {
@@ -1272,7 +1330,7 @@ if (customerForm) {
 }
 
 // ========================================
-// START
+// START APPLICATION
 // ========================================
 
 setDashboardEnabled(false);
@@ -1281,6 +1339,7 @@ initializeMasterAdmin().catch(error => {
   console.error("Initialization error:", error);
 
   setDashboardEnabled(false);
+
   document.body.style.display = "block";
 
   showMessage("Unable to initialize: " + error.message);
