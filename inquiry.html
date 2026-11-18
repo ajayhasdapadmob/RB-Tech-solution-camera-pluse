@@ -387,6 +387,7 @@
 
   <script type="module">
     import { db } from "./firebase.js";
+
     import {
       collection,
       addDoc,
@@ -402,6 +403,43 @@
       statusBox.style.color = success ? "#087f3c" : "#dc2626";
     }
 
+    /*
+      CUSTOMER ROUTING
+
+      GitHub Pages legacy website:
+      ajayhasdapadmob.github.io -> customer1
+
+      Other websites:
+      customerId must be supplied in the URL.
+    */
+
+    function getInquiryCustomerId() {
+      const params = new URLSearchParams(window.location.search);
+
+      const hostname = window.location.hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+
+      const urlCustomerId = (
+        params.get("customerId") || ""
+      ).trim();
+
+      if (urlCustomerId) {
+        return urlCustomerId;
+      }
+
+      if (hostname === "ajayhasdapadmob.github.io") {
+        return "customer1";
+      }
+
+      return "";
+    }
+
+    function getInquiryProductId() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get("productId") || "").trim();
+    }
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
@@ -412,48 +450,53 @@
       showStatus("Please wait. Saving your inquiry...", true);
 
       try {
-       const params = new URLSearchParams(window.location.search);
+        const customerId = getInquiryCustomerId();
+        const productId = getInquiryProductId();
 
-const hostname = window.location.hostname
-  .toLowerCase()
-  .replace(/^www\./, "");
+        if (!customerId) {
+          throw new Error(
+            "Customer website identify nahi hua. Please contact the website administrator."
+          );
+        }
 
-let customerId = params.get("customerId") || "";
-
-if (!customerId &&
-    hostname === "ajayhasdapadmob.github.io") {
-  customerId = "customer1";
-}
-
-const productId = params.get("productId") || "";
         const inquiryData = {
           name: document.getElementById("websiteInquiryName").value.trim(),
           mobile: document.getElementById("websiteInquiryMobile").value.trim(),
           email: document.getElementById("websiteInquiryEmail").value.trim(),
           company: document.getElementById("websiteInquiryCompany").value.trim(),
+
           country: document.getElementById("contactCountry").value.trim(),
           state: document.getElementById("contactState").value.trim(),
           city: document.getElementById("contactCity").value.trim(),
           pincode: document.getElementById("contactPincode").value.trim(),
+
           product: document.getElementById("websiteInquiryProduct").value,
           message: document.getElementById("websiteInquiryMessage").value.trim(),
 
           source: "product-inquiry-page",
           status: "new",
           read: false,
-          customerId: customerId || null,
+
+          customerId: customerId,
           productId: productId || null,
 
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
 
-        if (!inquiryData.name || !inquiryData.mobile ||
-            !inquiryData.product || !inquiryData.message) {
+        if (
+          !inquiryData.name ||
+          !inquiryData.mobile ||
+          !inquiryData.product ||
+          !inquiryData.message
+        ) {
           throw new Error("Please fill in all required fields.");
         }
 
-        await addDoc(collection(db, "enquiries"), inquiryData);
+        await addDoc(
+          collection(db, "enquiries"),
+          inquiryData
+        );
 
         showStatus(
           "Thank you! Your inquiry has been submitted successfully. We will contact you soon.",
@@ -461,6 +504,7 @@ const productId = params.get("productId") || "";
         );
 
         form.reset();
+
         document.getElementById("contactCountry").value = "India";
 
       } catch (error) {
