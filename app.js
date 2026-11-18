@@ -13,7 +13,7 @@ import {
 /* =========================================
    RB TECH SOLUTION - WEBSITE APP
    Old Products + Customer Admin Products
-   No Firebase Storage required
+   PDF + Dynamic Specifications Supported
 ========================================= */
 
 const WHATSAPP_NUMBER = "919663116089";
@@ -106,6 +106,40 @@ function getProductPrice(product) {
   return "₹" + product.price;
 }
 
+function getProductPDF(product) {
+  const url = String(
+    product?.pdfUrl ||
+    product?.brochureUrl ||
+    product?.datasheetUrl ||
+    ""
+  ).trim();
+
+  // Only allow valid HTTP/HTTPS PDF links.
+  try {
+    const parsed = new URL(url);
+
+    if (
+      parsed.protocol !== "https:" &&
+      parsed.protocol !== "http:"
+    ) {
+      return "";
+    }
+
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
+function getProductPDFName(product) {
+  return String(
+    product?.pdfName ||
+    product?.brochureName ||
+    product?.datasheetName ||
+    "Product Datasheet"
+  ).trim();
+}
+
 function openWhatsApp(message) {
   const url =
     "https://wa.me/" +
@@ -119,7 +153,6 @@ function openWhatsApp(message) {
 /* =========================================
    PRODUCT CARD
 ========================================= */
-
 
 function createProductCard(product, index) {
   const card = document.createElement("article");
@@ -216,11 +249,7 @@ function displayTrendingProducts() {
     trending.length > 0 ? trending : allProducts
   ).slice(0, 8);
 
-  if (!products.length) {
-    trendingGrid.innerHTML =
-      "<p>No products available.</p>";
-    return;
-  }
+  
 
   products.forEach(product => {
     const index = allProducts.indexOf(product);
@@ -421,7 +450,8 @@ function getProductFeatures(product) {
 }
 
 /* =========================================
-   SPECIFICATIONS HELPER
+   DYNAMIC SPECIFICATIONS HELPER
+   Supports new array + old object format
 ========================================= */
 
 function getProductSpecifications(product) {
@@ -433,8 +463,18 @@ function getProductSpecifications(product) {
     entries = specifications
       .filter(item => item && typeof item === "object")
       .map(item => ({
-        label: item.label || item.name || item.key || "",
-        value: item.value ?? item.description ?? ""
+        label: String(
+          item.label ||
+          item.name ||
+          item.key ||
+          ""
+        ).trim(),
+
+        value: String(
+          item.value ??
+          item.description ??
+          ""
+        ).trim()
       }));
   } else if (
     specifications &&
@@ -442,15 +482,14 @@ function getProductSpecifications(product) {
   ) {
     entries = Object.entries(specifications).map(
       ([label, value]) => ({
-        label,
-        value
+        label: String(label).trim(),
+        value: String(value ?? "").trim()
       })
     );
   }
 
   return entries.filter(item =>
-    String(item.label || "").trim() &&
-    String(item.value ?? "").trim()
+    item.label && item.value
   );
 }
 
@@ -804,6 +843,55 @@ async function submitRFI(form) {
 }
 
 /* =========================================
+   PDF DISPLAY SECTION
+========================================= */
+
+function createProductPDFSection(product) {
+  const pdfUrl = getProductPDF(product);
+
+  if (!pdfUrl) return "";
+
+  const pdfName = getProductPDFName(product);
+
+  return `
+    <section class="product-pdf-section">
+      <h2>Product Brochure / Datasheet</h2>
+
+      <p>${escapeHTML(pdfName)}</p>
+
+      <div class="product-pdf-actions">
+        <a
+          href="${escapeHTML(pdfUrl)}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="product-pdf-view"
+        >
+          View PDF
+        </a>
+
+        <a
+          href="${escapeHTML(pdfUrl)}"
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          class="product-pdf-download"
+        >
+          Download PDF
+        </a>
+      </div>
+
+      <div class="product-pdf-preview">
+        <iframe
+          src="${escapeHTML(pdfUrl)}#toolbar=1&navpanes=0"
+          title="${escapeHTML(pdfName)}"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </section>
+  `;
+}
+
+/* =========================================
    PRODUCT DETAILS MODAL
 ========================================= */
 
@@ -954,6 +1042,9 @@ function openProductDetails(index) {
           }
 
         </section>
+
+        ${createProductPDFSection(product)}
+
       </section>
 
       <div class="detail-tab-panel"
@@ -1239,11 +1330,6 @@ categoryFilter?.addEventListener("change", filterProducts);
 
 /* =========================================
    FIRESTORE PRODUCTS
-   Old Products + Customer Admin Products
-
-   IMPORTANT:
-   Both collections are loaded independently.
-   One permission error will not stop the other.
 ========================================= */
 
 async function loadProducts() {
@@ -1271,8 +1357,6 @@ async function loadProducts() {
     let oldProducts = [];
     let customerProducts = [];
 
-    /* OLD WEBSITE PRODUCTS */
-
     if (results[0].status === "fulfilled") {
       oldProducts = results[0].value.docs.map(item => ({
         id: item.id,
@@ -1285,8 +1369,6 @@ async function loadProducts() {
         results[0].reason
       );
     }
-
-    /* CUSTOMER ADMIN PRODUCTS */
 
     if (results[1].status === "fulfilled") {
       customerProducts = results[1].value.docs.map(item => ({
@@ -1301,27 +1383,14 @@ async function loadProducts() {
       );
     }
 
-    /* COMBINE BOTH COLLECTIONS */
-
     allProducts = [
       ...oldProducts,
       ...customerProducts
     ];
 
-    console.log(
-      "Old website products:",
-      oldProducts.length
-    );
-
-    console.log(
-      "Customer Admin products:",
-      customerProducts.length
-    );
-
-    console.log(
-      "Total active products:",
-      allProducts.length
-    );
+    console.log("Old website products:", oldProducts.length);
+    console.log("Customer Admin products:", customerProducts.length);
+    console.log("Total active products:", allProducts.length);
 
     displayProducts();
     displayTrendingProducts();
