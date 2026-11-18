@@ -396,33 +396,96 @@
     Customer ke UTR number aur payment details verify karke request Approve ya Reject karein.
   </p>
   
-  <div class="stats" style="margin-top:15px;">
-    
-    <div class="stat-card">
-      <h3>Total Requests</h3>
-      <strong id="totalSubscriptionRequests">0</strong>
-    </div>
-    
-    <div class="stat-card">
-      <h3>Pending Requests</h3>
-      <strong id="pendingSubscriptionRequests">0</strong>
-    </div>
-    
-    <div class="stat-card">
-      <h3>Approved Requests</h3>
-      <strong id="approvedSubscriptionRequests">0</strong>
-    </div>
-    
-  </div>
-  
   <button type="button" id="refreshSubscriptionRequests">
     Refresh Requests
   </button>
   
-  <div id="subscriptionRequestsList" style="margin-top:18px;">
+  <div id="subscriptionRequestsList">
     Loading subscription requests...
   </div>
   
+</section>
+
+
+<section class="section" id="websiteManagementSection">
+  
+  <!-- Yahan aapka pehle se bana hua Website Management ka poora code rahega -->
+  
+<h2>Website Management</h2>
+
+<p class="help">
+  Manage each customer's custom domain, website logo and website status.
+</p>
+
+<form id="websiteManagementForm">
+
+  <div class="form-grid">
+
+    <div class="field full">
+      <label for="websiteCustomerSelect">Select Customer *</label>
+      <select id="websiteCustomerSelect" required>
+        <option value="">Select Customer</option>
+      </select>
+    </div>
+
+    <div class="field full">
+      <label for="customDomain">Custom Domain</label>
+      <input
+        type="text"
+        id="customDomain"
+        placeholder="example.com"
+      >
+      <span class="help">
+        Enter the customer's domain without https:// or www.
+      </span>
+    </div>
+
+    <div class="field full">
+      <label for="websiteLogo">Website Logo URL</label>
+      <input
+        type="url"
+        id="websiteLogo"
+        placeholder="https://example.com/logo.png"
+      >
+    </div>
+
+    <div class="field">
+      <label for="websiteActive">Website Status</label>
+      <select id="websiteActive">
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="domainVerificationStatus">Domain Verification</label>
+      <input
+        type="text"
+        id="domainVerificationStatus"
+        value="Pending"
+        readonly
+      >
+    </div>
+
+  </div>
+
+  <button
+    type="submit"
+    id="saveWebsiteSettingsBtn"
+    style="background:#087f3c;color:white;width:100%;margin-top:18px;"
+  >
+    Save Website Settings
+  </button>
+
+  <div
+    id="websiteManagementMessage"
+    role="status"
+    aria-live="polite"
+    style="margin-top:15px;"
+  ></div>
+
+</form>
+
 </section>
     <footer>
       © <span id="year"></span> RB Tech Solution. All rights reserved.
