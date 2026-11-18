@@ -412,11 +412,20 @@
       showStatus("Please wait. Saving your inquiry...", true);
 
       try {
-        const params = new URLSearchParams(window.location.search);
+       const params = new URLSearchParams(window.location.search);
 
-        const customerId = params.get("customerId") || "";
-        const productId = params.get("productId") || "";
+const hostname = window.location.hostname
+  .toLowerCase()
+  .replace(/^www\./, "");
 
+let customerId = params.get("customerId") || "";
+
+if (!customerId &&
+    hostname === "ajayhasdapadmob.github.io") {
+  customerId = "customer1";
+}
+
+const productId = params.get("productId") || "";
         const inquiryData = {
           name: document.getElementById("websiteInquiryName").value.trim(),
           mobile: document.getElementById("websiteInquiryMobile").value.trim(),
