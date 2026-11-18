@@ -36,7 +36,126 @@ const CATEGORY_NAMES = [
 
 let allProducts = [];
 let heroSlideTimer = null;
+/* =========================================
+   MULTI-CUSTOMER WEBSITE ROUTING
+========================================= */
 
+let currentTenant = null;
+let currentTenantId = "";
+let currentWebsiteMode = "unknown";
+
+const LEGACY_HOSTS = [
+  "rb-tech-solution-camera-pluse.pages.dev",
+  "ajayhasdapadmob.github.io",
+  "localhost",
+  "127.0.0.1"
+];
+
+function getCurrentHostname() {
+  return String(window.location.hostname || "")
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .trim();
+}
+
+async function resolveWebsiteTenant() {
+  const hostname = getCurrentHostname();
+  
+  currentTenant = null;
+  currentTenantId = "";
+  currentWebsiteMode = "unknown";
+  
+  // पुरानी RB Tech Solution मुख्य वेबसाइट
+  if (LEGACY_HOSTS.includes(hostname)) {
+    currentWebsiteMode = "legacy";
+    currentTenantId = "customer1";
+    
+    try {
+      const customerSnap = await getDoc(
+        doc(db, "customers", "customer1")
+      );
+      
+      if (customerSnap.exists()) {
+        currentTenant = {
+          id: customerSnap.id,
+          ...customerSnap.data()
+        };
+      }
+    } catch (error) {
+      console.error("Legacy customer details error:", error);
+    }
+    
+    window.RB_TENANT = {
+      mode: currentWebsiteMode,
+      customerId: currentTenantId,
+      customer: currentTenant
+    };
+    
+    return true;
+  }
+  
+  // Custom domain से ग्राहक की पहचान
+  try {
+    const websiteSnap = await getDoc(
+      doc(db, "publicWebsites", hostname)
+    );
+    
+    if (!websiteSnap.exists()) {
+      console.error("Website domain is not registered:", hostname);
+      return false;
+    }
+    
+    const websiteData = websiteSnap.data();
+    
+    if (
+      websiteData.active !== true ||
+      websiteData.domainVerified !== true
+    ) {
+      console.error("Website is inactive or domain is not verified.");
+      return false;
+    }
+    
+    const customerId = String(
+      websiteData.customerId || ""
+    ).trim();
+    
+    if (!customerId) {
+      console.error("Customer ID missing in domain mapping.");
+      return false;
+    }
+    
+    const customerSnap = await getDoc(
+      doc(db, "customers", customerId)
+    );
+    
+    if (!customerSnap.exists()) {
+      console.error("Customer record not found:", customerId);
+      return false;
+    }
+    
+    currentTenant = {
+      id: customerSnap.id,
+      ...customerSnap.data()
+    };
+    
+    currentTenantId = customerId;
+    currentWebsiteMode = "tenant";
+    
+    window.RB_TENANT = {
+      mode: currentWebsiteMode,
+      customerId: currentTenantId,
+      customer: currentTenant
+    };
+    
+    console.log("Website tenant loaded:", currentTenantId);
+    
+    return true;
+    
+  } catch (error) {
+    console.error("Website domain routing error:", error);
+    return false;
+  }
+}
 const productGrid = document.getElementById("productGrid");
 const trendingGrid = document.getElementById("trendingGrid");
 const searchInput = document.getElementById("searchInput");
@@ -786,9 +905,9 @@ async function submitRFI(form) {
       formData.get("productModel") || ""
     ).trim(),
 
-    customerId: String(
-      formData.get("customerId") || ""
-    ).trim(),
+   customerId: currentTenantId || String(
+  formData.get("customerId") || ""
+).trim(),
 
     customerProductId: String(
       formData.get("customerProductId") || ""
@@ -1330,93 +1449,94 @@ categoryFilter?.addEventListener("change", filterProducts);
 
 /* =========================================
    FIRESTORE PRODUCTS
+   TENANT-WISE PRODUCT LOADING
 ========================================= */
 
 async function loadProducts() {
   if (productGrid) {
     productGrid.innerHTML = "<p>Loading products...</p>";
   }
-
+  
   try {
-    const results = await Promise.allSettled([
-      getDocs(
+    const tenantReady = await resolveWebsiteTenant();
+    
+    if (!tenantReady) {
+      allProducts = [];
+      
+      if (productGrid) {
+        productGrid.innerHTML =
+          "<p>This website is not configured or is inactive.</p>";
+      }
+      
+      if (trendingGrid) trendingGrid.innerHTML = "";
+      
+      return;
+    }
+    
+    let oldProducts = [];
+    let customerProducts = [];
+    
+    // केवल मुख्य RB Tech वेबसाइट पर पुराना catalogue
+    if (currentWebsiteMode === "legacy") {
+      const oldResult = await getDocs(
         query(
           collection(db, "products"),
           where("active", "==", true)
         )
-      ),
-
-      getDocs(
-        query(
-          collection(db, "customerProducts"),
-          where("active", "==", true)
-        )
-      )
-    ]);
-
-    let oldProducts = [];
-    let customerProducts = [];
-
-    if (results[0].status === "fulfilled") {
-      oldProducts = results[0].value.docs.map(item => ({
+      );
+      
+      oldProducts = oldResult.docs.map(item => ({
         id: item.id,
         ...item.data(),
         productSource: "website"
       }));
-    } else {
-      console.error(
-        "Old products loading error:",
-        results[0].reason
-      );
     }
-
-    if (results[1].status === "fulfilled") {
-      customerProducts = results[1].value.docs.map(item => ({
+    
+    // Customer की अपनी products collection
+    if (currentTenantId) {
+      const customerResult = await getDocs(
+        query(
+          collection(db, "customerProducts"),
+          where("active", "==", true),
+          where("customerId", "==", currentTenantId)
+        )
+      );
+      
+      customerProducts = customerResult.docs.map(item => ({
         id: item.id,
         ...item.data(),
         productSource: "customer"
       }));
-    } else {
-      console.error(
-        "Customer Admin products loading error:",
-        results[1].reason
-      );
     }
-
+    
+    // Legacy website पर दोनों catalogues
+    // Custom domain पर केवल उसी customer के products
     allProducts = [
       ...oldProducts,
       ...customerProducts
     ];
-
+    
+    console.log("Website mode:", currentWebsiteMode);
+    console.log("Current customer:", currentTenantId);
     console.log("Old website products:", oldProducts.length);
-    console.log("Customer Admin products:", customerProducts.length);
-    console.log("Total active products:", allProducts.length);
-
+    console.log("Customer products:", customerProducts.length);
+    console.log("Total products:", allProducts.length);
+    
     displayProducts();
     displayTrendingProducts();
     setupTrendingCarousel();
     createOfferCategoryCards();
     startHeroSlideshow();
-
-    if (
-      results[0].status === "rejected" &&
-      results[1].status === "rejected"
-    ) {
-      console.error(
-        "Both product collections failed to load."
-      );
-    }
-
+    
   } catch (error) {
     console.error("Product loading error:", error);
-
+    
     if (productGrid) {
       productGrid.innerHTML =
         "<p>Unable to load products. Please try again later.</p>";
     }
   }
 }
-
 /* =========================================
    FOOTER YEAR
 ========================================= */
@@ -1539,8 +1659,12 @@ function setupWebsiteInquiryForm() {
 
       privacyAccepted,
 
-      customerId: getCustomerId(matchedProduct),
-      customerProductId: getCustomerProductId(matchedProduct),
+     customerId: currentTenantId || getCustomerId(matchedProduct),
+  
+  customerProductId:
+  getCustomerId(matchedProduct) === currentTenantId ?
+  getCustomerProductId(matchedProduct) :
+  "",
 
       read: false,
       status: "New",
