@@ -506,8 +506,11 @@ function addProductDetailsStyles() {
    TENANT / CUSTOMER WEBSITE
 ========================================= */
 
+
 async function resolveWebsiteTenant() {
-  const hostname = location.hostname.toLowerCase();
+  const hostname = location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
 
   const legacyHosts = [
     "rb-tech-solution-camera-pluse.pages.dev",
@@ -516,23 +519,71 @@ async function resolveWebsiteTenant() {
     "127.0.0.1"
   ];
 
+  // Original RB Tech Solution website
   if (legacyHosts.includes(hostname)) {
     currentWebsiteMode = "legacy";
     currentTenantId = "customer1";
 
-    const tenantSnap = await getDoc(doc(db, "customers", "customer1"));
+    const snap = await getDoc(
+      doc(db, "customers", "customer1")
+    );
 
-    currentTenant = tenantSnap.exists()
-      ? { id: tenantSnap.id, ...tenantSnap.data() }
-      : { id: "customer1", businessName: "RB Tech Solution" };
+    currentTenant = snap.exists() ? snap.data() : null;
 
-    window.RB_TENANT = currentTenant;
-    return currentTenant;
+    return true;
   }
 
-  const customersSnap = await getDocs(collection(db, "customers"));
+  // Find custom domain in publicWebsites
+  const websiteSnap = await getDoc(
+    doc(db, "publicWebsites", hostname)
+  );
 
-  const matchedCustomer = customersSnap.docs.find(item => {
+  if (
+    websiteSnap.exists() &&
+    websiteSnap.data().active === true
+  ) {
+    const website = websiteSnap.data();
+
+    if (
+      website.domain &&
+      website.domain.toLowerCase().replace(/^www\./, "") !== hostname
+    ) {
+      return false;
+    }
+
+    const customerId = website.customerId;
+
+    if (!customerId) return false;
+
+    const customerSnap = await getDoc(
+      doc(db, "customers", customerId)
+    );
+
+    if (
+      !customerSnap.exists() ||
+      customerSnap.data().status !== "active"
+    ) {
+      return false;
+    }
+
+    currentTenantId = customerId;
+    currentTenant = {
+      id: customerId,
+      ...customerSnap.data()
+    };
+    currentWebsiteMode = "customer";
+
+    console.log("Website tenant:", currentTenantId);
+
+    return true;
+  }
+
+  // Fallback: find domain in customers
+  const customersSnap = await getDocs(
+    collection(db, "customers")
+  );
+
+  const matched = customersSnap.docs.find(item => {
     const data = item.data();
 
     const domains = [
@@ -542,22 +593,28 @@ async function resolveWebsiteTenant() {
       ...(Array.isArray(data.domains) ? data.domains : [])
     ]
       .filter(Boolean)
-      .map(domain => String(domain).toLowerCase());
+      .map(value =>
+        String(value).toLowerCase().replace(/^www\./, "")
+      );
 
     return domains.includes(hostname);
   });
 
-  if (!matchedCustomer) {
-    throw new Error("This website domain is not connected to a customer.");
+  if (!matched || matched.data().status !== "active") {
+    console.error("No active tenant found:", hostname);
+    return false;
   }
 
-  currentTenantId = matchedCustomer.id;
-  currentTenant = { id: matchedCustomer.id, ...matchedCustomer.data() };
+  currentTenantId = matched.id;
+  currentTenant = {
+    id: matched.id,
+    ...matched.data()
+  };
   currentWebsiteMode = "customer";
 
-  window.RB_TENANT = currentTenant;
-  return currentTenant;
+  return true;
 }
+
 
 /* =========================================
    LOAD PRODUCTS
