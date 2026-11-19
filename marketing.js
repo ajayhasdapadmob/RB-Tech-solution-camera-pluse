@@ -6,10 +6,11 @@ console.log("RB Marketing JS Loaded Successfully");
 import {
   collection,
   getDocs,
+  getDoc,
+  doc,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
 /* =====================================
    RB TECH SOLUTION - PUBLIC MARKETING
    Company News / Brochures / Videos
@@ -1524,9 +1525,125 @@ function convertCustomerProductToGallery(product) {
   };
 
 }
-
 /* =====================================
-   LOAD MARKETING + PRODUCT GALLERY
+   TENANT / DOMAIN RESOLUTION
+===================================== */
+
+let marketingTenantId = "";
+let marketingTenantUid = "";
+let marketingWebsiteMode = "blocked";
+
+const LEGACY_HOSTS = [
+  "rb-tech-solution-camera-pluse.pages.dev",
+  "ajayhasdapadmob.github.io",
+  "localhost",
+  "127.0.0.1"
+];
+
+async function resolveMarketingTenant() {
+
+  const hostname = location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  // Old RB Tech Solution website
+  if (LEGACY_HOSTS.includes(hostname)) {
+
+    marketingWebsiteMode = "legacy";
+    marketingTenantId = "customer1";
+    marketingTenantUid = "";
+
+    console.log("Marketing tenant: RB Tech Solution");
+
+    return true;
+  }
+
+  // First check publicWebsites
+  const websiteRef = doc(
+    db,
+    "publicWebsites",
+    hostname
+  );
+
+  const websiteSnap = await getDoc(websiteRef);
+
+  if (
+    websiteSnap.exists() &&
+    websiteSnap.data().active === true
+  ) {
+
+    const websiteData = websiteSnap.data();
+
+    const customerId = websiteData.customerId;
+
+    if (!customerId) return false;
+
+    const customerSnap = await getDoc(
+      doc(db, "customers", customerId)
+    );
+
+    if (
+      !customerSnap.exists() ||
+      customerSnap.data().status !== "active"
+    ) {
+      return false;
+    }
+
+    marketingTenantId = customerId;
+    marketingTenantUid = customerSnap.data().uid || "";
+    marketingWebsiteMode = "customer";
+
+    console.log("Marketing tenant:", customerId);
+
+    return true;
+  }
+
+  // Fallback: check customers domain field
+  const customersSnap = await getDocs(
+    collection(db, "customers")
+  );
+
+  const matchedCustomer = customersSnap.docs.find(item => {
+
+    const data = item.data();
+
+    const domains = [
+      data.domain,
+      data.customDomain,
+      data.websiteDomain,
+      ...(Array.isArray(data.domains) ? data.domains : [])
+    ]
+      .filter(Boolean)
+      .map(domain =>
+        String(domain)
+          .toLowerCase()
+          .replace(/^www\./, "")
+      );
+
+    return domains.includes(hostname);
+  });
+
+  if (
+    matchedCustomer &&
+    matchedCustomer.data().status === "active"
+  ) {
+
+    marketingTenantId = matchedCustomer.id;
+    marketingTenantUid = matchedCustomer.data().uid || "";
+    marketingWebsiteMode = "customer";
+
+    console.log("Marketing tenant:", marketingTenantId);
+
+    return true;
+  }
+
+  console.error("Website tenant not found:", hostname);
+
+  return false;
+}
+/* =====================================
+   LOAD TENANT-SPECIFIC MARKETING
+   SECURE PRODUCT GALLERY
 ===================================== */
 
 async function loadMarketingContent() {
@@ -1541,33 +1658,239 @@ async function loadMarketingContent() {
 
   try {
 
-    const results = await Promise.allSettled([
+    // Resolve current website tenant first
+    const tenantResolved = await resolveMarketingTenant();
 
-      // Marketing Admin content
-      getDocs(
-        query(
-          collection(db, MARKETING_COLLECTION),
-          where("active", "==", true)
-        )
-      ),
+    if (!tenantResolved) {
 
-      // Old website products
-      getDocs(
-        query(
-          collection(db, "products"),
-          where("active", "==", true)
-        )
-      ),
+      allGrids.forEach(grid => {
+        grid.innerHTML = "";
+      });
 
-      // Customer Admin products
-      getDocs(
-        query(
-          collection(db, "customerProducts"),
-          where("active", "==", true)
+      if (heroSlider) {
+        heroSlider.innerHTML = "";
+      }
+
+      console.error(
+        "Website blocked: tenant could not be verified."
+      );
+
+      return;
+    }
+
+    let marketingItems = [];
+    let oldProducts = [];
+    let customerProducts = [];
+
+    /* =====================================
+       LEGACY RB TECH SOLUTION
+    ===================================== */
+
+    if (marketingWebsiteMode === "legacy") {
+
+      const results = await Promise.allSettled([
+
+        getDocs(
+          query(
+            collection(db, "marketingItems"),
+            where("active", "==", true)
+          )
+        ),
+
+        getDocs(
+          query(
+            collection(db, "products"),
+            where("active", "==", true)
+          )
+        ),
+
+        getDocs(
+          query(
+            collection(db, "customerProducts"),
+            where("customerId", "==", "customer1"),
+            where("active", "==", true)
+          )
         )
+
+      ]);
+
+      if (results[0].status === "fulfilled") {
+        marketingItems = results[0].value.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+      } else {
+        console.error("Legacy marketing error:", results[0].reason);
+      }
+
+      if (results[1].status === "fulfilled") {
+        oldProducts = results[1].value.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+      } else {
+        console.error("Legacy products error:", results[1].reason);
+      }
+
+      if (results[2].status === "fulfilled") {
+        customerProducts = results[2].value.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+      } else {
+        console.error("Legacy customer products error:", results[2].reason);
+      }
+
+    }
+
+    /* =====================================
+       CUSTOMER WEBSITE
+       ONLY CURRENT CUSTOMER DATA
+    ===================================== */
+
+    else if (marketingWebsiteMode === "customer") {
+
+      const results = await Promise.allSettled([
+
+        getDocs(
+          query(
+            collection(db, "marketingItems"),
+            where("customerId", "==", marketingTenantId),
+            where("active", "==", true)
+          )
+        ),
+
+        getDocs(
+          query(
+            collection(db, "customerProducts"),
+            where("customerId", "==", marketingTenantId),
+            where("active", "==", true)
+          )
+        )
+
+      ]);
+
+      if (results[0].status === "fulfilled") {
+
+        marketingItems = results[0].value.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+
+      } else {
+
+        console.error(
+          "Customer marketing error:",
+          results[0].reason
+        );
+
+      }
+
+      if (results[1].status === "fulfilled") {
+
+        customerProducts = results[1].value.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+
+      } else {
+
+        console.error(
+          "Customer products error:",
+          results[1].reason
+        );
+
+      }
+
+      // Do not load RB Tech legacy products here
+      oldProducts = [];
+
+    }
+
+    /* =====================================
+       CONVERT PRODUCTS TO GALLERY
+    ===================================== */
+
+    const oldProductGallery = oldProducts
+      .map(convertOldProductToGallery)
+      .filter(Boolean);
+
+    const customerProductGallery = customerProducts
+      .map(convertCustomerProductToGallery)
+      .filter(Boolean);
+
+    const productGalleryItems = [
+      ...oldProductGallery,
+      ...customerProductGallery
+    ];
+
+    /* =====================================
+       COMBINE MARKETING + PRODUCT GALLERY
+    ===================================== */
+
+    const allMarketingItems = [
+      ...marketingItems,
+      ...productGalleryItems
+    ];
+
+    /* =====================================
+       HOMEPAGE HERO
+    ===================================== */
+
+    renderHeroSlider(marketingItems);
+
+    /* =====================================
+       RENDER SECTIONS
+    ===================================== */
+
+    Object.keys(SECTION_CONFIG).forEach(type => {
+
+      renderSection(
+        type,
+        allMarketingItems
+      );
+
+    });
+
+    /* =====================================
+       DEBUG INFORMATION
+    ===================================== */
+
+    console.log("Website mode:", marketingWebsiteMode);
+    console.log("Tenant ID:", marketingTenantId);
+    console.log("Marketing items:", marketingItems.length);
+    console.log("Old products:", oldProducts.length);
+    console.log("Customer products:", customerProducts.length);
+    console.log("Old product gallery:", oldProductGallery.length);
+    console.log("Customer product gallery:", customerProductGallery.length);
+
+    const finalGallery = getUniqueGalleryItems(
+      allMarketingItems.filter(item =>
+        item.type === "gallery" &&
+        item.active === true
       )
+    );
 
-    ]);
+    console.log(
+      "Final unique Gallery photos:",
+      finalGallery.length
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Marketing loading error:",
+      error
+    );
+
+    allGrids.forEach(grid => {
+      grid.innerHTML =
+        "<p>Unable to load content. Please try again later.</p>";
+    });
+
+  }
+
+}
 
     /* =====================================
        MARKETING ITEMS
