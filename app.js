@@ -616,18 +616,34 @@ async function resolveWebsiteTenant() {
 }
 
 
+
 /* =========================================
-   LOAD PRODUCTS
+   LOAD TENANT-SPECIFIC PRODUCTS
 ========================================= */
 
 async function loadProducts() {
   const grid = document.getElementById("productGrid");
   const trendingGrid = document.getElementById("trendingGrid");
 
-  if (grid) grid.innerHTML = "<p>Loading products...</p>";
+  if (grid) {
+    grid.innerHTML = "<p>Loading products...</p>";
+  }
 
   try {
     const productMap = new Map();
+
+    // Tenant verification
+    if (
+      !currentTenantId ||
+      !["legacy", "customer"].includes(currentWebsiteMode)
+    ) {
+      throw new Error("Website tenant is not verified.");
+    }
+
+    // =====================================
+    // OLD RB TECH PRODUCTS
+    // Only on legacy website
+    // =====================================
 
     if (currentWebsiteMode === "legacy") {
       try {
@@ -639,16 +655,22 @@ async function loadProducts() {
         const oldSnap = await getDocs(oldQuery);
 
         oldSnap.forEach(item => {
-          productMap.set(item.id, {
+          productMap.set("products:" + item.id, {
             id: item.id,
             ...item.data(),
             sourceCollection: "products"
           });
         });
+
       } catch (error) {
         console.warn("Legacy products not loaded:", error);
       }
     }
+
+    // =====================================
+    // CURRENT CUSTOMER PRODUCTS
+    // Only matching customerId
+    // =====================================
 
     const customerQuery = query(
       collection(db, "customerProducts"),
@@ -659,15 +681,23 @@ async function loadProducts() {
     const customerSnap = await getDocs(customerQuery);
 
     customerSnap.forEach(item => {
-      productMap.set(item.id, {
+      productMap.set("customerProducts:" + item.id, {
         id: item.id,
         ...item.data(),
         sourceCollection: "customerProducts"
       });
     });
 
+    // =====================================
+    // FINAL PRODUCT DATA
+    // =====================================
+
     allProducts = Array.from(productMap.values());
     filteredProducts = [...allProducts];
+
+    console.log("Website mode:", currentWebsiteMode);
+    console.log("Current tenant:", currentTenantId);
+    console.log("Products loaded:", allProducts.length);
 
     renderProducts();
     renderTrendingProducts();
@@ -675,8 +705,18 @@ async function loadProducts() {
   } catch (error) {
     console.error("Product loading error:", error);
 
-    if (grid) grid.innerHTML = "<p>Unable to load products. Please try again later.</p>";
-    if (trendingGrid) trendingGrid.innerHTML = "<p>Trending products are currently unavailable.</p>";
+    allProducts = [];
+    filteredProducts = [];
+
+    if (grid) {
+      grid.innerHTML =
+        "<p>Unable to load products. Please try again later.</p>";
+    }
+
+    if (trendingGrid) {
+      trendingGrid.innerHTML =
+        "<p>Trending products are currently unavailable.</p>";
+    }
   }
 }
 
