@@ -16,10 +16,24 @@ import {
    RB TECH SOLUTION - PUBLIC WEBSITE APP
 ========================================= */
 
-const WHATSAPP_NUMBER = "919663116089";
+const LEGACY_WHATSAPP_NUMBER = "919663116089";
+const INTELLO_WHATSAPP_NUMBER = "919448735433";
 
-const DEFAULT_IMAGE =
-  "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
+function getBusinessName() {
+  return currentWebsiteMode === "customer" ? (currentTenantId === "intelloelectric" ? "Intello Electric" : (currentTenant?.businessName || "Customer")) : "RB Tech Solution";
+}
+
+function getWhatsAppNumber() {
+  return currentWebsiteMode === "customer" ? INTELLO_WHATSAPP_NUMBER : LEGACY_WHATSAPP_NUMBER;
+}
+
+function getDefaultProductImage() {
+  return currentWebsiteMode === "customer" ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27600%27 height=%27400%27 viewBox=%270 0 600 400%27%3E%3Crect width=%27600%27 height=%27400%27 fill=%27%23f2f5f7%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 fill=%27%236b7280%27 font-family=%27Arial%27 font-size=%2724%27%3EProduct image unavailable%3C/text%3E%3C/svg%3E" : LEGACY_DEFAULT_IMAGE;
+}
+
+const LEGACY_DEFAULT_IMAGE = "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
+
+const DEFAULT_IMAGE = LEGACY_DEFAULT_IMAGE;
 
 let currentTenant = null;
 let currentTenantId = "";
@@ -49,7 +63,7 @@ function safeURL(value = "") {
 
   if (/^https?:\/\//i.test(url)) return url;
 
-  return DEFAULT_IMAGE;
+  return getDefaultProductImage();
 }
 
 function showMessage(message, type = "info") {
@@ -111,7 +125,7 @@ function getProductImage(product) {
     product.image ||
     product.photo ||
     product.productImage ||
-    DEFAULT_IMAGE
+    ""
   );
 }
 
@@ -736,7 +750,7 @@ function productCardHTML(product) {
       <div class="product-image"
            onclick="window.openProductDetails('${id}')">
         <img src="${image}" alt="${name}" loading="lazy"
-          onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'">
+          onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
       </div>
 
       <div class="product-info">
@@ -963,7 +977,7 @@ function productRFIFormHTML(product) {
           <input type="checkbox" name="privacy" required>
           <span>
             I agree to the Privacy Policy and consent to being
-            contacted by RB Tech Solution regarding this enquiry.
+            contacted by ${escapeHTML(getBusinessName())} regarding this enquiry.
           </span>
         </label>
 
@@ -1014,7 +1028,7 @@ function openProductDetails(productId) {
       aria-label="Close product details">×</button>
 
     <div class="rb-detail-header">
-      <div class="rb-detail-brand">RB TECH SOLUTION | CCTV & SECURITY SYSTEMS</div>
+      <div class="rb-detail-brand">${escapeHTML(getBusinessName())} | Computer & CCTV Sales and Services</div>
       <h2>${escapeHTML(getProductName(product))}</h2>
     </div>
 
@@ -1027,7 +1041,7 @@ function openProductDetails(productId) {
           <div class="rb-detail-photo">
             <img src="${escapeHTML(getProductImage(product))}"
               alt="${escapeHTML(getProductName(product))}"
-              onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}'">
+              onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
           </div>
 
           <div class="rb-detail-summary">
@@ -1131,7 +1145,7 @@ function whatsappProduct(productId) {
   if (!product) return;
 
   const message = [
-    "Hello RB Tech Solution,",
+    `Hello ${getBusinessName()},`,
     "",
     "I am interested in this product:",
     `Product: ${getProductName(product)}`,
@@ -1142,7 +1156,7 @@ function whatsappProduct(productId) {
   ].join("\n");
 
   window.open(
-    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+    `https://wa.me/${getWhatsAppNumber()}?text=${encodeURIComponent(message)}`,
     "_blank",
     "noopener"
   );
@@ -1328,7 +1342,20 @@ window.closeProductModal = closeProductModal;
 
 async function initializeWebsite() {
   try {
-    await resolveWebsiteTenant();
+    const tenantResolved = await resolveWebsiteTenant();
+
+    if (!tenantResolved) {
+      currentTenantId = "";
+      currentTenant = null;
+      currentWebsiteMode = "blocked";
+      allProducts = [];
+      filteredProducts = [];
+      const blockedGrid = document.getElementById("productGrid");
+      if (blockedGrid) blockedGrid.innerHTML = "<p>This website is not configured or is inactive.</p>";
+      const blockedTrending = document.getElementById("trendingGrid");
+      if (blockedTrending) blockedTrending.innerHTML = "";
+      return;
+    }
 
     const search = document.getElementById("searchInput");
     const category = document.getElementById("categoryFilter");
@@ -1344,7 +1371,7 @@ async function initializeWebsite() {
     await loadProducts();
 
     console.log(
-      "RB Tech Solution website initialized:",
+      `${getBusinessName()} website initialized:`,
       currentTenantId
     );
 
