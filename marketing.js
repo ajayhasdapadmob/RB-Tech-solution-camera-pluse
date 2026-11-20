@@ -1,48 +1,52 @@
 
 import { db } from "./firebase.js";
 
-console.log("RB Marketing JS Loaded Successfully");
-
 import {
   collection,
   getDocs,
-  getDoc,
+  addDoc,
   doc,
+  getDoc,
   query,
-  where
+  where,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-/* =====================================
-   RB TECH SOLUTION - PUBLIC MARKETING
-   Company News / Brochures / Videos
-   Gallery / Print & Press
-   Product Photos + Duplicate Protection
-===================================== */
 
-const MARKETING_COLLECTION = "marketingItems";
+/* =========================================
+   RB TECH SOLUTION - PUBLIC WEBSITE APP
+========================================= */
 
-const SECTION_CONFIG = {
-  companyNews: {
-    grid: "companyNewsGrid"
-  },
-  brochures: {
-    grid: "brochuresGrid"
-  },
-  videos: {
-    grid: "videosGrid"
-  },
-  gallery: {
-    grid: "galleryGrid"
-  },
-  printPress: {
-    grid: "printPressGrid"
-  }
-};
+const LEGACY_WHATSAPP_NUMBER = "919663116089";
+const INTELLO_WHATSAPP_NUMBER = "919448735433";
 
-const $ = (id) => document.getElementById(id);
+function getBusinessName() {
+  return currentWebsiteMode === "customer" ? (currentTenantId === "intelloelectric" ? "Intello Electric" : (currentTenant?.businessName || "Customer")) : "RB Tech Solution";
+}
 
-/* =====================================
-   COMMON FUNCTIONS
-===================================== */
+function getWhatsAppNumber() {
+  return currentWebsiteMode === "customer" ? INTELLO_WHATSAPP_NUMBER : LEGACY_WHATSAPP_NUMBER;
+}
+
+function getDefaultProductImage() {
+  return currentWebsiteMode === "customer" ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27600%27 height=%27400%27 viewBox=%270 0 600 400%27%3E%3Crect width=%27600%27 height=%27400%27 fill=%27%23f2f5f7%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 fill=%27%236b7280%27 font-family=%27Arial%27 font-size=%2724%27%3EProduct image unavailable%3C/text%3E%3C/svg%3E" : LEGACY_DEFAULT_IMAGE;
+}
+
+const LEGACY_DEFAULT_IMAGE = "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
+
+const DEFAULT_IMAGE = LEGACY_DEFAULT_IMAGE;
+
+let currentTenant = null;
+let currentTenantId = "";
+let currentWebsiteMode = "legacy";
+
+let allProducts = [];
+let filteredProducts = [];
+let currentProduct = null;
+let captchaAnswer = 0;
+
+/* =========================================
+   HELPERS
+========================================= */
 
 function escapeHTML(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({
@@ -50,1531 +54,518 @@ function escapeHTML(value = "") {
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
-    "'": "&#39;"
+    "'": "&#039;"
   })[char]);
 }
 
-function safeURL(value) {
-  try {
-    const url = new URL(String(value || ""));
+function safeURL(value = "") {
+  const url = String(value || "").trim();
 
-    return ["https:", "http:"].includes(url.protocol)
-      ? url.href
-      : "";
-  } catch {
-    return "";
-  }
+  if (/^https?:\/\//i.test(url)) return url;
+
+  return getDefaultProductImage();
 }
 
-function formatDate(value) {
-  if (!value) return "";
+function showMessage(message, type = "info") {
+  let box = document.getElementById("appMessage");
 
-  const date = value.toDate
-    ? value.toDate()
-    : new Date(value);
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "appMessage";
 
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  });
-}
-
-function getText(item) {
-  return item.description || item.content || "";
-}
-
-function getImage(item) {
-  return safeURL(
-    item.thumbnailUrl ||
-    item.mediaUrl ||
-    item.imageUrl ||
-    item.image ||
-    item.photo
-  );
-}
-
-/* =====================================
-   GALLERY DUPLICATE IMAGE PROTECTION
-===================================== */
-
-function getGalleryImageKey(item) {
-
-  const publicId = String(
-    item?.publicId || ""
-  ).trim();
-
-  // Same Cloudinary public ID = same image
-  if (publicId) {
-    return "cloudinary:" + publicId.toLowerCase();
-  }
-
-  const image = safeURL(
-    item?.mediaUrl ||
-    item?.thumbnailUrl ||
-    item?.imageUrl ||
-    item?.image ||
-    item?.photo
-  );
-
-  if (!image) return "";
-
-  try {
-    const url = new URL(image);
-
-    // Ignore query parameters when comparing image URLs.
-    return (
-      url.hostname.toLowerCase() +
-      url.pathname.toLowerCase()
-    );
-
-  } catch {
-    return image.toLowerCase();
-  }
-}
-
-function getUniqueGalleryItems(items = []) {
-
-  const seen = new Set();
-  const unique = [];
-
-  items.forEach(item => {
-
-    const key = getGalleryImageKey(item);
-
-    if (!key) return;
-
-    if (seen.has(key)) return;
-
-    seen.add(key);
-    unique.push(item);
-
-  });
-
-  return unique;
-}
-
-/* =====================================
-   MARKETING VIEWER
-===================================== */
-
-function getViewerElements() {
-  return {
-    viewer: $("marketingViewer"),
-    content: $("marketingViewerContent")
-  };
-}
-
-function openMarketingViewer(html) {
-
-  const { viewer, content } = getViewerElements();
-
-  if (!viewer || !content) return;
-
-  content.innerHTML = html;
-
-  viewer.classList.add("active");
-
-  document.body.style.overflow = "hidden";
-}
-
-function closeMarketingViewer() {
-
-  const { viewer, content } = getViewerElements();
-
-  if (!viewer) return;
-
-  viewer.classList.remove("active");
-
-  if (content) {
-
-    content.querySelectorAll("video").forEach(video => {
-
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
-
+    Object.assign(box.style, {
+      position: "fixed",
+      bottom: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: "999999",
+      padding: "13px 22px",
+      borderRadius: "7px",
+      color: "#fff",
+      fontSize: "14px",
+      maxWidth: "90%",
+      textAlign: "center",
+      boxShadow: "0 4px 15px rgba(0,0,0,.25)"
     });
 
-    content.innerHTML = "";
-
+    document.body.appendChild(box);
   }
 
-  document.body.style.overflow = "";
+  box.style.background =
+    type === "error" ? "#dc2626" :
+    type === "success" ? "#087f3c" : "#26352b";
+
+  box.textContent = message;
+  box.style.display = "block";
+
+  clearTimeout(box.hideTimer);
+
+  box.hideTimer = setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
 }
 
-/* =====================================
-   SHOW NEWS / ARTICLE
-===================================== */
+function normalizeArray(value) {
+  if (Array.isArray(value)) return value;
 
-function showArticle(item) {
+  if (typeof value === "string") {
+    return value.split(/\n|,/).map(x => x.trim()).filter(Boolean);
+  }
 
-  const title = escapeHTML(item.title || "Untitled");
+  if (value && typeof value === "object") {
+    return Object.entries(value).map(([key, val]) => `${key}: ${val}`);
+  }
 
-  const description = escapeHTML(getText(item));
-
-  const date = escapeHTML(formatDate(item.createdAt));
-
-  const image = getImage(item);
-
-  openMarketingViewer(`
-
-    ${image
-      ? `<img src="${escapeHTML(image)}" alt="${title}">`
-      : ""}
-
-    <h2>${title}</h2>
-
-    ${date ? `<p>${date}</p>` : ""}
-
-    <div style="text-align:left;line-height:1.8;white-space:pre-line">
-      ${description}
-    </div>
-
-  `);
+  return [];
 }
 
-/* =====================================
-   SHOW GALLERY IMAGE
-===================================== */
-
-function showImage(item) {
-
-  const image = safeURL(
-    item.mediaUrl ||
-    item.thumbnailUrl ||
-    item.imageUrl ||
-    item.image ||
-    item.photo
+function getProductImage(product) {
+  return safeURL(
+    product.imageUrl ||
+    product.image ||
+    product.photo ||
+    product.productImage ||
+    ""
   );
-
-  if (!image) return;
-
-  openMarketingViewer(`
-
-    <img
-      src="${escapeHTML(image)}"
-      alt="${escapeHTML(item.title || "Gallery image")}">
-
-    ${item.title
-      ? `<h2>${escapeHTML(item.title)}</h2>`
-      : ""}
-
-    ${getText(item)
-      ? `<p>${escapeHTML(getText(item))}</p>`
-      : ""}
-
-  `);
 }
 
-/* =====================================
-   SHOW VIDEO
-===================================== */
-
-function showVideo(item) {
-
-  const video = safeURL(item.mediaUrl);
-
-  if (!video) return;
-
-  const title = escapeHTML(item.title || "Video");
-
-  openMarketingViewer(`
-
-    <h2>${title}</h2>
-
-    <video
-      controls
-      autoplay
-      playsinline
-      poster="${escapeHTML(getImage(item))}"
-      style="background:#000">
-
-      <source src="${escapeHTML(video)}">
-
-      Your browser does not support video playback.
-
-    </video>
-
-    ${getText(item)
-      ? `<p>${escapeHTML(getText(item))}</p>`
-      : ""}
-
-  `);
+function getProductName(product) {
+  return product.name || product.productName || "Security Product";
 }
 
-/* =====================================
-   CREATE MARKETING CARD
-===================================== */
+function getProductCategory(product) {
+  return product.category || "Accessories";
+}
 
-function createCard(item, type, index) {
+function isTrending(product) {
+  return (
+    product.trending === true ||
+    product.isTrending === true ||
+    product.featured === true
+  );
+}
 
-  const title = escapeHTML(item.title || "Untitled");
+/* =========================================
+   PRODUCT DETAILS CSS
+   Only affects product details modal
+========================================= */
 
-  const description = escapeHTML(getText(item));
+function addProductDetailsStyles() {
+  if (document.getElementById("rbProductDetailsStyles")) return;
 
-  const image = getImage(item);
+  const style = document.createElement("style");
+  style.id = "rbProductDetailsStyles";
 
-  const card = document.createElement("article");
+  style.textContent = `
+    #productModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99990;
+      background: rgba(0,0,0,.78);
+      padding: 18px;
+      overflow-y: auto;
+      align-items: flex-start;
+      justify-content: center;
+    }
 
-  card.className = "marketing-item";
+    #productModal.active {
+      display: flex !important;
+    }
 
-  card.dataset.marketingIndex = index;
+    #productModal #modalContent {
+      position: relative;
+      width: 100%;
+      max-width: 1250px;
+      margin: 15px auto;
+      padding: 28px;
+      background: #fff;
+      color: #202b35;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
 
-  card.dataset.marketingType = type;
+    .rb-detail-header {
+      border-bottom: 3px solid #13a6b5;
+      padding-bottom: 15px;
+      margin-bottom: 22px;
+    }
 
-  if (item.productSource) {
-    card.dataset.productSource = item.productSource;
-  }
+    .rb-detail-brand {
+      color: #087b91;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+    }
 
-  let mediaHTML = "";
+    .rb-detail-header h2 {
+      margin: 8px 0;
+      font-size: 25px;
+      color: #172b3a;
+    }
 
-  if (type === "videos") {
+    .rb-detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+      gap: 25px;
+      align-items: start;
+    }
 
-    const videoURL = safeURL(item.mediaUrl);
+    .rb-detail-main,
+    .rb-rfi-column {
+      min-width: 0;
+    }
 
-    mediaHTML = videoURL
-      ? `
-        <video
-          src="${escapeHTML(videoURL)}"
-          poster="${escapeHTML(image)}"
-          autoplay
-          muted
-          loop
-          playsinline
-          webkit-playsinline
-          preload="auto"
-          disablepictureinpicture
-          style="width:100%;height:190px;object-fit:cover;background:#000">
-        </video>
-      `
-      : `
-        <div style="height:190px;display:grid;place-items:center;background:#edf5ee">
-          Video unavailable
-        </div>
-      `;
+    .rb-detail-product {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 22px;
+      align-items: start;
+      margin-bottom: 25px;
+    }
 
-  } else if (image) {
+    .rb-detail-photo {
+      background: #f6f8fa;
+      border: 1px solid #e2e8ee;
+      padding: 15px;
+      text-align: center;
+    }
 
-    mediaHTML = `
-      <img
-        src="${escapeHTML(image)}"
-        alt="${title}"
-        loading="lazy">
-    `;
+    .rb-detail-photo img {
+      width: 100%;
+      height: 210px;
+      object-fit: contain;
+    }
 
-  }
+    .rb-detail-summary h3 {
+      color: #172b3a;
+      font-size: 21px;
+      margin: 0 0 12px;
+    }
 
-  let actionHTML = "";
+    .rb-detail-summary p {
+      line-height: 1.6;
+      font-size: 14px;
+      margin: 8px 0;
+    }
 
-  if (type === "brochures") {
+    .rb-detail-section {
+      margin-top: 24px;
+    }
 
-    const fileURL = safeURL(item.mediaUrl);
+    .rb-detail-section h3 {
+      color: #fff;
+      background: #087f95;
+      padding: 12px 15px;
+      margin: 0;
+      font-size: 16px;
+    }
 
-    actionHTML = fileURL
-      ? `
-        <a
-          href="${escapeHTML(fileURL)}"
-          target="_blank"
-          rel="noopener">
-          View / Download PDF
-        </a>
-      `
-      : "";
+    .rb-detail-description {
+      line-height: 1.7;
+      padding: 14px;
+      background: #f7f9fb;
+      border: 1px solid #e3e9ee;
+    }
 
-  }
+    .rb-detail-features {
+      padding: 15px 15px 15px 35px;
+      line-height: 1.8;
+      border: 1px solid #e3e9ee;
+      margin: 0;
+    }
 
-  card.innerHTML = `
+    .rb-spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
 
-    ${mediaHTML}
+    .rb-spec-table th,
+    .rb-spec-table td {
+      border: 1px solid #dce3e9;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
 
-    <div class="marketing-item-body">
+    .rb-spec-table th {
+      width: 36%;
+      background: #f0f4f7;
+      color: #263746;
+      font-weight: 700;
+    }
 
-      <h3>${title}</h3>
+    .rb-spec-table tr:nth-child(even) td {
+      background: #fafcfd;
+    }
 
-      ${type !== "videos" && description
-        ? `
-          <p>
-            ${description.length > 160
-              ? description.slice(0, 160) + "..."
-              : description}
-          </p>
-        `
-        : ""}
+    .rb-rfi-column {
+      border: 1px solid #dce3e9;
+      background: #f8fafc;
+      padding: 18px;
+      border-top: 4px solid #087f95;
+    }
 
-      ${actionHTML}
+    .rb-rfi-heading {
+      color: #173447;
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 0 6px;
+    }
 
-    </div>
+    .rb-rfi-subtitle {
+      color: #647381;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 17px;
+    }
 
+    .rb-rfi-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #263746;
+      margin: 12px 0 6px;
+    }
+
+    .rb-rfi-form input,
+    .rb-rfi-form select,
+    .rb-rfi-form textarea {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 11px 12px;
+      border: 1px solid #cbd5df;
+      border-radius: 3px;
+      background: #fff;
+      color: #263746;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .rb-rfi-form input:focus,
+    .rb-rfi-form select:focus,
+    .rb-rfi-form textarea:focus {
+      border-color: #087f95;
+      box-shadow: 0 0 0 2px rgba(8,127,149,.1);
+    }
+
+    .rb-rfi-form textarea {
+      min-height: 95px;
+      resize: vertical;
+    }
+
+    .rb-phone-row {
+      display: grid;
+      grid-template-columns: 105px 1fr;
+      gap: 7px;
+    }
+
+    .rb-rfi-privacy {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      margin: 15px 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #4b5965;
+    }
+
+    .rb-rfi-privacy input {
+      width: auto;
+      margin-top: 3px;
+    }
+
+    .rb-rfi-captcha {
+      background: #edf3f6;
+      border: 1px solid #d7e0e6;
+      padding: 12px;
+      margin: 12px 0;
+    }
+
+    .rb-rfi-captcha strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #263746;
+    }
+
+    .rb-rfi-submit,
+    .rb-rfi-whatsapp {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      margin-top: 10px;
+    }
+
+    .rb-rfi-submit {
+      color: #fff;
+      background: #087f95;
+    }
+
+    .rb-rfi-submit:hover {
+      background: #066477;
+    }
+
+    .rb-rfi-submit:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .rb-rfi-whatsapp {
+      background: #159447;
+      color: #fff;
+    }
+
+    .rb-detail-brochure {
+      display: inline-block;
+      margin-top: 15px;
+      color: #087f95;
+      font-weight: 700;
+    }
+
+    #modalClose {
+      position: absolute;
+      top: 10px;
+      right: 13px;
+      z-index: 5;
+      border: 0;
+      background: #172b3a;
+      color: #fff;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      font-size: 25px;
+      line-height: 30px;
+      cursor: pointer;
+    }
+
+    .rb-detail-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .rb-detail-actions button {
+      padding: 11px 16px;
+      border: 0;
+      background: #087f95;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+
+    @media(max-width: 850px) {
+      #productModal #modalContent {
+        padding: 20px 14px;
+      }
+
+      .rb-detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .rb-rfi-column {
+        order: 2;
+      }
+    }
+
+    @media(max-width: 520px) {
+      #productModal {
+        padding: 5px;
+      }
+
+      #productModal #modalContent {
+        margin: 5px auto;
+        padding: 17px 11px;
+      }
+
+      .rb-detail-product {
+        grid-template-columns: 1fr;
+      }
+
+      .rb-detail-photo img {
+        height: 190px;
+      }
+
+      .rb-detail-header h2 {
+        font-size: 20px;
+        padding-right: 25px;
+      }
+
+      .rb-spec-table {
+        font-size: 12px;
+      }
+
+      .rb-spec-table th,
+      .rb-spec-table td {
+        padding: 8px 6px;
+      }
+    }
   `;
 
-  // Video autoplay
-  if (type === "videos") {
-
-    const video = card.querySelector("video");
-
-    if (video) {
-
-      video.muted = true;
-      video.defaultMuted = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.playsInline = true;
-
-      video.play().catch(error => {
-        console.log("Video autoplay issue:", error);
-      });
-
-    }
-
-  }
-
-  // Clickable image cursor
-  if (
-    type === "gallery" ||
-    type === "companyNews" ||
-    type === "printPress"
-  ) {
-
-    const photo = card.querySelector("img");
-
-    if (photo) {
-      photo.style.cursor = "pointer";
-    }
-
-  }
-
-  return card;
+  document.head.appendChild(style);
 }
 
-/* =====================================
-   RENDER MARKETING SECTION
-===================================== */
+/* =========================================
+   TENANT / CUSTOMER WEBSITE
+========================================= */
 
-function renderSection(type, items) {
 
-  const config = SECTION_CONFIG[type];
-
-  if (!config) return;
-
-  const grid = $(config.grid);
-
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  let filtered = items.filter(item =>
-    item.type === type &&
-    item.active === true
-  );
-
-  // Newest first
-  filtered.sort((a, b) => {
-
-    const aTime = a.createdAt?.toMillis
-      ? a.createdAt.toMillis()
-      : new Date(a.createdAt || 0).getTime();
-
-    const bTime = b.createdAt?.toMillis
-      ? b.createdAt.toMillis()
-      : new Date(b.createdAt || 0).getTime();
-
-    return bTime - aTime;
-
-  });
-
-  if (!filtered.length) return;
-
- 
-  /* =====================================
-     GALLERY: AUTO SLIDER
-     Manual Gallery + Product Photos
-     Duplicate Protection
-  ===================================== */
-
-  if (type === "gallery") {
-
-    const uniqueGallery = getUniqueGalleryItems(filtered);
-
-    if (!uniqueGallery.length) return;
-
-    // Slider wrapper
-    const gallerySlider = document.createElement("div");
-
-    gallerySlider.className = "marketing-gallery-slider";
-
-    gallerySlider.style.position = "relative";
-    gallerySlider.style.width = "100%";
-
-    // Viewport
-    const viewport = document.createElement("div");
-
-    viewport.className = "marketing-gallery-viewport";
-
-    viewport.style.width = "100%";
-    viewport.style.overflow = "hidden";
-
-    // Track
-    const track = document.createElement("div");
-
-    track.className = "marketing-gallery-track";
-
-    track.style.display = "flex";
-    track.style.gap = "20px";
-    track.style.width = "max-content";
-    track.style.transition = "transform 0.6s ease";
-    track.style.willChange = "transform";
-
-    viewport.appendChild(track);
-    gallerySlider.appendChild(viewport);
-
-    grid.appendChild(gallerySlider);
-
-    // Create original cards
-    const originalCards = uniqueGallery.map((item, index) => {
-
-      const card = createCard(item, "gallery", index);
-
-      card.style.boxSizing = "border-box";
-      card.style.minWidth = "0";
-
-      const photo = card.querySelector("img");
-
-      if (photo) {
-
-        photo.style.width = "100%";
-        photo.style.height = "190px";
-        photo.style.objectFit = "cover";
-        photo.style.display = "block";
-        photo.style.cursor = "pointer";
-
-      }
-
-      return card;
-
-    });
-
-    let visibleCount = 3;
-    let position = 0;
-    let galleryTimer = null;
-
-    const gap = 20;
-
-    // Previous button
-    const left = document.createElement("button");
-
-    left.type = "button";
-    left.className = "marketing-arrow marketing-left";
-    left.textContent = "❮";
-    left.setAttribute("aria-label", "Previous photo");
-
-    // Next button
-    const right = document.createElement("button");
-
-    right.type = "button";
-    right.className = "marketing-arrow marketing-right";
-    right.textContent = "❯";
-    right.setAttribute("aria-label", "Next photo");
-
-    // Arrow styling
-    [left, right].forEach(button => {
-
-      button.style.position = "absolute";
-      button.style.top = "50%";
-      button.style.transform = "translateY(-50%)";
-      button.style.zIndex = "10";
-      button.style.width = "42px";
-      button.style.height = "42px";
-      button.style.border = "none";
-      button.style.borderRadius = "50%";
-      button.style.background = "#075b30";
-      button.style.color = "#ffffff";
-      button.style.fontSize = "22px";
-      button.style.cursor = "pointer";
-
-    });
-
-    left.style.left = "10px";
-    right.style.right = "10px";
-
-    gallerySlider.append(left, right);
-
-    // Rebuild slider for screen size
-    function rebuildGallery() {
-
-      stopGalleryAuto();
-
-      const width = viewport.clientWidth;
-
-      if (!width) return;
-
-      if (window.innerWidth <= 480) {
-
-        visibleCount = 1;
-
-      } else if (window.innerWidth <= 768) {
-
-        visibleCount = 2;
-
-      } else {
-
-        visibleCount = 3;
-
-      }
-
-      visibleCount = Math.min(
-        visibleCount,
-        originalCards.length
-      );
-
-      position = 0;
-
-      track.style.transition = "none";
-      track.replaceChildren(...originalCards);
-
-      const cardWidth =
-        (width - gap * (visibleCount - 1)) / visibleCount;
-
-      originalCards.forEach(card => {
-
-        card.style.flex = `0 0 ${cardWidth}px`;
-        card.style.width = `${cardWidth}px`;
-
-      });
-
-      // Clone first cards for continuous forward sliding
-      if (originalCards.length > visibleCount) {
-
-        originalCards
-          .slice(0, visibleCount)
-          .forEach(card => {
-
-            const clone = card.cloneNode(true);
-
-            clone.setAttribute("aria-hidden", "true");
-
-            clone.dataset.galleryClone = "true";
-
-            track.appendChild(clone);
-
-          });
-
-      }
-
-      track.style.transform = "translate3d(0,0,0)";
-
-      // Restore transition after resetting
-      requestAnimationFrame(() => {
-
-        track.style.transition = "transform 0.6s ease";
-
-      });
-
-      // Hide arrows if not enough photos
-      const canMove = originalCards.length > visibleCount;
-
-      left.style.display = canMove ? "block" : "none";
-      right.style.display = canMove ? "block" : "none";
-
-      startGalleryAuto();
-
-    }
-
-    // Move slider
-    function moveGallery(direction) {
-
-      if (originalCards.length <= visibleCount) return;
-
-      const total = originalCards.length;
-
-      if (direction > 0) {
-
-        position++;
-
-        if (position > total) {
-          position = 1;
-          track.style.transition = "none";
-          track.style.transform = "translate3d(0,0,0)";
-
-          requestAnimationFrame(() => {
-
-            track.style.transition = "transform 0.6s ease";
-
-            track.style.transform =
-              `translate3d(-${position * (originalCards[0].offsetWidth + gap)}px,0,0)`;
-
-          });
-
-          return;
-        }
-
-      } else {
-
-        position = (position - 1 + total) % total;
-
-      }
-
-      track.style.transform =
-        `translate3d(-${position * (originalCards[0].offsetWidth + gap)}px,0,0)`;
-
-    }
-
-    // Automatic slide
-    function startGalleryAuto() {
-
-      stopGalleryAuto();
-
-      if (originalCards.length <= visibleCount) return;
-
-      galleryTimer = setInterval(() => {
-
-        moveGallery(1);
-
-      }, 3000);
-
-    }
-
-    function stopGalleryAuto() {
-
-      if (galleryTimer) {
-
-        clearInterval(galleryTimer);
-
-        galleryTimer = null;
-
-      }
-
-    }
-
-    // Arrow events
-    left.addEventListener("click", () => {
-      moveGallery(-1);
-    });
-
-    right.addEventListener("click", () => {
-      moveGallery(1);
-    });
-
-    // Pause on hover
-    gallerySlider.addEventListener("mouseenter", stopGalleryAuto);
-
-    gallerySlider.addEventListener("mouseleave", startGalleryAuto);
-
-    // Open image viewer
-    track.addEventListener("click", event => {
-
-      if (event.target.closest("a, button")) return;
-
-      const card = event.target.closest(".marketing-item");
-
-      if (!card) return;
-
-      const index = Number(card.dataset.marketingIndex);
-
-      const item = uniqueGallery[index];
-
-      if (item) {
-        showImage(item);
-      }
-
-    });
-
-    // Responsive adjustment
-    let resizeTimer = null;
-
-    window.addEventListener("resize", () => {
-
-      clearTimeout(resizeTimer);
-
-      resizeTimer = setTimeout(() => {
-
-        rebuildGallery();
-
-      }, 200);
-
-    });
-
-    // Start after layout
-    requestAnimationFrame(() => {
-
-      rebuildGallery();
-
-    });
-
-    console.log(
-      "Gallery slider initialized:",
-      uniqueGallery.length,
-      "unique photos"
-    );
-
-    return;
-
-  }
-
-  /* =====================================
-     OTHER SECTIONS: ORIGINAL SLIDER
-  ===================================== */
-
-  const slider = document.createElement("div");
-
-  slider.className = "marketing-slider";
-
-  const viewport = document.createElement("div");
-
-  viewport.className = "marketing-slider-viewport";
-
-  const track = document.createElement("div");
-
-  track.className = "marketing-slider-track";
-
-  const group1 = document.createElement("div");
-
-  group1.className = "marketing-slider-group";
-
-  viewport.appendChild(track);
-
-  slider.appendChild(viewport);
-
-  grid.appendChild(slider);
-
-  track.appendChild(group1);
-
-  /* Fill first group */
-
-  function fillGroup(group) {
-
-    let index = 0;
-
-    const targetWidth = viewport.clientWidth + 300;
-
-    while (
-      group.scrollWidth < targetWidth ||
-      group.children.length === 0
-    ) {
-
-      group.appendChild(
-        createCard(
-          filtered[index % filtered.length],
-          type,
-          index % filtered.length
-        )
-      );
-
-      index++;
-
-      if (index > 500) break;
-
-    }
-
-  }
-
-  fillGroup(group1);
-
-  /* Duplicate group for continuous slider */
-
-  const group2 = group1.cloneNode(true);
-
-  group2.setAttribute("aria-hidden", "true");
-
-  track.appendChild(group2);
-
-  /* Play all videos */
-
-  function playAllVideos() {
-
-    track.querySelectorAll("video").forEach(video => {
-
-      video.muted = true;
-      video.defaultMuted = true;
-      video.loop = true;
-      video.autoplay = true;
-      video.playsInline = true;
-
-      video.play().catch(error => {
-        console.log("Video autoplay issue:", error);
-      });
-
-    });
-
-  }
-
-  playAllVideos();
-
-  /* Slider arrows */
-
-  const left = document.createElement("button");
-
-  left.className = "marketing-arrow marketing-left";
-
-  left.type = "button";
-
-  left.textContent = "❮";
-
-  left.setAttribute("aria-label", "Previous");
-
-  const right = document.createElement("button");
-
-  right.className = "marketing-arrow marketing-right";
-
-  right.type = "button";
-
-  right.textContent = "❯";
-
-  right.setAttribute("aria-label", "Next");
-
-  slider.append(left, right);
-
-  /* Slider movement */
-
-  let position = 0;
-
-  let groupWidth = 0;
-
-  let frameId = null;
-
-  let lastTime = 0;
-
-  let paused = false;
-
-  const speed = 35;
-
-  function measureSlider() {
-
-    groupWidth = group1.getBoundingClientRect().width;
-
-    if (!groupWidth) return;
-
-    position = -groupWidth;
-
-    track.style.transform =
-      `translate3d(${position}px, 0, 0)`;
-
-  }
-
-  function animate(timestamp) {
-
-    if (paused || !groupWidth) {
-
-      frameId = null;
-
-      return;
-
-    }
-
-    if (!lastTime) {
-      lastTime = timestamp;
-    }
-
-    const elapsed = Math.min(
-      timestamp - lastTime,
-      50
-    );
-
-    lastTime = timestamp;
-
-    position += speed * elapsed / 1000;
-
-    if (position >= 0) {
-      position -= groupWidth;
-    }
-
-    track.style.transform =
-      `translate3d(${position}px, 0, 0)`;
-
-    frameId = requestAnimationFrame(animate);
-
-  }
-
-  function startSlider() {
-
-    if (frameId || !groupWidth) return;
-
-    paused = false;
-
-    lastTime = 0;
-
-    frameId = requestAnimationFrame(animate);
-
-  }
-
-  function stopSlider() {
-
-    paused = true;
-
-    if (frameId) {
-
-      cancelAnimationFrame(frameId);
-
-      frameId = null;
-
-    }
-
-  }
-
-  function moveCard(direction) {
-
-    const card = group1.querySelector(".marketing-item");
-
-    if (!card || !groupWidth) return;
-
-    const gap = parseFloat(
-      getComputedStyle(group1).columnGap
-    ) || 20;
-
-    position += direction * (card.offsetWidth + gap);
-
-    if (position >= 0) {
-      position -= groupWidth;
-    }
-
-    if (position < -groupWidth) {
-      position += groupWidth;
-    }
-
-    track.style.transform =
-      `translate3d(${position}px, 0, 0)`;
-
-  }
-
-  left.addEventListener("click", () => {
-    moveCard(1);
-  });
-
-  right.addEventListener("click", () => {
-    moveCard(-1);
-  });
-
-  /* Image click support */
-
-  track.addEventListener("click", event => {
-
-    const card = event.target.closest(".marketing-item");
-
-    if (!card) return;
-
-    const clickedImage = event.target.closest("img");
-
-    if (!clickedImage) return;
-
-    const cardType = card.dataset.marketingType;
-
-    const itemIndex = Number(
-      card.dataset.marketingIndex
-    );
-
-    const item = filtered[itemIndex];
-
-    if (!item) return;
-
-    if (cardType === "companyNews") {
-      showArticle(item);
-    }
-
-    if (cardType === "printPress") {
-      showArticle(item);
-    }
-
-  });
-
-  /* Start slider after layout calculation */
-
-  requestAnimationFrame(() => {
-
-    measureSlider();
-
-    playAllVideos();
-
-    startSlider();
-
-  });
-
-  /* Responsive slider */
-
-  window.addEventListener("resize", () => {
-
-    stopSlider();
-
-    measureSlider();
-
-    playAllVideos();
-
-    startSlider();
-
-  });
-
-}
-
-/* =====================================
-   HOMEPAGE HERO MARKETING SLIDER
-   VIDEO + IMAGE AUTO SLIDER
-===================================== */
-
-function renderHeroSlider(items) {
-
-  const slider = $("heroMarketingSlider");
-
-  if (!slider) return;
-
-  const mediaItems = items.filter(item => {
-
-    if (item.active !== true) return false;
-
-    if (item.type === "videos") {
-      return Boolean(safeURL(item.mediaUrl));
-    }
-
-    if (
-      ["companyNews", "gallery", "printPress"].includes(item.type)
-    ) {
-
-      return Boolean(getImage(item));
-
-    }
-
-    return false;
-
-  });
-
-  if (!mediaItems.length) {
-
-    slider.innerHTML = "";
-
-    return;
-
-  }
-
-  slider.innerHTML = "";
-
-  let currentIndex = 0;
-
-  let autoSlideTimer = null;
-
-  const slides = [];
-
-  // CREATE SLIDES
-  mediaItems.forEach((item, index) => {
-
-    const slide = document.createElement("div");
-
-    slide.className = "hero-marketing-slide";
-
-    if (item.type === "videos") {
-
-      const video = document.createElement("video");
-
-      video.src = safeURL(item.mediaUrl);
-
-      video.autoplay = false;
-
-      video.muted = true;
-
-      video.loop = false;
-
-      video.controls = false;
-
-      video.playsInline = true;
-
-      video.preload = "auto";
-
-      video.setAttribute("muted", "");
-
-      video.setAttribute("playsinline", "");
-
-      video.setAttribute("webkit-playsinline", "");
-
-      const poster = safeURL(item.thumbnailUrl);
-
-      if (poster) {
-        video.poster = poster;
-      }
-
-      video.addEventListener("ended", () => {
-
-        if (slides[currentIndex] === slide) {
-          nextSlide();
-        }
-
-      });
-
-      video.addEventListener("error", () => {
-
-        console.error(
-          "Hero video loading error:",
-          video.src,
-          video.error
-        );
-
-        if (slides[currentIndex] === slide) {
-
-          clearTimeout(autoSlideTimer);
-
-          autoSlideTimer = setTimeout(
-            nextSlide,
-            5000
-          );
-
-        }
-
-      });
-
-      slide.appendChild(video);
-
-    } else {
-
-      const img = document.createElement("img");
-
-      img.src = getImage(item);
-
-      img.alt = item.title || "RB Tech Solution";
-
-      img.loading = index === 0 ? "eager" : "lazy";
-
-      img.onerror = () => {
-
-        console.error(
-          "Hero image loading failed:",
-          img.src
-        );
-
-      };
-
-      slide.appendChild(img);
-
-    }
-
-    slider.appendChild(slide);
-
-    slides.push(slide);
-
-  });
-
-  // PREVIOUS BUTTON
-  const previous = document.createElement("button");
-
-  previous.type = "button";
-
-  previous.className =
-    "hero-marketing-arrow hero-marketing-prev";
-
-  previous.textContent = "‹";
-
-  previous.setAttribute(
-    "aria-label",
-    "Previous slide"
-  );
-
-  // NEXT BUTTON
-  const next = document.createElement("button");
-
-  next.type = "button";
-
-  next.className =
-    "hero-marketing-arrow hero-marketing-next";
-
-  next.textContent = "›";
-
-  next.setAttribute(
-    "aria-label",
-    "Next slide"
-  );
-
-  // DOTS
-  const dots = document.createElement("div");
-
-  dots.className = "hero-marketing-dots";
-
-  const dotButtons = slides.map((slide, index) => {
-
-    const dot = document.createElement("button");
-
-    dot.type = "button";
-
-    dot.className = "hero-marketing-dot";
-
-    dot.setAttribute(
-      "aria-label",
-      "Go to slide " + (index + 1)
-    );
-
-    dot.addEventListener("click", () => {
-      showSlide(index);
-    });
-
-    dots.appendChild(dot);
-
-    return dot;
-
-  });
-
-  slider.append(previous, next, dots);
-
-  // SHOW SLIDE
-  function showSlide(index) {
-
-    clearTimeout(autoSlideTimer);
-
-    currentIndex =
-      (index + slides.length) % slides.length;
-
-    slides.forEach((slide, i) => {
-
-      slide.classList.toggle(
-        "active",
-        i === currentIndex
-      );
-
-      const video = slide.querySelector("video");
-
-      if (video) {
-
-        if (i === currentIndex) {
-
-          video.currentTime = 0;
-
-          video.play().then(() => {
-
-            console.log(
-              "Hero video playing:",
-              video.src
-            );
-
-          }).catch(error => {
-
-            console.error(
-              "Hero video play failed:",
-              error
-            );
-
-            if (slides[currentIndex] === slide) {
-
-              autoSlideTimer = setTimeout(
-                nextSlide,
-                5000
-              );
-
-            }
-
-          });
-
-        } else {
-
-          video.pause();
-
-          video.currentTime = 0;
-
-        }
-
-      }
-
-    });
-
-    dotButtons.forEach((dot, i) => {
-
-      dot.classList.toggle(
-        "active",
-        i === currentIndex
-      );
-
-    });
-
-    // IMAGE: SHOW FOR 5 SECONDS
-    const activeVideo =
-      slides[currentIndex].querySelector("video");
-
-    if (!activeVideo && slides.length > 1) {
-
-      autoSlideTimer = setTimeout(
-        nextSlide,
-        5000
-      );
-
-    }
-
-  }
-
-  function nextSlide() {
-    showSlide(currentIndex + 1);
-  }
-
-  function previousSlide() {
-    showSlide(currentIndex - 1);
-  }
-
-  previous.addEventListener(
-    "click",
-    previousSlide
-  );
-
-  next.addEventListener(
-    "click",
-    nextSlide
-  );
-
-  // PAUSE WHEN TAB IS HIDDEN
-  document.addEventListener("visibilitychange", () => {
-
-    if (document.hidden) {
-
-      clearTimeout(autoSlideTimer);
-
-      const video =
-        slides[currentIndex]?.querySelector("video");
-
-      if (video) video.pause();
-
-    } else {
-
-      showSlide(currentIndex);
-
-    }
-
-  });
-
-  showSlide(0);
-
-}
-
-/* =====================================
-   CONVERT OLD PRODUCTS TO GALLERY ITEMS
-===================================== */
-
-function convertOldProductToGallery(product) {
-
-  const image = safeURL(
-    product.imageUrl ||
-    product.image ||
-    product.photo
-  );
-
-  if (!image) return null;
-
-  return {
-
-    id: "website-product-" + product.id,
-
-    type: "gallery",
-
-    active: true,
-
-    title:
-      product.name ||
-      product.productName ||
-      product.title ||
-      "Security Product",
-
-    description: product.description || "",
-
-    mediaUrl: image,
-
-    publicId: product.publicId || "",
-
-    productSource: "website",
-
-    productId: product.id,
-
-    createdAt: product.createdAt || null
-
-  };
-
-}
-
-/* =====================================
-   CONVERT CUSTOMER PRODUCTS TO GALLERY
-===================================== */
-
-function convertCustomerProductToGallery(product) {
-
-  const image = safeURL(
-    product.imageUrl ||
-    product.image ||
-    product.photo
-  );
-
-  if (!image) return null;
-
-  return {
-
-    id: "customer-product-" + product.id,
-
-    type: "gallery",
-
-    active: true,
-
-    title:
-      product.name ||
-      product.productName ||
-      product.title ||
-      "Security Product",
-
-    description: product.description || "",
-
-    mediaUrl: image,
-
-    publicId: product.publicId || "",
-
-    productSource: "customer",
-
-    productId: product.id,
-
-    customerId: product.customerId || "",
-
-    createdAt: product.createdAt || null
-
-  };
-
-}
-/* =====================================
-   TENANT / DOMAIN RESOLUTION
-===================================== */
-
-let marketingTenantId = "";
-let marketingTenantUid = "";
-let marketingWebsiteMode = "blocked";
-
-const LEGACY_HOSTS = [
-  "rb-tech-solution-camera-pluse.pages.dev",
-  "ajayhasdapadmob.github.io",
-  "localhost",
-  "127.0.0.1"
-];
-
-async function resolveMarketingTenant() {
-
+async function resolveWebsiteTenant() {
   const hostname = location.hostname
     .toLowerCase()
     .replace(/^www\./, "");
 
-  // Old RB Tech Solution website
-  if (LEGACY_HOSTS.includes(hostname)) {
+  const legacyHosts = [
+    "rb-tech-solution-camera-pluse.pages.dev",
+    "ajayhasdapadmob.github.io",
+    "localhost",
+    "127.0.0.1"
+  ];
 
-    marketingWebsiteMode = "legacy";
-    marketingTenantId = "customer1";
-    marketingTenantUid = "";
+  // Original RB Tech Solution website
+  if (legacyHosts.includes(hostname)) {
+    currentWebsiteMode = "legacy";
+    currentTenantId = "customer1";
 
-    console.log("Marketing tenant: RB Tech Solution");
+    const snap = await getDoc(
+      doc(db, "customers", "customer1")
+    );
+
+    currentTenant = snap.exists() ? snap.data() : null;
 
     return true;
   }
 
-  // First check publicWebsites
-  const websiteRef = doc(
-    db,
-    "publicWebsites",
-    hostname
+  // Find custom domain in publicWebsites
+  const websiteSnap = await getDoc(
+    doc(db, "publicWebsites", hostname)
   );
-
-  const websiteSnap = await getDoc(websiteRef);
 
   if (
     websiteSnap.exists() &&
     websiteSnap.data().active === true
   ) {
+    const website = websiteSnap.data();
 
-    const websiteData = websiteSnap.data();
+    if (
+      website.domain &&
+      website.domain.toLowerCase().replace(/^www\./, "") !== hostname
+    ) {
+      return false;
+    }
 
-    const customerId = websiteData.customerId;
+    const customerId = website.customerId;
 
     if (!customerId) return false;
 
@@ -1589,22 +580,24 @@ async function resolveMarketingTenant() {
       return false;
     }
 
-    marketingTenantId = customerId;
-    marketingTenantUid = customerSnap.data().uid || "";
-    marketingWebsiteMode = "customer";
+    currentTenantId = customerId;
+    currentTenant = {
+      id: customerId,
+      ...customerSnap.data()
+    };
+    currentWebsiteMode = "customer";
 
-    console.log("Marketing tenant:", customerId);
+    console.log("Website tenant:", currentTenantId);
 
     return true;
   }
 
-  // Fallback: check customers domain field
+  // Fallback: find domain in customers
   const customersSnap = await getDocs(
     collection(db, "customers")
   );
 
-  const matchedCustomer = customersSnap.docs.find(item => {
-
+  const matched = customersSnap.docs.find(item => {
     const data = item.data();
 
     const domains = [
@@ -1614,507 +607,784 @@ async function resolveMarketingTenant() {
       ...(Array.isArray(data.domains) ? data.domains : [])
     ]
       .filter(Boolean)
-      .map(domain =>
-        String(domain)
-          .toLowerCase()
-          .replace(/^www\./, "")
+      .map(value =>
+        String(value).toLowerCase().replace(/^www\./, "")
       );
 
     return domains.includes(hostname);
   });
 
-  if (
-    matchedCustomer &&
-    matchedCustomer.data().status === "active"
-  ) {
-
-    marketingTenantId = matchedCustomer.id;
-    marketingTenantUid = matchedCustomer.data().uid || "";
-    marketingWebsiteMode = "customer";
-
-    console.log("Marketing tenant:", marketingTenantId);
-
-    return true;
+  if (!matched || matched.data().status !== "active") {
+    console.error("No active tenant found:", hostname);
+    return false;
   }
 
-  console.error("Website tenant not found:", hostname);
+  currentTenantId = matched.id;
+  currentTenant = {
+    id: matched.id,
+    ...matched.data()
+  };
+  currentWebsiteMode = "customer";
 
-  return false;
+  return true;
 }
-/* =====================================
-   LOAD TENANT-SPECIFIC MARKETING
-   SECURE PRODUCT GALLERY
-===================================== */
 
-async function loadMarketingContent() {
 
-  const allGrids = Object.values(SECTION_CONFIG)
-    .map(config => $(config.grid))
-    .filter(Boolean);
 
-  const heroSlider = $("heroMarketingSlider");
+/* =========================================
+   LOAD TENANT-SPECIFIC PRODUCTS
+========================================= */
 
-  if (!allGrids.length && !heroSlider) return;
+async function loadProducts() {
+  const grid = document.getElementById("productGrid");
+  const trendingGrid = document.getElementById("trendingGrid");
+
+  if (grid) {
+    grid.innerHTML = "<p>Loading products...</p>";
+  }
 
   try {
+    const productMap = new Map();
 
-    // Resolve current website tenant first
-    const tenantResolved = await resolveMarketingTenant();
+    // Tenant verification
+    if (
+      !currentTenantId ||
+      !["legacy", "customer"].includes(currentWebsiteMode)
+    ) {
+      throw new Error("Website tenant is not verified.");
+    }
 
-    if (!tenantResolved) {
+    // =====================================
+    // OLD RB TECH PRODUCTS
+    // Only on legacy website
+    // =====================================
 
-      allGrids.forEach(grid => {
-        grid.innerHTML = "";
+    if (currentWebsiteMode === "legacy") {
+      try {
+        const oldQuery = query(
+          collection(db, "products"),
+          where("active", "==", true)
+        );
+
+        const oldSnap = await getDocs(oldQuery);
+
+        oldSnap.forEach(item => {
+          productMap.set("products:" + item.id, {
+            id: item.id,
+            ...item.data(),
+            sourceCollection: "products"
+          });
+        });
+
+      } catch (error) {
+        console.warn("Legacy products not loaded:", error);
+      }
+    }
+
+    // =====================================
+    // CURRENT CUSTOMER PRODUCTS
+    // Only matching customerId
+    // =====================================
+
+    const customerQuery = query(
+      collection(db, "customerProducts"),
+      where("customerId", "==", currentTenantId),
+      where("active", "==", true)
+    );
+
+    const customerSnap = await getDocs(customerQuery);
+
+    customerSnap.forEach(item => {
+      productMap.set("customerProducts:" + item.id, {
+        id: item.id,
+        ...item.data(),
+        sourceCollection: "customerProducts"
+      });
+    });
+
+    // =====================================
+    // FINAL PRODUCT DATA
+    // =====================================
+
+    allProducts = Array.from(productMap.values());
+    filteredProducts = [...allProducts];
+
+    console.log("Website mode:", currentWebsiteMode);
+    console.log("Current tenant:", currentTenantId);
+    console.log("Products loaded:", allProducts.length);
+
+    renderProducts();
+    renderTrendingProducts();
+
+  } catch (error) {
+    console.error("Product loading error:", error);
+
+    allProducts = [];
+    filteredProducts = [];
+
+    if (grid) {
+      grid.innerHTML =
+        "<p>Unable to load products. Please try again later.</p>";
+    }
+
+    if (trendingGrid) {
+      trendingGrid.innerHTML =
+        "<p>Trending products are currently unavailable.</p>";
+    }
+  }
+}
+
+/* =========================================
+   PRODUCT CARD
+========================================= */
+
+function productCardHTML(product) {
+  const name = escapeHTML(getProductName(product));
+  const category = escapeHTML(getProductCategory(product));
+  const model = escapeHTML(product.model || "");
+  const image = escapeHTML(getProductImage(product));
+  const id = escapeHTML(product.id);
+
+  return `
+    <div class="product-card">
+      <div class="product-image"
+           onclick="window.openProductDetails('${id}')">
+        <img src="${image}" alt="${name}" loading="lazy"
+          onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
+      </div>
+
+      <div class="product-info">
+        <span class="product-category">${category}</span>
+        <h3>${name}</h3>
+        ${model ? `<p>Model: ${model}</p>` : ""}
+
+        <button type="button"
+          onclick="window.openProductDetails('${id}')">
+          VIEW DETAILS
+        </button>
+
+        <button type="button"
+          onclick="window.whatsappProduct('${id}')">
+          ENQUIRE NOW
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderProducts() {
+  const grid = document.getElementById("productGrid");
+  if (!grid) return;
+
+  if (!filteredProducts.length) {
+    grid.innerHTML = "<p>No products found.</p>";
+    return;
+  }
+
+  grid.innerHTML = filteredProducts.map(productCardHTML).join("");
+}
+
+function renderTrendingProducts() {
+  const grid = document.getElementById("trendingGrid");
+  if (!grid) return;
+
+  const trending = allProducts.filter(isTrending);
+
+  if (!trending.length) {
+    grid.innerHTML = "<p>No trending products available.</p>";
+    return;
+  }
+
+  grid.innerHTML = trending.map(productCardHTML).join("");
+}
+
+/* =========================================
+   SEARCH AND CATEGORY FILTER
+========================================= */
+
+function filterProducts() {
+  const searchInput = document.getElementById("searchInput");
+  const categoryFilter = document.getElementById("categoryFilter");
+
+  const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
+  const category = categoryFilter ? categoryFilter.value : "";
+
+  filteredProducts = allProducts.filter(product => {
+    const searchable = [
+      product.name,
+      product.productName,
+      product.model,
+      product.category,
+      product.description
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    return (
+      (!search || searchable.includes(search)) &&
+      (!category || getProductCategory(product) === category)
+    );
+  });
+
+  renderProducts();
+}
+
+/* =========================================
+   TECHNICAL SPECIFICATIONS
+========================================= */
+
+function specificationsHTML(specifications) {
+  if (!specifications) return "";
+
+  let rows = [];
+
+  if (Array.isArray(specifications)) {
+    rows = specifications.map(item => ({
+      key: item.label || item.name || item.key || "",
+      value: item.value ?? item.description ?? ""
+    }));
+  } else if (typeof specifications === "object") {
+    rows = Object.entries(specifications).map(([key, value]) => ({
+      key,
+      value
+    }));
+  }
+
+  rows = rows.filter(row => row.key && row.value !== "");
+
+  if (!rows.length) return "";
+
+  return `
+    <div class="rb-detail-section">
+      <h3>Technical Specifications</h3>
+
+      <table class="rb-spec-table">
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <th>${escapeHTML(row.key)}</th>
+              <td>${escapeHTML(
+                typeof row.value === "object"
+                  ? JSON.stringify(row.value)
+                  : row.value
+              )}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* =========================================
+   COUNTRY OPTIONS
+========================================= */
+
+function countryOptionsHTML() {
+  const countries = [
+    ["+91", "India (+91)"],
+    ["+1", "USA / Canada (+1)"],
+    ["+44", "United Kingdom (+44)"],
+    ["+971", "UAE (+971)"],
+    ["+966", "Saudi Arabia (+966)"],
+    ["+65", "Singapore (+65)"],
+    ["+61", "Australia (+61)"],
+    ["+880", "Bangladesh (+880)"],
+    ["+977", "Nepal (+977)"],
+    ["+94", "Sri Lanka (+94)"]
+  ];
+
+  return countries.map(([code, label]) => `
+    <option value="${code}" ${code === "+91" ? "selected" : ""}>
+      ${label}
+    </option>
+  `).join("");
+}
+
+/* =========================================
+   RFI FORM
+========================================= */
+
+function productRFIFormHTML(product) {
+  const name = escapeHTML(getProductName(product));
+  const model = escapeHTML(product.model || "");
+
+  const a = Math.floor(Math.random() * 8) + 2;
+  const b = Math.floor(Math.random() * 8) + 1;
+
+  captchaAnswer = a + b;
+
+  return `
+    <div class="rb-rfi-column">
+
+      <h3 class="rb-rfi-heading">Request for Information</h3>
+
+      <p class="rb-rfi-subtitle">
+        Please complete the form below. Our team will contact you
+        regarding this product.
+      </p>
+
+      <form id="productRFIForm" class="rb-rfi-form">
+
+        <label>Product</label>
+        <input type="text" value="${name}" readonly>
+
+        ${model ? `
+          <label>Model Number</label>
+          <input type="text" value="${model}" readonly>
+        ` : ""}
+
+        <label for="rfiName">Name *</label>
+        <input id="rfiName" type="text" name="name"
+          placeholder="Enter your full name" required maxlength="100">
+
+        <label for="rfiEmail">Email Address *</label>
+        <input id="rfiEmail" type="email" name="email"
+          placeholder="Enter your email address" required maxlength="150">
+
+        <label>Phone Number *</label>
+
+        <div class="rb-phone-row">
+          <select name="countryCode" aria-label="Country code" required>
+            ${countryOptionsHTML()}
+          </select>
+
+          <input type="tel" name="phone"
+            placeholder="Phone number" required
+            inputmode="numeric" pattern="[0-9]{6,15}"
+            maxlength="15">
+        </div>
+
+        <label for="rfiCompany">Company Name</label>
+        <input id="rfiCompany" type="text" name="company"
+          placeholder="Enter company name" maxlength="150">
+
+        <label for="rfiMessage">Message *</label>
+        <textarea id="rfiMessage" name="message"
+          placeholder="Tell us about your requirements"
+          required maxlength="2000"></textarea>
+
+        <div class="rb-rfi-captcha">
+          <strong>Security Verification</strong>
+
+          <label for="rfiCaptcha">
+            What is ${a} + ${b}?
+          </label>
+
+          <input id="rfiCaptcha" type="number"
+            name="captcha" placeholder="Enter answer" required>
+        </div>
+
+        <label class="rb-rfi-privacy">
+          <input type="checkbox" name="privacy" required>
+          <span>
+            I agree to the Privacy Policy and consent to being
+            contacted by ${escapeHTML(getBusinessName())} regarding this enquiry.
+          </span>
+        </label>
+
+        <button type="submit" class="rb-rfi-submit">
+          SUBMIT REQUEST
+        </button>
+
+      </form>
+
+      <button type="button" class="rb-rfi-whatsapp"
+        id="productWhatsApp">
+        WhatsApp Enquiry
+      </button>
+
+    </div>
+  `;
+}
+
+/* =========================================
+   PRODUCT DETAILS MODAL
+========================================= */
+
+function openProductDetails(productId) {
+  const product = allProducts.find(item => item.id === productId);
+
+  if (!product) {
+    showMessage("Product not found.", "error");
+    return;
+  }
+
+  currentProduct = product;
+
+  addProductDetailsStyles();
+
+  const modal = document.getElementById("productModal");
+  const content = document.getElementById("modalContent");
+
+  if (!modal || !content) {
+    showMessage("Product details modal not found in HTML.", "error");
+    return;
+  }
+
+  const features = normalizeArray(product.features);
+  const brochure = product.brochureUrl || product.pdfUrl || "";
+
+  content.innerHTML = `
+    <button id="modalClose" type="button"
+      aria-label="Close product details">×</button>
+
+    <div class="rb-detail-header">
+      <div class="rb-detail-brand">${escapeHTML(getBusinessName())} | Computer & CCTV Sales and Services</div>
+      <h2>${escapeHTML(getProductName(product))}</h2>
+    </div>
+
+    <div class="rb-detail-layout">
+
+      <div class="rb-detail-main">
+
+        <div class="rb-detail-product">
+
+          <div class="rb-detail-photo">
+            <img src="${escapeHTML(getProductImage(product))}"
+              alt="${escapeHTML(getProductName(product))}"
+              onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
+          </div>
+
+          <div class="rb-detail-summary">
+
+            <h3>${escapeHTML(getProductName(product))}</h3>
+
+            <p><strong>Category:</strong>
+              ${escapeHTML(getProductCategory(product))}
+            </p>
+
+            ${product.model ? `
+              <p><strong>Model:</strong>
+                ${escapeHTML(product.model)}
+              </p>
+            ` : ""}
+
+            ${product.description ? `
+              <p>${escapeHTML(product.description)}</p>
+            ` : ""}
+
+            <div class="rb-detail-actions">
+              <button type="button" id="productWhatsAppTop">
+                WhatsApp Enquiry
+              </button>
+            </div>
+
+            ${brochure ? `
+              <a class="rb-detail-brochure"
+                href="${escapeHTML(safeURL(brochure))}"
+                target="_blank" rel="noopener">
+                View / Download Product Brochure
+              </a>
+            ` : ""}
+
+          </div>
+        </div>
+
+        ${product.description ? `
+          <div class="rb-detail-section">
+            <h3>Product Description</h3>
+            <div class="rb-detail-description">
+              ${escapeHTML(product.description)}
+            </div>
+          </div>
+        ` : ""}
+
+        ${features.length ? `
+          <div class="rb-detail-section">
+            <h3>Key Features</h3>
+            <ul class="rb-detail-features">
+              ${features.map(feature =>
+                `<li>${escapeHTML(feature)}</li>`
+              ).join("")}
+            </ul>
+          </div>
+        ` : ""}
+
+        ${specificationsHTML(product.specifications)}
+
+      </div>
+
+      ${productRFIFormHTML(product)}
+
+    </div>
+  `;
+
+  modal.style.display = "flex";
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+
+  document.getElementById("modalClose")
+    ?.addEventListener("click", closeProductModal);
+
+  document.getElementById("productWhatsApp")
+    ?.addEventListener("click", () => whatsappProduct(productId));
+
+  document.getElementById("productWhatsAppTop")
+    ?.addEventListener("click", () => whatsappProduct(productId));
+
+  document.getElementById("productRFIForm")
+    ?.addEventListener("submit", submitProductRFI);
+}
+
+function closeProductModal() {
+  const modal = document.getElementById("productModal");
+
+  if (modal) {
+    modal.classList.remove("active");
+    modal.style.display = "none";
+  }
+
+  document.body.style.overflow = "";
+}
+
+/* =========================================
+   WHATSAPP ENQUIRY
+========================================= */
+
+function whatsappProduct(productId) {
+  const product = allProducts.find(item => item.id === productId);
+  if (!product) return;
+
+  const message = [
+    `Hello ${getBusinessName()},`,
+    "",
+    "I am interested in this product:",
+    `Product: ${getProductName(product)}`,
+    `Category: ${getProductCategory(product)}`,
+    `Model: ${product.model || "Not specified"}`,
+    "",
+    "Please share more details."
+  ].join("\n");
+
+  window.open(
+    `https://wa.me/${getWhatsAppNumber()}?text=${encodeURIComponent(message)}`,
+    "_blank",
+    "noopener"
+  );
+}
+
+/* =========================================
+   SAVE ENQUIRY
+========================================= */
+
+async function saveEnquiry(data) {
+  if (!currentTenantId) {
+    throw new Error("Customer website is not identified.");
+  }
+
+  await addDoc(collection(db, "enquiries"), {
+    ...data,
+    customerId: currentTenantId,
+    customerUid: currentTenant?.uid || "",
+    status: "New",
+    createdAt: serverTimestamp()
+  });
+}
+
+/* =========================================
+   PRODUCT RFI SUBMISSION
+========================================= */
+
+async function submitProductRFI(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+
+  const enteredCaptcha = Number(formData.get("captcha"));
+
+  if (enteredCaptcha !== captchaAnswer) {
+    showMessage("Incorrect security verification answer.", "error");
+    return;
+  }
+
+  if (!formData.get("privacy")) {
+    showMessage("Please accept the Privacy Policy.", "error");
+    return;
+  }
+
+  const phone = String(formData.get("phone") || "").replace(/\D/g, "");
+
+  if (phone.length < 6 || phone.length > 15) {
+    showMessage("Please enter a valid phone number.", "error");
+    return;
+  }
+
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+  }
+
+  try {
+    await saveEnquiry({
+      type: "Product RFI",
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      countryCode: formData.get("countryCode") || "+91",
+      phone: `${formData.get("countryCode") || "+91"} ${phone}`,
+      company: String(formData.get("company") || "").trim(),
+      message: String(formData.get("message") || "").trim(),
+      productName: currentProduct ? getProductName(currentProduct) : "",
+      productModel: currentProduct?.model || "",
+      customerProductId: currentProduct?.id || "",
+      privacyAccepted: true
+    });
+
+    showMessage("Your enquiry has been submitted successfully.", "success");
+
+    form.reset();
+    closeProductModal();
+
+  } catch (error) {
+    console.error("RFI submission error:", error);
+
+    showMessage(
+      "Unable to submit enquiry. Please try WhatsApp.",
+      "error"
+    );
+
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "SUBMIT REQUEST";
+    }
+  }
+}
+
+/* =========================================
+   GENERAL WEBSITE INQUIRY FORM
+========================================= */
+
+function setupWebsiteInquiryForm() {
+  const form = document.getElementById("websiteInquiryForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+
+    try {
+      await saveEnquiry({
+        type: "Website Inquiry",
+        name: formData.get("name") || "",
+        email: formData.get("email") || "",
+        phone: formData.get("phone") || "",
+        message: formData.get("message") || ""
       });
 
-      if (heroSlider) {
-        heroSlider.innerHTML = "";
+      showMessage("Your enquiry has been submitted.", "success");
+      form.reset();
+
+    } catch (error) {
+      console.error(error);
+      showMessage("Unable to submit enquiry.", "error");
+    }
+  });
+}
+
+/* =========================================
+   CATEGORY BUTTONS
+========================================= */
+
+function setupCategoryButtons() {
+  document.querySelectorAll("[data-category]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+
+      const category = button.dataset.category;
+      const filter = document.getElementById("categoryFilter");
+
+      if (filter) {
+        filter.value = category;
       }
 
-      console.error(
-        "Website blocked: tenant could not be verified."
-      );
+      filterProducts();
 
+      document.getElementById("products")
+        ?.scrollIntoView({ behavior: "smooth" });
+    });
+  });
+}
+
+/* =========================================
+   MODAL EVENTS
+========================================= */
+
+function setupModalEvents() {
+  const modal = document.getElementById("productModal");
+
+  modal?.addEventListener("click", event => {
+    if (event.target === modal) {
+      closeProductModal();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeProductModal();
+    }
+  });
+}
+
+/* =========================================
+   GLOBAL FUNCTIONS
+========================================= */
+
+window.openProductDetails = openProductDetails;
+window.whatsappProduct = whatsappProduct;
+window.closeProductModal = closeProductModal;
+
+/* =========================================
+   INITIALIZE WEBSITE
+========================================= */
+
+async function initializeWebsite() {
+  try {
+    const tenantResolved = await resolveWebsiteTenant();
+
+    if (!tenantResolved) {
+      currentTenantId = "";
+      currentTenant = null;
+      currentWebsiteMode = "blocked";
+      allProducts = [];
+      filteredProducts = [];
+      const blockedGrid = document.getElementById("productGrid");
+      if (blockedGrid) blockedGrid.innerHTML = "<p>This website is not configured or is inactive.</p>";
+      const blockedTrending = document.getElementById("trendingGrid");
+      if (blockedTrending) blockedTrending.innerHTML = "";
       return;
     }
 
-    let marketingItems = [];
-    let oldProducts = [];
-    let customerProducts = [];
+    const search = document.getElementById("searchInput");
+    const category = document.getElementById("categoryFilter");
 
-    /* =====================================
-       LEGACY RB TECH SOLUTION
-    ===================================== */
+    search?.addEventListener("input", filterProducts);
+    category?.addEventListener("change", filterProducts);
 
-    if (marketingWebsiteMode === "legacy") {
+    setupCategoryButtons();
+    setupModalEvents();
+    setupWebsiteInquiryForm();
+    addProductDetailsStyles();
 
-      const results = await Promise.allSettled([
-
-        getDocs(
-          query(
-            collection(db, "marketingItems"),
-            where("active", "==", true)
-          )
-        ),
-
-        getDocs(
-          query(
-            collection(db, "products"),
-            where("active", "==", true)
-          )
-        ),
-
-        getDocs(
-          query(
-            collection(db, "customerProducts"),
-            where("customerId", "==", "customer1"),
-            where("active", "==", true)
-          )
-        )
-
-      ]);
-
-      if (results[0].status === "fulfilled") {
-        marketingItems = results[0].value.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-      } else {
-        console.error("Legacy marketing error:", results[0].reason);
-      }
-
-      if (results[1].status === "fulfilled") {
-        oldProducts = results[1].value.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-      } else {
-        console.error("Legacy products error:", results[1].reason);
-      }
-
-      if (results[2].status === "fulfilled") {
-        customerProducts = results[2].value.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-      } else {
-        console.error("Legacy customer products error:", results[2].reason);
-      }
-
-    }
-
-    /* =====================================
-       CUSTOMER WEBSITE
-       ONLY CURRENT CUSTOMER DATA
-    ===================================== */
-
-    else if (marketingWebsiteMode === "customer") {
-
-      const results = await Promise.allSettled([
-
-        getDocs(
-          query(
-            collection(db, "marketingItems"),
-            where("customerId", "==", marketingTenantId),
-            where("active", "==", true)
-          )
-        ),
-
-        getDocs(
-          query(
-            collection(db, "customerProducts"),
-            where("customerId", "==", marketingTenantId),
-            where("active", "==", true)
-          )
-        )
-
-      ]);
-
-      if (results[0].status === "fulfilled") {
-
-        marketingItems = results[0].value.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-
-      } else {
-
-        console.error(
-          "Customer marketing error:",
-          results[0].reason
-        );
-
-      }
-
-      if (results[1].status === "fulfilled") {
-
-        customerProducts = results[1].value.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-
-      } else {
-
-        console.error(
-          "Customer products error:",
-          results[1].reason
-        );
-
-      }
-
-      // Do not load RB Tech legacy products here
-      oldProducts = [];
-
-    }
-
-    /* =====================================
-       CONVERT PRODUCTS TO GALLERY
-    ===================================== */
-
-    const oldProductGallery = oldProducts
-      .map(convertOldProductToGallery)
-      .filter(Boolean);
-
-    const customerProductGallery = customerProducts
-      .map(convertCustomerProductToGallery)
-      .filter(Boolean);
-
-    const productGalleryItems = [
-      ...oldProductGallery,
-      ...customerProductGallery
-    ];
-
-    /* =====================================
-       COMBINE MARKETING + PRODUCT GALLERY
-    ===================================== */
-
-    const allMarketingItems = [
-      ...marketingItems,
-      ...productGalleryItems
-    ];
-
-    /* =====================================
-       HOMEPAGE HERO
-    ===================================== */
-
-    renderHeroSlider(marketingItems);
-
-    /* =====================================
-       RENDER SECTIONS
-    ===================================== */
-
-    Object.keys(SECTION_CONFIG).forEach(type => {
-
-      renderSection(
-        type,
-        allMarketingItems
-      );
-
-    });
-
-    /* =====================================
-       DEBUG INFORMATION
-    ===================================== */
-
-    console.log("Website mode:", marketingWebsiteMode);
-    console.log("Tenant ID:", marketingTenantId);
-    console.log("Marketing items:", marketingItems.length);
-    console.log("Old products:", oldProducts.length);
-    console.log("Customer products:", customerProducts.length);
-    console.log("Old product gallery:", oldProductGallery.length);
-    console.log("Customer product gallery:", customerProductGallery.length);
-
-    const finalGallery = getUniqueGalleryItems(
-      allMarketingItems.filter(item =>
-        item.type === "gallery" &&
-        item.active === true
-      )
-    );
+    await loadProducts();
 
     console.log(
-      "Final unique Gallery photos:",
-      finalGallery.length
+      `${getBusinessName()} website initialized:`,
+      currentTenantId
     );
 
   } catch (error) {
+    console.error("Website initialization error:", error);
 
-    console.error(
-      "Marketing loading error:",
-      error
-    );
+    const grid = document.getElementById("productGrid");
 
-    allGrids.forEach(grid => {
+    if (grid) {
       grid.innerHTML =
-        "<p>Unable to load content. Please try again later.</p>";
-    });
-
+        "<p>Website configuration error. Please contact support.</p>";
+    }
   }
-
 }
 
-    /* =====================================
-       MARKETING ITEMS
-    ===================================== */
-
-    let marketingItems = [];
-
-    if (results[0].status === "fulfilled") {
-
-      marketingItems = results[0].value.docs.map(document => ({
-
-        id: document.id,
-
-        ...document.data()
-
-      }));
-
-    } else {
-
-      console.error(
-        "Marketing loading error:",
-        results[0].reason
-      );
-
-    }
-
-    /* =====================================
-       OLD WEBSITE PRODUCTS
-    ===================================== */
-
-    let oldProducts = [];
-
-    if (results[1].status === "fulfilled") {
-
-      oldProducts = results[1].value.docs.map(document => ({
-
-        id: document.id,
-
-        ...document.data()
-
-      }));
-
-    } else {
-
-      console.error(
-        "Old products loading error:",
-        results[1].reason
-      );
-
-    }
-
-    /* =====================================
-       CUSTOMER ADMIN PRODUCTS
-    ===================================== */
-
-    let customerProducts = [];
-
-    if (results[2].status === "fulfilled") {
-
-      customerProducts = results[2].value.docs.map(document => ({
-
-        id: document.id,
-
-        ...document.data()
-
-      }));
-
-    } else {
-
-      console.error(
-        "Customer products loading error:",
-        results[2].reason
-      );
-
-    }
-
-    /* =====================================
-       CONVERT PRODUCTS TO GALLERY ITEMS
-    ===================================== */
-
-    const oldProductGallery = oldProducts
-      .map(convertOldProductToGallery)
-      .filter(Boolean);
-
-    const customerProductGallery = customerProducts
-      .map(convertCustomerProductToGallery)
-      .filter(Boolean);
-
-    const productGalleryItems = [
-
-      ...oldProductGallery,
-
-      ...customerProductGallery
-
-    ];
-
-    /* =====================================
-       COMBINE MARKETING + PRODUCT GALLERY
-    ===================================== */
-
-    const allMarketingItems = [
-
-      ...marketingItems,
-
-      ...productGalleryItems
-
-    ];
-
-    /* =====================================
-       HOMEPAGE HERO
-       Original marketing content only
-    ===================================== */
-
-    renderHeroSlider(marketingItems);
-
-    /* =====================================
-       RENDER ALL MARKETING SECTIONS
-    ===================================== */
-
-    Object.keys(SECTION_CONFIG).forEach(type => {
-
-      renderSection(
-        type,
-        allMarketingItems
-      );
-
-    });
-
-    /* =====================================
-       DEBUG INFORMATION
-    ===================================== */
-
-    console.log(
-      "Marketing items:",
-      marketingItems.length
-    );
-
-    console.log(
-      "Old website products:",
-      oldProducts.length
-    );
-
-    console.log(
-      "Customer Admin products:",
-      customerProducts.length
-    );
-
-    console.log(
-      "Old product Gallery photos:",
-      oldProductGallery.length
-    );
-
-    console.log(
-      "Customer product Gallery photos:",
-      customerProductGallery.length
-    );
-
-    const finalGallery = getUniqueGalleryItems(
-      allMarketingItems.filter(item =>
-        item.type === "gallery" &&
-        item.active === true
-      )
-    );
-
-    console.log(
-      "Final unique Gallery photos:",
-      finalGallery.length
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Marketing and Gallery loading error:",
-      error
-    );
-
-    allGrids.forEach(grid => {
-
-      grid.innerHTML =
-        "<p>Unable to load content. Please try again later.</p>";
-
-    });
-
-  }
-
-}
-
-/* =====================================
-   VIEWER CLOSE EVENTS
-===================================== */
-
-$("closeMarketingViewer")?.addEventListener(
-  "click",
-  closeMarketingViewer
-);
-
-$("marketingViewer")?.addEventListener(
-  "click",
-  event => {
-
-    if (event.target.id === "marketingViewer") {
-
-      closeMarketingViewer();
-
-    }
-
-  }
-);
-
-document.addEventListener("keydown", event => {
-
-  if (
-    event.key === "Escape" &&
-    $("marketingViewer")?.classList.contains("active")
-  ) {
-
-    closeMarketingViewer();
-
-  }
-
-});
-
-/* =====================================
-   LOAD PUBLIC MARKETING DATA
-===================================== */
-
-loadMarketingContent();
+initializeWebsite();
