@@ -1651,173 +1651,41 @@ async function resolveMarketingTenant() {
 
 
 async function loadMarketingContent() {
+
   const allGrids = Object.values(SECTION_CONFIG)
     .map(config => $(config.grid))
     .filter(Boolean);
 
   const heroSlider = $("heroMarketingSlider");
 
-  if (!allGrids.length && !heroSlider) {
-    console.error("Marketing: Gallery/section containers not found.");
-    return;
-  }
+  if (!allGrids.length && !heroSlider) return;
 
   try {
+
+    // Resolve current website tenant first
     const tenantResolved = await resolveMarketingTenant();
 
     if (!tenantResolved) {
-      allGrids.forEach(grid => grid.innerHTML = "");
-      if (heroSlider) heroSlider.innerHTML = "";
-      console.error("Marketing: Website tenant could not be verified.");
+
+      allGrids.forEach(grid => {
+        grid.innerHTML = "";
+      });
+
+      if (heroSlider) {
+        heroSlider.innerHTML = "";
+      }
+
+      console.error(
+        "Website blocked: tenant could not be verified."
+      );
+
       return;
     }
-
-    console.log("Marketing website mode:", marketingWebsiteMode);
-    console.log("Marketing tenant ID:", marketingTenantId);
 
     let marketingItems = [];
     let oldProducts = [];
     let customerProducts = [];
 
-    if (marketingWebsiteMode === "legacy") {
-      const results = await Promise.allSettled([
-        getDocs(query(
-          collection(db, "marketingItems"),
-          where("active", "==", true)
-        )),
-        getDocs(query(
-          collection(db, "products"),
-          where("active", "==", true)
-        )),
-        getDocs(query(
-          collection(db, "customerProducts"),
-          where("customerId", "==", "customer1"),
-          where("active", "==", true)
-        ))
-      ]);
-
-      if (results[0].status === "fulfilled") {
-        marketingItems = results[0].value.docs.map(d => ({
-          id: d.id, ...d.data()
-        }));
-      } else {
-        console.error("Legacy marketing query failed:", results[0].reason);
-      }
-
-      if (results[1].status === "fulfilled") {
-        oldProducts = results[1].value.docs.map(d => ({
-          id: d.id, ...d.data()
-        }));
-      } else {
-        console.error("Legacy products query failed:", results[1].reason);
-      }
-
-      if (results[2].status === "fulfilled") {
-        customerProducts = results[2].value.docs.map(d => ({
-          id: d.id, ...d.data()
-        }));
-      } else {
-        console.error("Legacy customer products query failed:", results[2].reason);
-      }
-    }
-
-    else if (marketingWebsiteMode === "customer") {
-      const results = await Promise.allSettled([
-        getDocs(query(
-          collection(db, "marketingItems"),
-          where("customerId", "==", marketingTenantId),
-          where("active", "==", true)
-        )),
-        getDocs(query(
-          collection(db, "customerProducts"),
-          where("customerId", "==", marketingTenantId),
-          where("active", "==", true)
-        ))
-      ]);
-
-      if (results[0].status === "fulfilled") {
-        marketingItems = results[0].value.docs.map(d => ({
-          id: d.id, ...d.data()
-        }));
-      } else {
-        console.error(
-          "Customer marketing query failed:",
-          results[0].reason
-        );
-      }
-
-      if (results[1].status === "fulfilled") {
-        customerProducts = results[1].value.docs.map(d => ({
-          id: d.id, ...d.data()
-        }));
-      } else {
-        console.error(
-          "Customer products query failed:",
-          results[1].reason
-        );
-      }
-
-      // Never load RB Tech legacy products on customer websites.
-      oldProducts = [];
-    }
-
-    const oldProductGallery = oldProducts
-      .map(convertOldProductToGallery)
-      .filter(Boolean);
-
-    const customerProductGallery = customerProducts
-      .map(convertCustomerProductToGallery)
-      .filter(Boolean);
-
-    // Combine only the current website's marketing and product data.
-    const allMarketingItems = [
-      ...marketingItems,
-      ...customerProductGallery,
-      ...oldProductGallery
-    ];
-
-    const galleryItems = allMarketingItems.filter(item =>
-      item.type === "gallery" &&
-      item.active === true &&
-      Boolean(getImage(item))
-    );
-
-    console.log("Marketing documents loaded:", marketingItems.length);
-    console.log("Customer product documents:", customerProducts.length);
-    console.log("Gallery photos found:", galleryItems.length);
-    console.table(galleryItems.map(item => ({
-      id: item.id,
-      title: item.title,
-      customerId: item.customerId || "",
-      image: getImage(item)
-    })));
-
-    renderHeroSlider(marketingItems);
-
-    Object.keys(SECTION_CONFIG).forEach(type => {
-      renderSection(type, allMarketingItems);
-    });
-
-    // Report broken image URLs in the browser console.
-    allGrids.forEach(grid => {
-      grid.querySelectorAll("img").forEach(img => {
-        img.addEventListener("error", () => {
-          console.error("Marketing image failed to load:", img.src);
-        }, { once: true });
-      });
-    });
-
-    console.log("Marketing content rendering completed.");
-
-  } catch (error) {
-    console.error("Marketing loading error:", error);
-
-    allGrids.forEach(grid => {
-      grid.innerHTML =
-        "<p>Unable to load content. Please try again later.</p>";
-    });
-  }
-}
     /* =====================================
        LEGACY RB TECH SOLUTION
     ===================================== */
