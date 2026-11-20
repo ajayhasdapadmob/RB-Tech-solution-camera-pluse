@@ -13,27 +13,60 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 /* =========================================
-   RB TECH SOLUTION - PUBLIC WEBSITE APP
+   Intello Electric - PUBLIC WEBSITE APP
 ========================================= */
 
 const LEGACY_WHATSAPP_NUMBER = "919663116089";
 const INTELLO_WHATSAPP_NUMBER = "919448735433";
+const INTELLO_EMAIL = "intelloelectric@gmail.com";
+const INTELLO_LOGO = "images/intello-logo.png";
 
-function getBusinessName() {
-  return currentWebsiteMode === "customer" ? (currentTenantId === "intelloelectric" ? "Intello Electric" : (currentTenant?.businessName || "Customer")) : "RB Tech Solution";
+function getBrandName() {
+  return currentWebsiteMode === "legacy" ? "Intello Electric" : (currentTenant?.businessName === "Intelloelectric" ? "Intello Electric" : (currentTenant?.businessName || "Intello Electric"));
 }
-
 function getWhatsAppNumber() {
-  return currentWebsiteMode === "customer" ? INTELLO_WHATSAPP_NUMBER : LEGACY_WHATSAPP_NUMBER;
+  if (currentWebsiteMode === "legacy") return LEGACY_WHATSAPP_NUMBER;
+  const raw = String(currentTenant?.phone || INTELLO_WHATSAPP_NUMBER).replace(/\D/g, "");
+  return raw.startsWith("91") ? raw : `91${raw}`;
+}
+function getFallbackImage() {
+  return currentWebsiteMode === "legacy" ? DEFAULT_IMAGE : INTELLO_LOGO;
+}
+function applyTenantBranding() {
+  if (currentWebsiteMode === "legacy") return;
+  const name = getBrandName();
+  const phone = "+91 94487 35433";
+  const digits = getWhatsAppNumber();
+  const email = INTELLO_EMAIL;
+  document.title = `${name} | Computer and CCTV Sales and Services`;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", `${name} provides computer, laptop, CCTV, door phone and security system sales and services.`);
+  document.querySelector('meta[name="author"]')?.setAttribute("content", name);
+  document.querySelector('meta[name="keywords"]')?.setAttribute("content", `${name}, Computer Sales, Laptop Sales, CCTV, Door Phone, Security Systems`);
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", `https://${location.hostname.replace(/^www\./, "")}/`);
+  const logo = document.getElementById("siteLogo");
+  if (logo) { logo.src = INTELLO_LOGO; logo.alt = `${name} Logo`; logo.style.display = "block"; }
+  const favicon = document.getElementById("siteFavicon");
+  if (favicon) favicon.href = INTELLO_LOGO;
+  const brand = document.getElementById("siteBrandName"); if (brand) brand.textContent = name;
+  const brandTag = document.getElementById("siteBrandTagline"); if (brandTag) brandTag.textContent = "COMPUTER AND CCTV SALES AND SERVICES";
+  const topPhone = document.getElementById("topPhoneLink"); if (topPhone) { topPhone.href = `tel:${phone.replace(/\s/g, "")}`; topPhone.textContent = phone; }
+  const footerBrand = document.getElementById("footerBrandName"); if (footerBrand) footerBrand.textContent = name;
+  const copyright = document.getElementById("footerCopyrightBrand"); if (copyright) copyright.textContent = name;
+  const popupBrand = document.getElementById("popupCompanyName"); if (popupBrand) popupBrand.textContent = name;
+  ["footerPhoneLink", "popupPhoneLink"].forEach(id => { const a=document.getElementById(id); if(a){a.href=`https://wa.me/${digits}`; a.textContent=phone;} });
+  ["footerEmailLink", "popupEmailLink"].forEach(id => { const a=document.getElementById(id); if(a){a.href=`mailto:${email}`; a.textContent=email;} });
+  const float = document.getElementById("floatingWhatsApp"); if (float) { float.href=`https://wa.me/${digits}`; float.setAttribute("aria-label", `Contact ${name} on WhatsApp`); }
+  const fallback = document.getElementById("heroFallbackImage"); if (fallback) { fallback.src=INTELLO_LOGO; fallback.alt=`${name} Logo`; fallback.style.objectFit="contain"; fallback.style.padding="24px"; fallback.style.boxSizing="border-box"; }
+  const partner = document.getElementById("partnerDescription"); if (partner) partner.textContent = `Interested in working with ${name}? Contact us to discuss business and partnership opportunities.`;
+  const contactDescription = document.getElementById("mainContactDescription"); if (contactDescription) contactDescription.textContent = `Contact ${name} for computer, CCTV and complete security solutions.`;
+  document.querySelectorAll(".tenant-category-image").forEach(img => { img.src=INTELLO_LOGO; img.alt=`${name} products`; img.style.objectFit="contain"; });
+  document.querySelectorAll(".site-footer p").forEach(p => { if (p.textContent.includes("Contact Intello Electric")) p.textContent = `Contact ${name} for computer, CCTV and security solutions.`; });
+  document.querySelectorAll(".contact-detail-item").forEach(el => { if (el.textContent.includes("Ajay Hasda")) el.lastChild.textContent = currentTenant?.ownerName || "FAYAZ"; });
 }
 
-function getDefaultProductImage() {
-  return currentWebsiteMode === "customer" ? "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27600%27 height=%27400%27 viewBox=%270 0 600 400%27%3E%3Crect width=%27600%27 height=%27400%27 fill=%27%23f2f5f7%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 fill=%27%236b7280%27 font-family=%27Arial%27 font-size=%2724%27%3EProduct image unavailable%3C/text%3E%3C/svg%3E" : LEGACY_DEFAULT_IMAGE;
-}
 
-const LEGACY_DEFAULT_IMAGE = "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
-
-const DEFAULT_IMAGE = LEGACY_DEFAULT_IMAGE;
+const DEFAULT_IMAGE =
+  "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
 
 let currentTenant = null;
 let currentTenantId = "";
@@ -63,7 +96,7 @@ function safeURL(value = "") {
 
   if (/^https?:\/\//i.test(url)) return url;
 
-  return getDefaultProductImage();
+  return getFallbackImage();
 }
 
 function showMessage(message, type = "info") {
@@ -125,7 +158,7 @@ function getProductImage(product) {
     product.image ||
     product.photo ||
     product.productImage ||
-    ""
+    getFallbackImage()
   );
 }
 
@@ -526,6 +559,16 @@ async function resolveWebsiteTenant() {
     .toLowerCase()
     .replace(/^www\./, "");
 
+  // Optional SPCK preview: append ?tenant=intelloelectric to preview URL.
+  if (new URLSearchParams(location.search).get("tenant") === "intelloelectric") {
+    const snap = await getDoc(doc(db, "customers", "intelloelectric"));
+    if (!snap.exists() || snap.data().status !== "active") return false;
+    currentTenantId = "intelloelectric";
+    currentTenant = { id: currentTenantId, ...snap.data() };
+    currentWebsiteMode = "customer";
+    return true;
+  }
+
   const legacyHosts = [
     "rb-tech-solution-camera-pluse.pages.dev",
     "ajayhasdapadmob.github.io",
@@ -533,7 +576,7 @@ async function resolveWebsiteTenant() {
     "127.0.0.1"
   ];
 
-  // Original RB Tech Solution website
+  // Original Intello Electric website
   if (legacyHosts.includes(hostname)) {
     currentWebsiteMode = "legacy";
     currentTenantId = "customer1";
@@ -750,7 +793,7 @@ function productCardHTML(product) {
       <div class="product-image"
            onclick="window.openProductDetails('${id}')">
         <img src="${image}" alt="${name}" loading="lazy"
-          onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
+          onerror="this.onerror=null;this.src='${getFallbackImage()}'">
       </div>
 
       <div class="product-info">
@@ -977,7 +1020,7 @@ function productRFIFormHTML(product) {
           <input type="checkbox" name="privacy" required>
           <span>
             I agree to the Privacy Policy and consent to being
-            contacted by ${escapeHTML(getBusinessName())} regarding this enquiry.
+            contacted by ${escapeHTML(getBrandName())} regarding this enquiry.
           </span>
         </label>
 
@@ -1028,7 +1071,7 @@ function openProductDetails(productId) {
       aria-label="Close product details">×</button>
 
     <div class="rb-detail-header">
-      <div class="rb-detail-brand">${escapeHTML(getBusinessName())} | Computer & CCTV Sales and Services</div>
+      <div class="rb-detail-brand">${escapeHTML(getBrandName().toUpperCase())} | COMPUTER & CCTV SALES AND SERVICES</div>
       <h2>${escapeHTML(getProductName(product))}</h2>
     </div>
 
@@ -1041,7 +1084,7 @@ function openProductDetails(productId) {
           <div class="rb-detail-photo">
             <img src="${escapeHTML(getProductImage(product))}"
               alt="${escapeHTML(getProductName(product))}"
-              onerror="this.onerror=null;this.src='${getDefaultProductImage()}'">
+              onerror="this.onerror=null;this.src='${getFallbackImage()}'">
           </div>
 
           <div class="rb-detail-summary">
@@ -1145,7 +1188,7 @@ function whatsappProduct(productId) {
   if (!product) return;
 
   const message = [
-    `Hello ${getBusinessName()},`,
+    `Hello ${getBrandName()},`,
     "",
     "I am interested in this product:",
     `Product: ${getProductName(product)}`,
@@ -1342,20 +1385,9 @@ window.closeProductModal = closeProductModal;
 
 async function initializeWebsite() {
   try {
-    const tenantResolved = await resolveWebsiteTenant();
-
-    if (!tenantResolved) {
-      currentTenantId = "";
-      currentTenant = null;
-      currentWebsiteMode = "blocked";
-      allProducts = [];
-      filteredProducts = [];
-      const blockedGrid = document.getElementById("productGrid");
-      if (blockedGrid) blockedGrid.innerHTML = "<p>This website is not configured or is inactive.</p>";
-      const blockedTrending = document.getElementById("trendingGrid");
-      if (blockedTrending) blockedTrending.innerHTML = "";
-      return;
-    }
+    const tenantReady = await resolveWebsiteTenant();
+    if (!tenantReady) throw new Error("This domain is not mapped to an active customer website. For SPCK preview, add ?tenant=intelloelectric to the URL.");
+    applyTenantBranding();
 
     const search = document.getElementById("searchInput");
     const category = document.getElementById("categoryFilter");
@@ -1371,7 +1403,7 @@ async function initializeWebsite() {
     await loadProducts();
 
     console.log(
-      `${getBusinessName()} website initialized:`,
+      "Customer website initialized:",
       currentTenantId
     );
 
