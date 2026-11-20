@@ -1138,22 +1138,11 @@ function renderHeroSlider(items) {
   });
 
   if (!mediaItems.length) {
+
     slider.innerHTML = "";
-    const fallback = document.createElement("img");
-    fallback.className = "hero-static-image hero-logo-fallback";
-    fallback.src = marketingWebsiteMode === "legacy"
-      ? "images/products/jaise%20camera-01.jpg.png"
-      : "images/intello-logo.png";
-    fallback.alt = marketingWebsiteMode === "legacy" ? "RB Tech Solution" : "Intello Electric";
-    fallback.style.objectFit = marketingWebsiteMode === "legacy" ? "cover" : "contain";
-    fallback.style.padding = marketingWebsiteMode === "legacy" ? "0" : "24px";
-    fallback.style.boxSizing = "border-box";
-    fallback.onerror = () => {
-      fallback.onerror = null;
-      fallback.src = "images/intello-logo.png";
-    };
-    slider.appendChild(fallback);
+
     return;
+
   }
 
   slider.innerHTML = "";
@@ -1238,7 +1227,7 @@ function renderHeroSlider(items) {
 
       img.src = getImage(item);
 
-      img.alt = item.title || "Intello Electric";
+      img.alt = item.title || (marketingWebsiteMode === "customer" ? "Intello Electric" : "RB Tech Solution");
 
       img.loading = index === 0 ? "eager" : "lazy";
 
@@ -1557,24 +1546,14 @@ async function resolveMarketingTenant() {
     .toLowerCase()
     .replace(/^www\./, "");
 
-  // Optional SPCK preview: append ?tenant=intelloelectric to the preview URL.
-  if (new URLSearchParams(location.search).get("tenant") === "intelloelectric") {
-    const customerSnap = await getDoc(doc(db, "customers", "intelloelectric"));
-    if (!customerSnap.exists() || customerSnap.data().status !== "active") return false;
-    marketingTenantId = "intelloelectric";
-    marketingTenantUid = customerSnap.data().uid || "";
-    marketingWebsiteMode = "customer";
-    return true;
-  }
-
-  // Old Intello Electric website
+  // Old RB Tech Solution website
   if (LEGACY_HOSTS.includes(hostname)) {
 
     marketingWebsiteMode = "legacy";
     marketingTenantId = "customer1";
     marketingTenantUid = "";
 
-    console.log("Marketing tenant: Intello Electric");
+    console.log("Marketing tenant: RB Tech Solution");
 
     return true;
   }
@@ -1594,6 +1573,9 @@ async function resolveMarketingTenant() {
   ) {
 
     const websiteData = websiteSnap.data();
+
+    const mappedDomain = String(websiteData.domain || hostname).toLowerCase().replace(/^www\./, "");
+    if (mappedDomain !== hostname) return false;
 
     const customerId = websiteData.customerId;
 
@@ -1739,7 +1721,7 @@ async function loadMarketingContent() {
         marketingItems = results[0].value.docs.map(d => ({
           id: d.id,
           ...d.data()
-        })).filter(item => !item.customerId || item.customerId === "customer1");
+        }));
       } else {
         console.error("Legacy marketing error:", results[0].reason);
       }
@@ -1796,7 +1778,7 @@ async function loadMarketingContent() {
         marketingItems = results[0].value.docs.map(d => ({
           id: d.id,
           ...d.data()
-        })).filter(item => item.customerId === marketingTenantId);
+        }));
 
       } else {
 
@@ -1812,7 +1794,7 @@ async function loadMarketingContent() {
         customerProducts = results[1].value.docs.map(d => ({
           id: d.id,
           ...d.data()
-        })).filter(item => item.customerId === marketingTenantId);
+        }));
 
       } else {
 
