@@ -866,17 +866,59 @@ function renderHeroSlider(items) {
     const slide = document.createElement("div");
     slide.className = "hero-marketing-slide";
 
-    if (item.type === "videos") {
+   if (item.type === "videos") {
       const video = document.createElement("video");
 
       video.src = safeURL(item.mediaUrl);
       video.muted = true;
-      video.controls = false;
+      video.defaultMuted = true;
+      video.autoplay = true;
+      video.loop = false;
+      video.controls = true;
       video.playsInline = true;
       video.preload = "auto";
 
       video.setAttribute("muted", "");
+      video.setAttribute("autoplay", "");
       video.setAttribute("playsinline", "");
+      video.setAttribute("controls", "");
+
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.objectFit = "cover";
+      video.style.background = "#000";
+
+      const poster = safeURL(item.thumbnailUrl);
+
+      if (poster) {
+        video.poster = poster;
+      }
+
+      video.addEventListener("loadeddata", () => {
+        console.log("Hero video loaded:", item.title);
+      });
+
+      video.addEventListener("error", () => {
+        console.error(
+          "Hero video loading failed:",
+          item.title,
+          video.error,
+          item.mediaUrl
+        );
+
+        if (slides[currentIndex] === slide) {
+          clearTimeout(autoSlideTimer);
+          autoSlideTimer = setTimeout(nextSlide, 5000);
+        }
+      });
+
+      video.addEventListener("ended", () => {
+        if (slides[currentIndex] === slide) {
+          nextSlide();
+        }
+      });
+
+      slide.appendChild(video);
 
       const poster = safeURL(item.thumbnailUrl);
       if (poster) video.poster = poster;
@@ -967,10 +1009,8 @@ function renderHeroSlider(items) {
         video.currentTime = 0;
 
         video.play().catch(error => {
-          console.log("Hero video play issue:", error);
-
-          autoSlideTimer = setTimeout(nextSlide, 5000);
-        });
+  console.error("Hero video play issue:", error);
+});
       } else {
         video.pause();
         video.currentTime = 0;
@@ -1341,7 +1381,7 @@ async function loadMarketingContent() {
        HERO SLIDER
     ===================================== */
 
-    renderHeroSlider(marketingItems);
+    renderHeroSlider(allMarketingItems);
 
     /* =====================================
        RENDER ALL SECTIONS
