@@ -13,7 +13,20 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 /* =========================================
-   Intello Electric - PUBLIC WEBSITE APP
+   GLOBAL VARIABLES
+========================================= */
+
+let currentTenantId = null;
+let currentTenant = null;
+let currentWebsiteMode = null;
+
+let allProducts = [];
+let filteredProducts = [];
+let currentProduct = null;
+let captchaAnswer = null;
+
+/* =========================================
+   WEBSITE SETTINGS
 ========================================= */
 
 const LEGACY_WHATSAPP_NUMBER = "919663116089";
@@ -21,64 +34,241 @@ const INTELLO_WHATSAPP_NUMBER = "919448735433";
 const INTELLO_EMAIL = "intelloelectric@gmail.com";
 const INTELLO_LOGO = "images/intello-logo.png";
 
-function getBrandName() {
-  return currentWebsiteMode === "legacy" ? "Intello Electric" : (currentTenant?.businessName === "Intelloelectric" ? "Intello Electric" : (currentTenant?.businessName || "Intello Electric"));
-}
-function getWhatsAppNumber() {
-  if (currentWebsiteMode === "legacy") return LEGACY_WHATSAPP_NUMBER;
-  const raw = String(currentTenant?.phone || INTELLO_WHATSAPP_NUMBER).replace(/\D/g, "");
-  return raw.startsWith("91") ? raw : `91${raw}`;
-}
-function getFallbackImage() {
-  return currentWebsiteMode === "legacy" ? DEFAULT_IMAGE : INTELLO_LOGO;
-}
-function applyTenantBranding() {
-  if (currentWebsiteMode === "legacy") return;
-  const name = getBrandName();
-  const phone = "+91 94487 35433";
-  const digits = getWhatsAppNumber();
-  const email = INTELLO_EMAIL;
-  document.title = `${name} | Computer and CCTV Sales and Services`;
-  document.querySelector('meta[name="description"]')?.setAttribute("content", `${name} provides computer, laptop, CCTV, door phone and security system sales and services.`);
-  document.querySelector('meta[name="author"]')?.setAttribute("content", name);
-  document.querySelector('meta[name="keywords"]')?.setAttribute("content", `${name}, Computer Sales, Laptop Sales, CCTV, Door Phone, Security Systems`);
-  document.querySelector('link[rel="canonical"]')?.setAttribute("href", `https://${location.hostname.replace(/^www\./, "")}/`);
-  const logo = document.getElementById("siteLogo");
-  if (logo) { logo.src = INTELLO_LOGO; logo.alt = `${name} Logo`; logo.style.display = "block"; }
-  const favicon = document.getElementById("siteFavicon");
-  if (favicon) favicon.href = INTELLO_LOGO;
-  const brand = document.getElementById("siteBrandName"); if (brand) brand.textContent = name;
-  const brandTag = document.getElementById("siteBrandTagline"); if (brandTag) brandTag.textContent = "COMPUTER AND CCTV SALES AND SERVICES";
-  const topPhone = document.getElementById("topPhoneLink"); if (topPhone) { topPhone.href = `tel:${phone.replace(/\s/g, "")}`; topPhone.textContent = phone; }
-  const footerBrand = document.getElementById("footerBrandName"); if (footerBrand) footerBrand.textContent = name;
-  const copyright = document.getElementById("footerCopyrightBrand"); if (copyright) copyright.textContent = name;
-  const popupBrand = document.getElementById("popupCompanyName"); if (popupBrand) popupBrand.textContent = name;
-  ["footerPhoneLink", "popupPhoneLink"].forEach(id => { const a=document.getElementById(id); if(a){a.href=`https://wa.me/${digits}`; a.textContent=phone;} });
-  ["footerEmailLink", "popupEmailLink"].forEach(id => { const a=document.getElementById(id); if(a){a.href=`mailto:${email}`; a.textContent=email;} });
-  const float = document.getElementById("floatingWhatsApp"); if (float) { float.href=`https://wa.me/${digits}`; float.setAttribute("aria-label", `Contact ${name} on WhatsApp`); }
-  const fallback = document.getElementById("heroFallbackImage"); if (fallback) { fallback.src=INTELLO_LOGO; fallback.alt=`${name} Logo`; fallback.style.objectFit="contain"; fallback.style.padding="24px"; fallback.style.boxSizing="border-box"; }
-  const partner = document.getElementById("partnerDescription"); if (partner) partner.textContent = `Interested in working with ${name}? Contact us to discuss business and partnership opportunities.`;
-  const contactDescription = document.getElementById("mainContactDescription"); if (contactDescription) contactDescription.textContent = `Contact ${name} for computer, CCTV and complete security solutions.`;
-  document.querySelectorAll(".tenant-category-image").forEach(img => { img.src=INTELLO_LOGO; img.alt=`${name} products`; img.style.objectFit="contain"; });
-  document.querySelectorAll(".site-footer p").forEach(p => { if (p.textContent.includes("Contact Intello Electric")) p.textContent = `Contact ${name} for computer, CCTV and security solutions.`; });
-  document.querySelectorAll(".contact-detail-item").forEach(el => { if (el.textContent.includes("Ajay Hasda")) el.lastChild.textContent = currentTenant?.ownerName || "FAYAZ"; });
-}
-
-
 const DEFAULT_IMAGE =
   "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
 
-let currentTenant = null;
-let currentTenantId = "";
-let currentWebsiteMode = "legacy";
+/* =========================================
+   BRANDING HELPERS
+========================================= */
 
-let allProducts = [];
-let filteredProducts = [];
-let currentProduct = null;
-let captchaAnswer = 0;
+function getBrandName() {
+  if (currentWebsiteMode === "legacy") {
+    return "RB Tech Solution";
+  }
+
+  return currentTenant?.businessName === "Intelloelectric"
+    ? "Intello Electric"
+    : (currentTenant?.businessName || "Intello Electric");
+}
+
+function getWhatsAppNumber() {
+  if (currentWebsiteMode === "legacy") {
+    return LEGACY_WHATSAPP_NUMBER;
+  }
+
+  const raw = String(
+    currentTenant?.phone || INTELLO_WHATSAPP_NUMBER
+  ).replace(/\D/g, "");
+
+  return raw.startsWith("91") ? raw : `91${raw}`;
+}
+
+function getFallbackImage() {
+  return currentWebsiteMode === "legacy"
+    ? DEFAULT_IMAGE
+    : INTELLO_LOGO;
+}
+
+function getTenantEmail() {
+  return currentTenant?.email ||
+    currentTenant?.businessEmail ||
+    INTELLO_EMAIL;
+}
+
+function getTenantPhoneDisplay() {
+  const number = getWhatsAppNumber();
+  return `+${number.slice(0, 2)} ${number.slice(2)}`;
+}
 
 /* =========================================
-   HELPERS
+   REPLACE STATIC WEBSITE TEXT
+========================================= */
+
+function replaceTenantText() {
+  if (currentWebsiteMode !== "customer") return;
+
+  const name = getBrandName();
+  const phone = getTenantPhoneDisplay();
+  const email = getTenantEmail();
+  const owner = currentTenant?.ownerName || "FAYAZ";
+
+  const replacements = [
+    [/RB TECH SOLUTION/g, name.toUpperCase()],
+    [/RB Tech Solution/g, name],
+    [/RB Tech solution/g, name],
+    [/Ajay Hasda/g, owner],
+    [/ajayhasda623@gmail\.com/g, email],
+    [/\+91 96631 16089/g, phone],
+    [/919663116089/g, getWhatsAppNumber()],
+    [/CCTV & SECURITY SYSTEMS/g, "COMPUTER AND CCTV SALES AND SERVICES"],
+    [/CCTV & Security Systems/g, "Computer and CCTV Sales and Services"]
+  ];
+
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT
+  );
+
+  const textNodes = [];
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const parent = node.parentElement;
+
+    if (!parent) continue;
+
+    if (
+      ["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA"].includes(parent.tagName)
+    ) {
+      continue;
+    }
+
+    textNodes.push(node);
+  }
+
+  textNodes.forEach(node => {
+    let value = node.nodeValue;
+
+    replacements.forEach(([pattern, replacement]) => {
+      value = value.replace(pattern, () => replacement);
+    });
+
+    node.nodeValue = value;
+  });
+}
+
+/* =========================================
+   APPLY TENANT BRANDING
+========================================= */
+
+function applyTenantBranding() {
+  const name = getBrandName();
+
+  // Original RB Tech website
+  if (currentWebsiteMode === "legacy") {
+    document.title = "RB Tech Solution | CCTV & Security Systems";
+    return;
+  }
+
+  const phone = getTenantPhoneDisplay();
+  const digits = getWhatsAppNumber();
+  const email = getTenantEmail();
+
+  const logoPath =
+    currentTenant?.logoUrl ||
+    currentTenant?.logo ||
+    INTELLO_LOGO;
+
+  document.title =
+    `${name} | Computer and CCTV Sales and Services`;
+
+  document.querySelector('meta[name="description"]')
+    ?.setAttribute(
+      "content",
+      `${name} provides computer, laptop, CCTV, door phone and security system sales and services.`
+    );
+
+  document.querySelector('meta[name="author"]')
+    ?.setAttribute("content", name);
+
+  document.querySelector('meta[name="keywords"]')
+    ?.setAttribute(
+      "content",
+      `${name}, Computer Sales, Laptop Sales, CCTV, Door Phone, Security Systems`
+    );
+
+  document.querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", "#087f3c");
+
+  document.querySelector('link[rel="canonical"]')
+    ?.setAttribute(
+      "href",
+      `https://${location.hostname.replace(/^www\./, "")}/`
+    );
+
+  // Logo and favicon
+  document.querySelectorAll(
+    ".brand img, #siteLogo, #siteFavicon, link[rel='icon']"
+  ).forEach(element => {
+    if (element.tagName === "LINK") {
+      element.href = logoPath;
+    } else {
+      element.src = logoPath;
+      element.alt = `${name} Logo`;
+      element.style.display = "block";
+      element.style.objectFit = "contain";
+    }
+  });
+
+  // Hero image
+  document.querySelectorAll(
+    ".hero-static-image, #heroFallbackImage"
+  ).forEach(image => {
+    image.src = logoPath;
+    image.alt = name;
+    image.style.objectFit = "contain";
+    image.style.background = "#fff";
+  });
+
+  // Phone links
+  document.querySelectorAll(
+    'a[href^="tel:"], #topPhoneLink'
+  ).forEach(link => {
+    link.href = `tel:+${digits}`;
+    link.textContent = phone;
+  });
+
+  // WhatsApp links
+  document.querySelectorAll(
+    'a[href*="wa.me"], .whatsapp-float, #floatingWhatsApp'
+  ).forEach(link => {
+    link.href = `https://wa.me/${digits}`;
+    link.setAttribute(
+      "aria-label",
+      `Contact ${name} on WhatsApp`
+    );
+  });
+
+  // Email links
+  document.querySelectorAll('a[href^="mailto:"]')
+    .forEach(link => {
+      link.href = `mailto:${email}`;
+      link.textContent = email;
+    });
+
+  // Footer and popup
+  document.querySelectorAll(
+    "#footerBrandName, #footerCopyrightBrand, #popupCompanyName, #siteBrandName"
+  ).forEach(element => {
+    element.textContent = name;
+  });
+
+  document.querySelectorAll(
+    "#footerPhoneLink, #popupPhoneLink"
+  ).forEach(link => {
+    link.href = `https://wa.me/${digits}`;
+    link.textContent = phone;
+  });
+
+  document.querySelectorAll(
+    "#footerEmailLink, #popupEmailLink"
+  ).forEach(link => {
+    link.href = `mailto:${email}`;
+    link.textContent = email;
+  });
+
+  const tagline = document.getElementById("siteBrandTagline");
+
+  if (tagline) {
+    tagline.textContent =
+      "COMPUTER AND CCTV SALES AND SERVICES";
+  }
+
+  replaceTenantText();
+}
+
+/* =========================================
+   GENERAL HELPERS
 ========================================= */
 
 function escapeHTML(value = "") {
@@ -94,7 +284,9 @@ function escapeHTML(value = "") {
 function safeURL(value = "") {
   const url = String(value || "").trim();
 
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
 
   return getFallbackImage();
 }
@@ -180,7 +372,6 @@ function isTrending(product) {
 
 /* =========================================
    PRODUCT DETAILS CSS
-   Only affects product details modal
 ========================================= */
 
 function addProductDetailsStyles() {
@@ -550,47 +741,64 @@ function addProductDetailsStyles() {
 }
 
 /* =========================================
-   TENANT / CUSTOMER WEBSITE
+   RESOLVE WEBSITE TENANT
 ========================================= */
-
 
 async function resolveWebsiteTenant() {
   const hostname = location.hostname
     .toLowerCase()
     .replace(/^www\./, "");
 
-  // Optional SPCK preview: append ?tenant=intelloelectric to preview URL.
-  if (new URLSearchParams(location.search).get("tenant") === "intelloelectric") {
-    const snap = await getDoc(doc(db, "customers", "intelloelectric"));
-    if (!snap.exists() || snap.data().status !== "active") return false;
+  const pathname = location.pathname.toLowerCase();
+
+  // SPCK preview
+  if (
+    new URLSearchParams(location.search).get("tenant") ===
+    "intelloelectric"
+  ) {
+    const snap = await getDoc(
+      doc(db, "customers", "intelloelectric")
+    );
+
+    if (!snap.exists() || snap.data().status !== "active") {
+      return false;
+    }
+
     currentTenantId = "intelloelectric";
-    currentTenant = { id: currentTenantId, ...snap.data() };
+    currentTenant = {
+      id: currentTenantId,
+      ...snap.data()
+    };
+
     currentWebsiteMode = "customer";
     return true;
   }
 
-  const legacyHosts = [
-    "rb-tech-solution-camera-pluse.pages.dev",
-    "ajayhasdapadmob.github.io",
-    "localhost",
-    "127.0.0.1"
-  ];
+  // RB Tech official website
+  const isLegacyWebsite =
+    hostname === "rb-tech-solution-camera-pluse.pages.dev" ||
+    (
+      hostname === "ajayhasdapadmob.github.io" &&
+      pathname.startsWith("/rb-tech-solution-camera-pluse/")
+    ) ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
 
-  // Original Intello Electric website
-  if (legacyHosts.includes(hostname)) {
-    currentWebsiteMode = "legacy";
-    currentTenantId = "customer1";
-
+  if (isLegacyWebsite) {
     const snap = await getDoc(
       doc(db, "customers", "customer1")
     );
 
-    currentTenant = snap.exists() ? snap.data() : null;
+    currentTenantId = "customer1";
+    currentTenant = snap.exists()
+      ? { id: currentTenantId, ...snap.data() }
+      : null;
 
+    currentWebsiteMode = "legacy";
     return true;
   }
 
-  // Find custom domain in publicWebsites
+  // Custom domain mapping
   const websiteSnap = await getDoc(
     doc(db, "publicWebsites", hostname)
   );
@@ -609,7 +817,6 @@ async function resolveWebsiteTenant() {
     }
 
     const customerId = website.customerId;
-
     if (!customerId) return false;
 
     const customerSnap = await getDoc(
@@ -628,14 +835,14 @@ async function resolveWebsiteTenant() {
       id: customerId,
       ...customerSnap.data()
     };
+
     currentWebsiteMode = "customer";
 
-    console.log("Website tenant:", currentTenantId);
-
+    console.log("Customer website:", currentTenantId);
     return true;
   }
 
-  // Fallback: find domain in customers
+  // Fallback: search domain in customer records
   const customersSnap = await getDocs(
     collection(db, "customers")
   );
@@ -667,12 +874,10 @@ async function resolveWebsiteTenant() {
     id: matched.id,
     ...matched.data()
   };
-  currentWebsiteMode = "customer";
 
+  currentWebsiteMode = "customer";
   return true;
 }
-
-
 
 /* =========================================
    LOAD TENANT-SPECIFIC PRODUCTS
@@ -689,7 +894,6 @@ async function loadProducts() {
   try {
     const productMap = new Map();
 
-    // Tenant verification
     if (
       !currentTenantId ||
       !["legacy", "customer"].includes(currentWebsiteMode)
@@ -697,11 +901,7 @@ async function loadProducts() {
       throw new Error("Website tenant is not verified.");
     }
 
-    // =====================================
-    // OLD RB TECH PRODUCTS
-    // Only on legacy website
-    // =====================================
-
+    // Old RB Tech products: legacy website only
     if (currentWebsiteMode === "legacy") {
       try {
         const oldQuery = query(
@@ -718,17 +918,12 @@ async function loadProducts() {
             sourceCollection: "products"
           });
         });
-
       } catch (error) {
         console.warn("Legacy products not loaded:", error);
       }
     }
 
-    // =====================================
-    // CURRENT CUSTOMER PRODUCTS
-    // Only matching customerId
-    // =====================================
-
+    // Customer products: only matching customerId
     const customerQuery = query(
       collection(db, "customerProducts"),
       where("customerId", "==", currentTenantId),
@@ -744,10 +939,6 @@ async function loadProducts() {
         sourceCollection: "customerProducts"
       });
     });
-
-    // =====================================
-    // FINAL PRODUCT DATA
-    // =====================================
 
     allProducts = Array.from(productMap.values());
     filteredProducts = [...allProducts];
@@ -849,8 +1040,13 @@ function filterProducts() {
   const searchInput = document.getElementById("searchInput");
   const categoryFilter = document.getElementById("categoryFilter");
 
-  const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
-  const category = categoryFilter ? categoryFilter.value : "";
+  const search = searchInput
+    ? searchInput.value.trim().toLowerCase()
+    : "";
+
+  const category = categoryFilter
+    ? categoryFilter.value
+    : "";
 
   filteredProducts = allProducts.filter(product => {
     const searchable = [
@@ -859,7 +1055,10 @@ function filterProducts() {
       product.model,
       product.category,
       product.description
-    ].filter(Boolean).join(" ").toLowerCase();
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
     return (
       (!search || searchable.includes(search)) &&
@@ -943,7 +1142,7 @@ function countryOptionsHTML() {
 }
 
 /* =========================================
-   RFI FORM
+   PRODUCT RFI FORM
 ========================================= */
 
 function productRFIFormHTML(product) {
@@ -1071,7 +1270,10 @@ function openProductDetails(productId) {
       aria-label="Close product details">×</button>
 
     <div class="rb-detail-header">
-      <div class="rb-detail-brand">${escapeHTML(getBrandName().toUpperCase())} | COMPUTER & CCTV SALES AND SERVICES</div>
+      <div class="rb-detail-brand">
+        ${escapeHTML(getBrandName().toUpperCase())}
+        | COMPUTER & CCTV SALES AND SERVICES
+      </div>
       <h2>${escapeHTML(getProductName(product))}</h2>
     </div>
 
@@ -1180,7 +1382,7 @@ function closeProductModal() {
 }
 
 /* =========================================
-   WHATSAPP ENQUIRY
+   WHATSAPP PRODUCT ENQUIRY
 ========================================= */
 
 function whatsappProduct(productId) {
@@ -1274,7 +1476,10 @@ async function submitProductRFI(event) {
       privacyAccepted: true
     });
 
-    showMessage("Your enquiry has been submitted successfully.", "success");
+    showMessage(
+      "Your enquiry has been submitted successfully.",
+      "success"
+    );
 
     form.reset();
     closeProductModal();
@@ -1386,8 +1591,18 @@ window.closeProductModal = closeProductModal;
 async function initializeWebsite() {
   try {
     const tenantReady = await resolveWebsiteTenant();
-    if (!tenantReady) throw new Error("This domain is not mapped to an active customer website. For SPCK preview, add ?tenant=intelloelectric to the URL.");
+
+    if (!tenantReady) {
+      throw new Error(
+        "This domain is not mapped to an active customer website. For SPCK preview, add ?tenant=intelloelectric to the URL."
+      );
+    }
+
     applyTenantBranding();
+
+    requestAnimationFrame(() => {
+      applyTenantBranding();
+    });
 
     const search = document.getElementById("searchInput");
     const category = document.getElementById("categoryFilter");
