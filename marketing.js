@@ -862,99 +862,68 @@ function renderHeroSlider(items) {
 
   const slides = [];
 
-  mediaItems.forEach((item, index) => {
-    const slide = document.createElement("div");
-    slide.className = "hero-marketing-slide";
 
-   if (item.type === "videos") {
-      const video = document.createElement("video");
+mediaItems.forEach((item, index) => {
+  const slide = document.createElement("div");
+  slide.className = "hero-marketing-slide";
 
-      video.src = safeURL(item.mediaUrl);
-      video.muted = true;
-      video.defaultMuted = true;
-      video.autoplay = true;
-      video.loop = false;
-      video.controls = true;
-      video.playsInline = true;
-      video.preload = "auto";
+  if (item.type === "videos") {
+    const video = document.createElement("video");
 
-      video.setAttribute("muted", "");
-      video.setAttribute("autoplay", "");
-      video.setAttribute("playsinline", "");
-      video.setAttribute("controls", "");
+    video.src = safeURL(item.mediaUrl);
+    video.muted = true;
+    video.defaultMuted = true;
+    video.autoplay = true;
+    video.loop = false;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "auto";
 
-      video.style.width = "100%";
-      video.style.height = "100%";
-      video.style.objectFit = "cover";
-      video.style.background = "#000";
+    video.style.width = "100%";
+    video.style.height = "100%";
+    video.style.objectFit = "cover";
+    video.style.background = "#000";
 
-      const poster = safeURL(item.thumbnailUrl);
-
-      if (poster) {
-        video.poster = poster;
-      }
-
-      video.addEventListener("loadeddata", () => {
-        console.log("Hero video loaded:", item.title);
-      });
-
-      video.addEventListener("error", () => {
-        console.error(
-          "Hero video loading failed:",
-          item.title,
-          video.error,
-          item.mediaUrl
-        );
-
-        if (slides[currentIndex] === slide) {
-          clearTimeout(autoSlideTimer);
-          autoSlideTimer = setTimeout(nextSlide, 5000);
-        }
-      });
-
-      video.addEventListener("ended", () => {
-        if (slides[currentIndex] === slide) {
-          nextSlide();
-        }
-      });
-
-      slide.appendChild(video);
-
-      const poster = safeURL(item.thumbnailUrl);
-      if (poster) video.poster = poster;
-
-      video.addEventListener("ended", () => {
-        if (slides[currentIndex] === slide) {
-          nextSlide();
-        }
-      });
-
-      video.addEventListener("error", () => {
-        if (slides[currentIndex] === slide) {
-          clearTimeout(autoSlideTimer);
-          autoSlideTimer = setTimeout(nextSlide, 5000);
-        }
-      });
-
-      slide.appendChild(video);
-    } else {
-      const img = document.createElement("img");
-
-      img.src = getImage(item);
-
-      img.alt = item.title ||
-        (marketingWebsiteMode === "customer"
-          ? "Intello Electric"
-          : "RB Tech Solution");
-
-      img.loading = index === 0 ? "eager" : "lazy";
-
-      slide.appendChild(img);
+    const poster = safeURL(item.thumbnailUrl);
+    if (poster) {
+      video.poster = poster;
     }
 
-    slider.appendChild(slide);
-    slides.push(slide);
-  });
+    video.addEventListener("error", () => {
+      console.error("Hero video loading failed:", item.title, item.mediaUrl);
+
+      if (slides[currentIndex] === slide) {
+        clearTimeout(autoSlideTimer);
+        autoSlideTimer = setTimeout(nextSlide, 5000);
+      }
+    });
+
+    video.addEventListener("ended", () => {
+      if (slides[currentIndex] === slide) {
+        nextSlide();
+      }
+    });
+
+    slide.appendChild(video);
+
+  } else {
+    const img = document.createElement("img");
+
+    img.src = getImage(item);
+    img.alt = item.title ||
+      (marketingWebsiteMode === "customer"
+        ? "Intello Electric"
+        : "RB Tech Solution");
+
+    img.loading = index === 0 ? "eager" : "lazy";
+
+    slide.appendChild(img);
+  }
+
+  slider.appendChild(slide);
+  slides.push(slide);
+});
+
 
   const previous = document.createElement("button");
   previous.type = "button";
