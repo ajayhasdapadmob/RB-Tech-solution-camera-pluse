@@ -1083,8 +1083,10 @@ function convertCustomerProductToGallery(product) {
   };
 }
 
+
 /* =====================================
    RESOLVE CURRENT WEBSITE TENANT
+   PUBLIC DOMAIN MAPPING
 ===================================== */
 
 async function resolveMarketingTenant() {
@@ -1092,12 +1094,23 @@ async function resolveMarketingTenant() {
     .toLowerCase()
     .replace(/^www\./, "");
 
+  const pathname = location.pathname.toLowerCase();
+
   marketingTenantId = "";
   marketingTenantUid = "";
   marketingWebsiteMode = "blocked";
 
-  // RB Tech की पुरानी वेबसाइट
-  if (LEGACY_HOSTS.includes(hostname)) {
+  // RB Tech पुरानी वेबसाइट
+  const isLegacyWebsite =
+    hostname === "rb-tech-solution-camera-pluse.pages.dev" ||
+    (
+      hostname === "ajayhasdapadmob.github.io" &&
+      pathname.startsWith("/rb-tech-solution-camera-pluse/")
+    ) ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+
+  if (isLegacyWebsite) {
     marketingWebsiteMode = "legacy";
     marketingTenantId = "customer1";
 
@@ -1105,15 +1118,25 @@ async function resolveMarketingTenant() {
     return true;
   }
 
-  // पहले publicWebsites में domain mapping
-  const websiteRef = doc(db, "publicWebsites", hostname);
-  const websiteSnap = await getDoc(websiteRef);
+  // दूसरे domains के लिए publicWebsites mapping
+  try {
+    const websiteRef = doc(
+      db,
+      "publicWebsites",
+      hostname
+    );
 
-  if (websiteSnap.exists()) {
+    const websiteSnap = await getDoc(websiteRef);
+
+    if (!websiteSnap.exists()) {
+      console.error("Website mapping not found:", hostname);
+      return false;
+    }
+
     const websiteData = websiteSnap.data();
 
     if (websiteData.active !== true) {
-      console.error("Website mapping is inactive:", hostname);
+      console.error("Website mapping inactive:", hostname);
       return false;
     }
 
@@ -1124,78 +1147,29 @@ async function resolveMarketingTenant() {
       .replace(/^www\./, "");
 
     if (mappedDomain !== hostname) {
-      console.error("Domain mapping mismatch:", hostname);
+      console.error("Domain mismatch:", hostname);
       return false;
     }
-
-    const customerId = websiteData.customerId;
-
-    if (!customerId) {
-      console.error("Customer ID missing in website mapping.");
-      return false;
-    }
-
-    const customerSnap = await getDoc(
-      doc(db, "customers", customerId)
-    );
 
     if (
-      !customerSnap.exists() ||
-      customerSnap.data().status !== "active"
+      typeof websiteData.customerId !== "string" ||
+      !websiteData.customerId.trim()
     ) {
-      console.error("Customer is inactive:", customerId);
+      console.error("Customer ID missing in public mapping");
       return false;
     }
 
-    marketingTenantId = customerId;
-    marketingTenantUid = customerSnap.data().uid || "";
+    marketingTenantId = websiteData.customerId;
     marketingWebsiteMode = "customer";
 
     console.log("Marketing tenant:", marketingTenantId);
 
     return true;
+
+  } catch (error) {
+    console.error("Domain mapping error:", error);
+    return false;
   }
-
-  // Fallback: customers में domain खोजें
-  const customersSnap = await getDocs(
-    collection(db, "customers")
-  );
-
-  const matchedCustomer = customersSnap.docs.find(item => {
-    const data = item.data();
-
-    const domains = [
-      data.domain,
-      data.customDomain,
-      data.websiteDomain,
-      ...(Array.isArray(data.domains) ? data.domains : [])
-    ]
-      .filter(Boolean)
-      .map(domain =>
-        String(domain)
-          .toLowerCase()
-          .replace(/^www\./, "")
-      );
-
-    return domains.includes(hostname);
-  });
-
-  if (
-    matchedCustomer &&
-    matchedCustomer.data().status === "active"
-  ) {
-    marketingTenantId = matchedCustomer.id;
-    marketingTenantUid = matchedCustomer.data().uid || "";
-    marketingWebsiteMode = "customer";
-
-    console.log("Marketing tenant:", marketingTenantId);
-
-    return true;
-  }
-
-  console.error("Website tenant not found:", hostname);
-
-  return false;
 }
 
 /* =====================================
