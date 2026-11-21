@@ -24,8 +24,17 @@ import {
 
 const CLOUDINARY_NAME = "ch5mab4a";
 const CLOUDINARY_PRESET = "rbtech_products";
-const CLOUDINARY_FOLDER = "rb-tech-solution/marketing";
+function getMarketingCloudinaryFolder(type) {
+  const customerId = String(marketingCustomer?.id || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "");
 
+  if (!customerId) {
+    throw new Error("Invalid customer ID.");
+  }
+
+  return `rb-tech-solution/tenants/${customerId}/marketing/${type}`;
+}
 
 const MARKETING_TYPES = {
   companyNews: {
@@ -237,7 +246,10 @@ async function uploadMarketingFile(file, type) {
 
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_PRESET);
-  formData.append("folder", CLOUDINARY_FOLDER);
+  formData.append(
+  "folder",
+  getMarketingCloudinaryFolder(type)
+);
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -689,7 +701,27 @@ async function marketingSave(event) {
         item => item.id === editingMarketingId
       )
     : null;
+if (editingMarketingId && !existing) {
+  marketingMessage(
+    "Marketing record not found.",
+    "error"
+  );
+  return;
+}
 
+if (
+  existing &&
+  (
+    existing.customerId !== marketingCustomer.id ||
+    existing.customerUid !== marketingCurrentUid()
+  )
+) {
+  marketingMessage(
+    "You cannot edit another customer's content.",
+    "error"
+  );
+  return;
+}
   if (!existing && !files.length) {
     marketingMessage("Please select a file.", "error");
     return;
