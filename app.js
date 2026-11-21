@@ -32,7 +32,7 @@ let captchaAnswer = null;
 const LEGACY_WHATSAPP_NUMBER = "919663116089";
 const INTELLO_WHATSAPP_NUMBER = "919448735433";
 const INTELLO_EMAIL = "intelloelectric@gmail.com";
-const INTELLO_LOGO = "images/intello-logo.png";
+const INTELLO_LOGO = "images/products/intello-logo.png";
 
 const DEFAULT_IMAGE =
   "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
