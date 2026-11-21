@@ -1103,6 +1103,7 @@ async function resolveMarketingTenant() {
   // RB Tech पुरानी वेबसाइट
   const isLegacyWebsite =
     hostname === "rb-tech-solution-camera-pluse.pages.dev" ||
+    hostname === "rb-tech-solution-camera-pluse-pages.pages.dev" ||
     (
       hostname === "ajayhasdapadmob.github.io" &&
       pathname.startsWith("/rb-tech-solution-camera-pluse/")
