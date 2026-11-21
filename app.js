@@ -803,6 +803,29 @@ async function resolveWebsiteTenant() {
     return true;
   }
 
+  // INTELLO ELECTRIC OFFICIAL DOMAIN
+  if (hostname === "intelloelectric.com") {
+    const snap = await getDoc(
+      doc(db, "customers", "intelloelectric")
+    );
+
+    if (!snap.exists() || snap.data().status !== "active") {
+      console.error("Intello Electric customer is not active.");
+      return false;
+    }
+
+    currentTenantId = "intelloelectric";
+    currentTenant = {
+      id: currentTenantId,
+      ...snap.data()
+    };
+
+    currentWebsiteMode = "customer";
+
+    console.log("Intello Electric website loaded.");
+    return true;
+  }
+
   // Custom domain mapping
   const websiteSnap = await getDoc(
     doc(db, "publicWebsites", hostname)
