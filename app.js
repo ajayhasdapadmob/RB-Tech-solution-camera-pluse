@@ -138,58 +138,49 @@ function replaceTenantText() {
   });
 }
 
+
 /* =========================================
    APPLY TENANT BRANDING
 ========================================= */
 
 function applyTenantBranding() {
-  const name = getBrandName();
+  const isIntello = currentTenantId === "intelloelectric";
+  const isRBTech = currentTenantId === "customer1";
 
-  // Original RB Tech website
-  if (currentWebsiteMode === "legacy") {
-    document.title = "RB Tech Solution | CCTV & Security Systems";
-    return;
-  }
+  const name = isIntello
+    ? "Intello Electric"
+    : "RB Tech Solution";
 
-  const phone = getTenantPhoneDisplay();
-  const digits = getWhatsAppNumber();
-  const email = getTenantEmail();
+  // Separate contact details
+  const phone = isIntello
+    ? "+91 94487 73543"
+    : "+91 96631 16089";
 
-  const logoPath =
-  currentTenantId === "intelloelectric"
+  const digits = isIntello
+    ? "919448735433"
+    : "919663116089";
+
+  const email = isIntello
+    ? "intelloelectric@gmail.com"
+    : "ajayhasda623@gmail.com";
+
+  // Separate logos
+  const logoPath = isIntello
     ? INTELLO_LOGO
-    : (
-        currentTenant?.logoUrl ||
-        currentTenant?.logo ||
-        INTELLO_LOGO
-      );
+    : "images/logo.png";
 
+  // Page title
   document.title =
     `${name} | Computer and CCTV Sales and Services`;
 
   document.querySelector('meta[name="description"]')
     ?.setAttribute(
       "content",
-      `${name} provides computer, laptop, CCTV, door phone and security system sales and services.`
+      `${name} - Computer, CCTV and Security Systems`
     );
 
   document.querySelector('meta[name="author"]')
     ?.setAttribute("content", name);
-
-  document.querySelector('meta[name="keywords"]')
-    ?.setAttribute(
-      "content",
-      `${name}, Computer Sales, Laptop Sales, CCTV, Door Phone, Security Systems`
-    );
-
-  document.querySelector('meta[name="theme-color"]')
-    ?.setAttribute("content", "#087f3c");
-
-  document.querySelector('link[rel="canonical"]')
-    ?.setAttribute(
-      "href",
-      `https://${location.hostname.replace(/^www\./, "")}/`
-    );
 
   // Logo and favicon
   document.querySelectorAll(
@@ -205,21 +196,11 @@ function applyTenantBranding() {
     }
   });
 
-  // Hero image
-  document.querySelectorAll(
-    ".hero-static-image, #heroFallbackImage"
-  ).forEach(image => {
-    image.src = logoPath;
-    image.alt = name;
-    image.style.objectFit = "contain";
-    image.style.background = "#fff";
-  });
-
   // Phone links
   document.querySelectorAll(
     'a[href^="tel:"], #topPhoneLink'
   ).forEach(link => {
-    link.href = `tel:+${digits}`;
+    link.href = `tel:${digits}`;
     link.textContent = phone;
   });
 
@@ -228,10 +209,7 @@ function applyTenantBranding() {
     'a[href*="wa.me"], .whatsapp-float, #floatingWhatsApp'
   ).forEach(link => {
     link.href = `https://wa.me/${digits}`;
-    link.setAttribute(
-      "aria-label",
-      `Contact ${name} on WhatsApp`
-    );
+    link.setAttribute("aria-label", `Contact ${name} on WhatsApp`);
   });
 
   // Email links
@@ -265,8 +243,9 @@ function applyTenantBranding() {
   const tagline = document.getElementById("siteBrandTagline");
 
   if (tagline) {
-    tagline.textContent =
-      "COMPUTER AND CCTV SALES AND SERVICES";
+    tagline.textContent = isIntello
+      ? "ELECTRICAL AND SECURITY SOLUTIONS"
+      : "COMPUTER AND CCTV SALES AND SERVICES";
   }
 
   replaceTenantText();
@@ -1299,22 +1278,40 @@ function whatsappProduct(productId) {
   );
 }
 
+
 /* =========================================
    SAVE ENQUIRY
 ========================================= */
 
 async function saveEnquiry(data) {
-  if (!currentTenantId) {
-    throw new Error("Customer website is not identified.");
+  if (
+    !currentTenantId ||
+    !["legacy", "customer"].includes(currentWebsiteMode)
+  ) {
+    throw new Error(
+      "Customer website identify nahi hua. Please contact the website administrator."
+    );
   }
 
-  await addDoc(collection(db, "enquiries"), {
+  const enquiryData = {
     ...data,
     customerId: currentTenantId,
     customerUid: currentTenant?.uid || "",
-    status: "New",
+    status: "new",
+    read: false,
+    source: "website-inquiry",
     createdAt: serverTimestamp()
-  });
+  };
+
+  await addDoc(
+    collection(db, "enquiries"),
+    enquiryData
+  );
+
+  console.log(
+    "Enquiry saved for customer:",
+    currentTenantId
+  );
 }
 
 /* =========================================
