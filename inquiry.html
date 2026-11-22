@@ -6,8 +6,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Product Inquiry | RB Tech Solution</title>
-  <meta name="description" content="Contact us for product inquiries and business requirements.">
+  <title>Product Inquiry | Intello Electric</title>
+
+  <meta name="description" content="Contact Intello Electric for computer, CCTV, electrical products and services.">
+
+  <meta name="theme-color" content="#071b2b">
 
   <link rel="stylesheet" href="style.css">
 
@@ -30,9 +33,11 @@
       font-family: Arial, sans-serif;
     }
 
+    /* HEADER */
+
     .inquiry-header {
       background: var(--navy);
-      padding: 17px 6%;
+      padding: 14px 6%;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -41,24 +46,44 @@
     }
 
     .brand {
-      color: white;
-      font-size: 23px;
-      font-weight: 800;
-      text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .brand span {
-      color: var(--cyan);
+      gap: 13px;
+      color: white;
+      text-decoration: none;
+      min-width: 0;
     }
 
     .brand-logo {
-      height: 42px;
-      width: auto;
-      max-width: 130px;
+      width: 68px;
+      height: 60px;
       object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .brand-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .brand-name {
+      color: white;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-tagline {
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .brand-phone {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
     }
 
     .back-home {
@@ -67,12 +92,15 @@
       border: 1px solid var(--cyan);
       padding: 10px 17px;
       border-radius: 7px;
+      white-space: nowrap;
     }
 
     .back-home:hover {
       background: var(--cyan);
       color: var(--navy);
     }
+
+    /* HERO */
 
     .inquiry-hero {
       background: linear-gradient(120deg, #071b2b, #10465a);
@@ -92,6 +120,8 @@
       line-height: 1.7;
       color: #d8edf0;
     }
+
+    /* FORM */
 
     .inquiry-wrapper {
       width: min(1000px, 92%);
@@ -154,7 +184,7 @@
       font-size: 15px;
       font-family: inherit;
       outline: none;
-      background: #fff;
+      background: white;
       color: #243746;
     }
 
@@ -174,6 +204,8 @@
       color: #e33b3b;
     }
 
+    /* PRIVACY */
+
     .privacy-row {
       display: flex;
       align-items: flex-start;
@@ -188,9 +220,7 @@
       margin-top: 3px;
     }
 
-    .privacy-row label {
-      cursor: pointer;
-    }
+    /* BUTTON */
 
     .submit-btn {
       width: 100%;
@@ -218,10 +248,27 @@
 
     .form-status {
       margin-top: 15px;
+      padding: 12px;
+      border-radius: 7px;
       font-size: 14px;
       text-align: center;
       line-height: 1.5;
+      display: none;
     }
+
+    .form-status.success {
+      display: block;
+      color: #176b35;
+      background: #e8f7ed;
+    }
+
+    .form-status.error {
+      display: block;
+      color: #a52222;
+      background: #fdecec;
+    }
+
+    /* CONTACT DETAILS */
 
     .contact-details {
       display: grid;
@@ -236,7 +283,6 @@
       padding: 17px;
       border-radius: 10px;
       text-align: center;
-      overflow-wrap: anywhere;
     }
 
     .contact-box strong {
@@ -251,6 +297,8 @@
       overflow-wrap: anywhere;
     }
 
+    /* FOOTER */
+
     .inquiry-footer {
       background: var(--navy);
       color: #d8e5eb;
@@ -259,7 +307,41 @@
       font-size: 13px;
     }
 
+    .privacy-link {
+      color: #087f87;
+      text-decoration: none;
+    }
+
+    /* MOBILE */
+
     @media (max-width: 650px) {
+
+      .inquiry-header {
+        padding: 13px 4%;
+      }
+
+      .brand-logo {
+        width: 55px;
+        height: 52px;
+      }
+
+      .brand-name {
+        font-size: 18px;
+      }
+
+      .brand-tagline {
+        font-size: 10px;
+      }
+
+      .brand-phone {
+        font-size: 12px;
+      }
+
+      .back-home {
+        font-size: 12px;
+        padding: 9px 11px;
+      }
+
       .inquiry-card {
         padding: 22px 17px;
       }
@@ -279,10 +361,6 @@
       .inquiry-hero {
         padding: 42px 18px 65px;
       }
-
-      .brand {
-        font-size: 19px;
-      }
     }
   </style>
 </head>
@@ -293,8 +371,30 @@
 
   <header class="inquiry-header">
 
-    <a class="brand" id="businessBrand" href="index.html">
-      RB <span>TECH SOLUTION</span>
+    <a class="brand" href="index.html">
+
+      <img
+        class="brand-logo"
+        src="https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png"
+        alt="Intello Electric Logo"
+      >
+
+      <span class="brand-info">
+
+        <strong class="brand-name">
+          INTELLO ELECTRIC
+        </strong>
+
+        <small class="brand-tagline">
+          COMPUTER AND CCTV SALES AND SERVICES
+        </small>
+
+        <small class="brand-phone">
+          +91 94487 73543
+        </small>
+
+      </span>
+
     </a>
 
     <a class="back-home" href="index.html">
@@ -309,7 +409,7 @@
 
     <h1>Product Inquiry</h1>
 
-    <p id="heroDescription">
+    <p>
       Looking for products or services?
       Share your requirements and our team will get in touch with you.
     </p>
@@ -413,9 +513,8 @@
               id="contactCountry"
               name="country"
               type="text"
-              placeholder="Enter country"
               value="India"
-              maxlength="100"
+              placeholder="Enter country"
             >
 
           </div>
@@ -431,7 +530,6 @@
               name="state"
               type="text"
               placeholder="Enter state"
-              maxlength="100"
             >
 
           </div>
@@ -447,7 +545,6 @@
               name="city"
               type="text"
               placeholder="Enter city"
-              maxlength="100"
             >
 
           </div>
@@ -481,16 +578,61 @@
               required
             >
 
-              <option value="">Select product or service</option>
+              <option value="">
+                Select product or service
+              </option>
 
-              <option value="CCTV Cameras">CCTV Cameras</option>
-              <option value="IP Cameras">IP Cameras</option>
-              <option value="DVR">DVR</option>
-              <option value="NVR">NVR</option>
-              <option value="Video Door Phone">Video Door Phone</option>
-              <option value="CCTV Installation">CCTV Installation</option>
-              <option value="Maintenance / Repair">Maintenance / Repair</option>
-              <option value="Other">Other Inquiry</option>
+              <option value="Computer Products">
+                Computer Products
+              </option>
+
+              <option value="CCTV Cameras">
+                CCTV Cameras
+              </option>
+
+              <option value="IP Cameras">
+                IP Cameras
+              </option>
+
+              <option value="DVR">
+                DVR
+              </option>
+
+              <option value="NVR">
+                NVR
+              </option>
+
+              <option value="Networking Products">
+                Networking Products
+              </option>
+
+              <option value="Electrical Products">
+                Electrical Products
+              </option>
+
+              <option value="Lighting Products">
+                Lighting Products
+              </option>
+
+              <option value="Wires & Cables">
+                Wires & Cables
+              </option>
+
+              <option value="Switches & Switchgear">
+                Switches & Switchgear
+              </option>
+
+              <option value="Electrical Installation">
+                Electrical Installation
+              </option>
+
+              <option value="Maintenance / Repair">
+                Maintenance / Repair
+              </option>
+
+              <option value="Other">
+                Other Inquiry
+              </option>
 
             </select>
 
@@ -514,6 +656,8 @@
 
         </div>
 
+        <!-- PRIVACY CONSENT -->
+
         <div class="privacy-row">
 
           <input
@@ -522,11 +666,13 @@
             required
           >
 
-          <label for="contactPrivacy" id="privacyLabel">
-            I agree to be contacted by RB Tech Solution regarding my inquiry.
+          <label for="contactPrivacy">
+            I agree to be contacted by Intello Electric regarding my inquiry.
           </label>
 
         </div>
+
+        <!-- SUBMIT -->
 
         <button
           type="submit"
@@ -549,45 +695,53 @@
 
       <div class="contact-details">
 
-        <div class="contact-box" id="phoneContactBox">
+        <div class="contact-box">
 
           <strong>📞 Phone / WhatsApp</strong>
 
           <a
-            id="businessPhone"
-            href="https://wa.me/919663116089"
+            href="https://wa.me/919448773543"
             target="_blank"
             rel="noopener"
           >
-            +91 96631 16089
+            +91 94487 73543
           </a>
 
         </div>
 
-        <div class="contact-box" id="emailContactBox">
+        <div class="contact-box">
 
           <strong>✉️ Email</strong>
 
-          <a
-            id="businessEmail"
-            href="mailto:ajayhasda623@gmail.com"
-          >
-            ajayhasda623@gmail.com
+          <a href="mailto:intelloelectric@gmail.com">
+            intelloelectric@gmail.com
           </a>
 
         </div>
 
-        <div class="contact-box" id="addressContactBox">
+        <div class="contact-box">
 
           <strong>📍 Location</strong>
 
-          <span id="businessAddress">
-            India
+          <span>
+            Mangalore, Karnataka, India
           </span>
 
         </div>
 
       </div>
+
+      <!-- PRIVACY POLICY -->
+
+      <p style="text-align:center;font-size:12px;color:#687985;margin-top:22px;">
+
+        By submitting this form, you agree to our
+
+        <a class="privacy-link" href="privacy-policy.html">
+          Privacy Policy
+        </a>.
+
+      </p>
 
     </section>
 
@@ -597,12 +751,11 @@
 
   <footer class="inquiry-footer">
 
-    © 2026 <span id="footerBusinessName">RB Tech Solution</span>.
-    All Rights Reserved.
+    © 2026 Intelloelectric. All Rights Reserved.
 
   </footer>
 
-  <!-- FIREBASE JAVASCRIPT -->
+  <!-- FIREBASE INQUIRY JAVASCRIPT -->
 
   <script type="module">
 
@@ -616,11 +769,6 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-
-    // =====================================
-    // HTML ELEMENTS
-    // =====================================
-
     const form = document.getElementById("websiteInquiryForm");
 
     const submitButton =
@@ -629,399 +777,26 @@
     const statusBox =
       document.getElementById("websiteInquiryStatus");
 
+    const CUSTOMER_ID = "intelloelectric";
 
-    // =====================================
-    // DEFAULT BRANDING
-    // =====================================
-
-    let inquiryCustomerId = "";
-
-    let websiteBrand = {
-
-      name: "RB Tech Solution",
-
-      phone: "919663116089",
-
-      email: "ajayhasda623@gmail.com",
-
-      logo: "images/logo.png",
-
-      address: "Mangalore, Karnataka, India"
-
+    const WEBSITE_BRAND = {
+      name: "Intello Electric",
+      phone: "919448773543",
+      email: "intelloelectric@gmail.com"
     };
-
-
-    // =====================================
-    // STATUS MESSAGE
-    // =====================================
 
     function showStatus(message, success = false) {
 
       statusBox.textContent = message;
 
-      statusBox.style.color =
-        success ? "#087f3c" : "#dc2626";
+      statusBox.className =
+        "form-status " + (success ? "success" : "error");
 
     }
 
-
-    // =====================================
-    // IDENTIFY CUSTOMER WEBSITE
-    // =====================================
-
-    function identifyCustomer() {
-
-      const hostname = window.location.hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-
-      const params =
-        new URLSearchParams(window.location.search);
-
-      const previewTenant = params.get("tenant");
-
-      if (previewTenant) {
-
-        inquiryCustomerId = previewTenant
-          .toLowerCase()
-          .replace(/[^a-z0-9_-]/g, "");
-
-        return;
-      }
-
-      const domainMap = {
-
-        "ajayhasdapadmob.github.io": "customer1",
-
-        "rb-tech-solution-camera-pluse-pages.pages.dev": "customer1",
-
-        "intelloelectric.com": "intelloelectric"
-
-      };
-
-      if (domainMap[hostname]) {
-
-        inquiryCustomerId = domainMap[hostname];
-
-        return;
-      }
-
-      // Other customer domains:
-      // Example: customerdomain.com -> customerdomain
-
-      inquiryCustomerId = hostname
-        .split(".")[0]
-        .toLowerCase()
-        .replace(/[^a-z0-9_-]/g, "");
-
-    }
-
-
-    // =====================================
-    // LOAD CUSTOMER DETAILS FROM FIRESTORE
-    // =====================================
-
-    async function loadCustomerBranding() {
-
-      identifyCustomer();
-
-      if (!inquiryCustomerId) {
-        throw new Error("Customer ID not identified.");
-      }
-
-      const customerRef = doc(
-        db,
-        "customers",
-        inquiryCustomerId
-      );
-
-      const customerSnap = await getDoc(customerRef);
-
-      if (customerSnap.exists()) {
-
-        const customer = customerSnap.data();
-
-        websiteBrand = {
-
-          name:
-            customer.businessName ||
-            websiteBrand.name,
-
-          phone:
-            customer.phone ||
-            customer.whatsapp ||
-            websiteBrand.phone,
-
-          email:
-            customer.email ||
-            websiteBrand.email,
-
-          logo:
-            customer.logoUrl ||
-            customer.logo ||
-            websiteBrand.logo,
-
-          address:
-            customer.address ||
-            websiteBrand.address
-
-        };
-
-      } else if (inquiryCustomerId !== "customer1") {
-
-        throw new Error(
-          "Customer profile not found: " + inquiryCustomerId
-        );
-
-      }
-
-      applyInquiryBranding();
-
-    }
-
-
-    // =====================================
-    // APPLY BRANDING
-    // =====================================
-
-    function applyInquiryBranding() {
-
-      document.title =
-        "Product Inquiry | " + websiteBrand.name;
-
-      // Header brand
-
-      const brand =
-        document.getElementById("businessBrand");
-
-      if (brand) {
-
-        brand.replaceChildren();
-
-        if (websiteBrand.logo) {
-
-          const logo = document.createElement("img");
-
-          logo.src = websiteBrand.logo;
-
-          logo.alt = websiteBrand.name + " Logo";
-
-          logo.className = "brand-logo";
-
-          logo.onerror = () => {
-            logo.style.display = "none";
-          };
-
-          brand.appendChild(logo);
-
-        }
-
-        const brandText = document.createElement("span");
-
-        brandText.textContent = websiteBrand.name;
-
-        brandText.style.color = "#22c6c8";
-
-        brand.appendChild(brandText);
-
-      }
-
-      // Footer
-
-      document.getElementById(
-        "footerBusinessName"
-      ).textContent = websiteBrand.name;
-
-      // Privacy text
-
-      document.getElementById(
-        "privacyLabel"
-      ).textContent =
-        "I agree to be contacted by " +
-        websiteBrand.name +
-        " regarding my inquiry.";
-
-      // Phone / WhatsApp
-
-      const phoneBox =
-        document.getElementById("phoneContactBox");
-
-      const phoneLink =
-        document.getElementById("businessPhone");
-
-      if (websiteBrand.phone) {
-
-        let digits = String(websiteBrand.phone)
-          .replace(/\D/g, "");
-
-        if (digits.length === 10) {
-          digits = "91" + digits;
-        }
-
-        phoneLink.href = "https://wa.me/" + digits;
-
-        phoneLink.textContent = websiteBrand.phone;
-
-      } else {
-
-        phoneBox.style.display = "none";
-
-      }
-
-      // Email
-
-      const emailBox =
-        document.getElementById("emailContactBox");
-
-      const emailLink =
-        document.getElementById("businessEmail");
-
-      if (websiteBrand.email) {
-
-        emailLink.href =
-          "mailto:" + websiteBrand.email;
-
-        emailLink.textContent =
-          websiteBrand.email;
-
-      } else {
-
-        emailBox.style.display = "none";
-
-      }
-
-      // Address
-
-      const addressBox =
-        document.getElementById("addressContactBox");
-
-      if (websiteBrand.address) {
-
-        document.getElementById(
-          "businessAddress"
-        ).textContent = websiteBrand.address;
-
-      } else {
-
-        addressBox.style.display = "none";
-
-      }
-
-      // Intello Electric product options
-
-      if (inquiryCustomerId === "intelloelectric") {
-
-        const productSelect =
-          document.getElementById("websiteInquiryProduct");
-
-        productSelect.innerHTML = `
-          <option value="">Select product or service</option>
-          <option value="Electrical Products">Electrical Products</option>
-          <option value="Lighting Products">Lighting Products</option>
-          <option value="Wires & Cables">Wires & Cables</option>
-          <option value="Switches & Switchgear">Switches & Switchgear</option>
-          <option value="Electrical Installation">Electrical Installation</option>
-          <option value="Maintenance / Repair">Maintenance / Repair</option>
-          <option value="Other">Other Inquiry</option>
-        `;
-
-      }
-
-    }
-
-
-    // =====================================
-    // PRODUCT ID FROM URL
-    // =====================================
-
-    function getInquiryProductId() {
-
-      const params =
-        new URLSearchParams(window.location.search);
-
-      return (
-        params.get("productId") ||
-        params.get("customerProductId") ||
-        ""
-      ).trim();
-
-    }
-
-
-    // =====================================
-    // PRODUCT NAME FROM URL
-    // =====================================
-
-    function getInquiryProductName() {
-
-      const params =
-        new URLSearchParams(window.location.search);
-
-      return (
-        params.get("productName") ||
-        params.get("product") ||
-        ""
-      ).trim();
-
-    }
-
-
-    // =====================================
-    // PREFILL PRODUCT
-    // =====================================
-
-    function prefillProduct() {
-
-      const productName = getInquiryProductName();
-
-      const productId = getInquiryProductId();
-
-      const productSelect =
-        document.getElementById("websiteInquiryProduct");
-
-      if (productName) {
-
-        const existingOption = Array.from(
-          productSelect.options
-        ).find(option =>
-          option.value.toLowerCase() === productName.toLowerCase()
-        );
-
-        if (existingOption) {
-
-          productSelect.value = existingOption.value;
-
-        } else {
-
-          const option = document.createElement("option");
-
-          option.value = productName;
-
-          option.textContent = productName;
-
-          productSelect.appendChild(option);
-
-          productSelect.value = productName;
-
-        }
-
-      }
-
-      if (productId) {
-
-        document.getElementById(
-          "websiteInquiryMessage"
-        ).value = "I am interested in product: " +
-          (productName || "Selected Product");
-
-      }
-
-    }
-
-
-    // =====================================
-    // SUBMIT INQUIRY
-    // =====================================
+    /* =====================================
+       SUBMIT INQUIRY
+    ===================================== */
 
     form.addEventListener("submit", async (event) => {
 
@@ -1035,68 +810,55 @@
 
       submitButton.textContent = "Submitting...";
 
-      showStatus(
-        "Please wait. Saving your inquiry...",
-        true
-      );
+      showStatus("Please wait. Saving your inquiry...", true);
 
       try {
 
-        if (!inquiryCustomerId) {
-
-          throw new Error(
-            "Customer website is not identified."
-          );
-
-        }
-
-        const productId = getInquiryProductId();
-
         const inquiryData = {
 
-          customerId: inquiryCustomerId,
+          customerId: CUSTOMER_ID,
 
-          businessName: websiteBrand.name,
+          businessName: WEBSITE_BRAND.name,
 
-          name: document.getElementById(
-            "websiteInquiryName"
-          ).value.trim(),
+          name: document
+            .getElementById("websiteInquiryName")
+            .value.trim(),
 
-          phone: document.getElementById(
-            "websiteInquiryMobile"
-          ).value.trim(),
+          mobile: document
+            .getElementById("websiteInquiryMobile")
+            .value.trim(),
 
-          email: document.getElementById(
-            "websiteInquiryEmail"
-          ).value.trim(),
+          email: document
+            .getElementById("websiteInquiryEmail")
+            .value.trim(),
 
-          company: document.getElementById(
-            "websiteInquiryCompany"
-          ).value.trim(),
+          company: document
+            .getElementById("websiteInquiryCompany")
+            .value.trim(),
 
-          country: document.getElementById(
-            "contactCountry"
-          ).value.trim(),
+          country: document
+            .getElementById("contactCountry")
+            .value.trim(),
 
-          state: document.getElementById(
-            "contactState"
-          ).value.trim(),
+          state: document
+            .getElementById("contactState")
+            .value.trim(),
 
-          city: document.getElementById(
-            "contactCity"
-          ).value.trim(),
+          city: document
+            .getElementById("contactCity")
+            .value.trim(),
 
-          pincode: document.getElementById(
-            "contactPincode"
-          ).value.trim(),
+          pincode: document
+            .getElementById("contactPincode")
+            .value.trim(),
 
-          productName: document.getElementById(
-            "websiteInquiryProduct"
-          ).value,
+          product: document
+            .getElementById("websiteInquiryProduct")
+            .value,
 
-          message: document.getElementById(
-            "websiteInquiryMessage"
-          ).value.trim(),
+          message: document
+            .getElementById("websiteInquiryMessage")
+            .value.trim(),
 
           source: "product-inquiry-page",
 
@@ -1110,16 +872,10 @@
 
         };
 
-        if (productId) {
-
-          inquiryData.customerProductId = productId;
-
-        }
-
         if (
           !inquiryData.name ||
-          !inquiryData.phone ||
-          !inquiryData.productName ||
+          !inquiryData.mobile ||
+          !inquiryData.product ||
           !inquiryData.message
         ) {
 
@@ -1141,37 +897,35 @@
 
         form.reset();
 
-        document.getElementById(
-          "contactCountry"
-        ).value = "India";
+        document.getElementById("contactCountry").value = "India";
 
       } catch (error) {
 
         console.error(
-          "Website inquiry submission error:",
+          "Intello Electric inquiry error:",
           error
         );
 
-        let message =
+        let errorMessage =
           "Unable to submit your inquiry. Please try again.";
 
         if (error.code === "permission-denied") {
 
-          message =
-            "Permission denied. Please check Firestore security rules.";
+          errorMessage =
+            "Firestore permission denied. Please check your security rules.";
 
         } else if (error.code === "unavailable") {
 
-          message =
+          errorMessage =
             "Network unavailable. Please try again.";
 
         } else if (error.message) {
 
-          message = error.message;
+          errorMessage = error.message;
 
         }
 
-        showStatus(message, false);
+        showStatus(errorMessage, false);
 
       } finally {
 
@@ -1182,37 +936,6 @@
       }
 
     });
-
-
-    // =====================================
-    // START WEBSITE
-    // =====================================
-
-    try {
-
-      await loadCustomerBranding();
-
-      prefillProduct();
-
-      console.log(
-        "Inquiry website ready:",
-        inquiryCustomerId,
-        websiteBrand.name
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Inquiry website initialization error:",
-        error
-      );
-
-      showStatus(
-        "Website configuration error: " + error.message,
-        false
-      );
-
-    }
 
   </script>
 
