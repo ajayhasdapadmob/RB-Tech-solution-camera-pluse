@@ -723,7 +723,32 @@ function addProductDetailsStyles() {
 
   document.head.appendChild(style);
 }
+// INTELLO ELECTRIC OFFICIAL DOMAIN
+if (hostname === "intelloelectric.com") {
+  const websiteSnap = await getDoc(
+    doc(db, "publicWebsites", "intelloelectric.com")
+  );
 
+  if (
+    !websiteSnap.exists() ||
+    websiteSnap.data().active !== true
+  ) {
+    return false;
+  }
+
+  currentTenantId = websiteSnap.data().customerId;
+  currentTenant = {
+    id: currentTenantId,
+    businessName: "Intello Electric",
+    phone: "9448735433",
+    email: "intelloelectric@gmail.com"
+  };
+
+  currentWebsiteMode = "customer";
+
+  console.log("Intello Electric website loaded.");
+  return true;
+}
 // INTELLO ELECTRIC OFFICIAL DOMAIN
 if (hostname === "intelloelectric.com") {
   const websiteSnap = await getDoc(
