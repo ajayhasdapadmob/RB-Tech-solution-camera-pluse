@@ -6,172 +6,282 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Customer Enquiry</title>
+  <title>Product Inquiry | RB Tech Solution</title>
+  <meta name="description" content="Contact us for product inquiries and business requirements.">
+
+  <link rel="stylesheet" href="style.css">
 
   <style>
+    :root {
+      --navy: #071b2b;
+      --cyan: #22c6c8;
+      --light: #f3f8fa;
+      --text: #243746;
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      padding: 25px 15px;
+      background: var(--light);
+      color: var(--text);
       font-family: Arial, sans-serif;
-      background: #f3f6f9;
-      color: #172331;
     }
 
-    .inquiry-container {
-      max-width: 650px;
-      margin: 30px auto;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+    .inquiry-header {
+      background: var(--navy);
+      padding: 17px 6%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
     }
 
     .brand {
-      text-align: center;
-      margin-bottom: 25px;
+      color: white;
+      font-size: 23px;
+      font-weight: 800;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .brand img {
+    .brand span {
+      color: var(--cyan);
+    }
+
+    .brand-logo {
+      height: 42px;
+      width: auto;
       max-width: 130px;
-      max-height: 90px;
       object-fit: contain;
-      margin-bottom: 10px;
     }
 
-    .brand h2 {
-      margin: 5px 0;
-      color: #075b9a;
+    .back-home {
+      color: white;
+      text-decoration: none;
+      border: 1px solid var(--cyan);
+      padding: 10px 17px;
+      border-radius: 7px;
     }
 
-    .brand p {
-      margin: 5px 0;
-      color: #667085;
+    .back-home:hover {
+      background: var(--cyan);
+      color: var(--navy);
+    }
+
+    .inquiry-hero {
+      background: linear-gradient(120deg, #071b2b, #10465a);
+      color: white;
+      text-align: center;
+      padding: 55px 20px 75px;
+    }
+
+    .inquiry-hero h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 13px;
+    }
+
+    .inquiry-hero p {
+      max-width: 650px;
+      margin: auto;
+      line-height: 1.7;
+      color: #d8edf0;
+    }
+
+    .inquiry-wrapper {
+      width: min(1000px, 92%);
+      margin: -35px auto 55px;
+      position: relative;
+    }
+
+    .inquiry-card {
+      background: white;
+      border-radius: 15px;
+      padding: 32px;
+      box-shadow: 0 12px 40px rgba(7, 27, 43, 0.12);
     }
 
     .form-heading {
-      text-align: center;
       margin-bottom: 25px;
     }
 
-    .form-heading h1 {
+    .form-heading h2 {
+      color: var(--navy);
+      margin: 0 0 8px;
       font-size: 25px;
-      margin-bottom: 8px;
     }
 
     .form-heading p {
-      color: #667085;
-      font-size: 14px;
+      color: #687985;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 19px;
     }
 
     .form-group {
-      margin-bottom: 17px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
     }
 
     .form-group label {
-      display: block;
-      font-weight: 600;
       font-size: 14px;
-      margin-bottom: 7px;
+      font-weight: 700;
+      color: var(--navy);
     }
 
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #d0d5dd;
-      border-radius: 7px;
+      padding: 13px 14px;
+      border: 1px solid #d7e1e6;
+      border-radius: 8px;
       font-size: 15px;
+      font-family: inherit;
       outline: none;
       background: #fff;
+      color: #243746;
     }
 
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
-      border-color: #0879c9;
-      box-shadow: 0 0 0 2px rgba(8,121,201,0.10);
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(34, 198, 200, 0.13);
     }
 
     .form-group textarea {
-      min-height: 110px;
+      min-height: 125px;
       resize: vertical;
+    }
+
+    .required {
+      color: #e33b3b;
+    }
+
+    .privacy-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 23px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #596c78;
+    }
+
+    .privacy-row input {
+      margin-top: 3px;
+    }
+
+    .privacy-row label {
+      cursor: pointer;
     }
 
     .submit-btn {
       width: 100%;
-      padding: 14px;
-      background: #0879c9;
-      color: white;
-      border: none;
-      border-radius: 7px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--cyan);
+      color: var(--navy);
+      padding: 15px 20px;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 800;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     .submit-btn:hover {
-      background: #075b9a;
+      background: #12aeb1;
+      transform: translateY(-1px);
     }
 
     .submit-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      transform: none;
     }
 
-    .enquiry-status {
-      display: none;
+    .form-status {
       margin-top: 15px;
-      padding: 12px;
-      border-radius: 7px;
       font-size: 14px;
+      text-align: center;
       line-height: 1.5;
     }
 
-    .enquiry-status.success {
-      display: block;
-      background: #e8f7ed;
-      color: #176b35;
+    .contact-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 25px;
     }
 
-    .enquiry-status.error {
-      display: block;
-      background: #fdecec;
-      color: #a52222;
-    }
-
-    .privacy-text {
-      margin-top: 18px;
+    .contact-box {
+      background: #f1f8fa;
+      border: 1px solid #e0edef;
+      padding: 17px;
+      border-radius: 10px;
       text-align: center;
-      font-size: 12px;
-      color: #667085;
+      overflow-wrap: anywhere;
     }
 
-    .privacy-text a {
-      color: #0879c9;
-      text-decoration: none;
-    }
-
-    .back-link {
+    .contact-box strong {
       display: block;
-      text-align: center;
-      margin-top: 20px;
-      color: #0879c9;
-      text-decoration: none;
+      color: var(--navy);
+      margin-bottom: 7px;
     }
 
-    @media(max-width: 600px) {
-      .inquiry-container {
+    .contact-box a {
+      color: #087f87;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .inquiry-footer {
+      background: var(--navy);
+      color: #d8e5eb;
+      text-align: center;
+      padding: 22px 15px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 650px) {
+      .inquiry-card {
         padding: 22px 17px;
-        margin: 10px auto;
       }
 
-      .form-heading h1 {
-        font-size: 22px;
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+
+      .contact-details {
+        grid-template-columns: 1fr;
+      }
+
+      .inquiry-hero {
+        padding: 42px 18px 65px;
+      }
+
+      .brand {
+        font-size: 19px;
       }
     }
   </style>
@@ -179,195 +289,932 @@
 
 <body>
 
-  <main class="inquiry-container">
+  <!-- HEADER -->
 
-    <!-- BUSINESS BRANDING -->
+  <header class="inquiry-header">
 
-    <div class="brand">
-
-      <img
-        id="businessLogo"
-        src=""
-        alt="Business Logo"
-      >
-
-      <h2 id="businessName">RB Tech Solution</h2>
-
-      <p id="businessTagline">
-        CCTV & Security Systems
-      </p>
-
-    </div>
-
-    <!-- FORM HEADING -->
-
-    <div class="form-heading">
-
-      <h1>Customer Enquiry</h1>
-
-      <p>
-        Please fill in the form below.
-        Our team will contact you shortly.
-      </p>
-
-    </div>
-
-    <!-- ENQUIRY FORM -->
-
-    <form id="enquiryForm">
-
-      <div class="form-group">
-
-        <label for="enquiryName">
-          Full Name *
-        </label>
-
-        <input
-          type="text"
-          id="enquiryName"
-          placeholder="Enter your full name"
-          required
-          maxlength="100"
-        >
-
-      </div>
-
-      <div class="form-group">
-
-        <label for="enquiryCountry">
-          Country *
-        </label>
-
-        <select id="enquiryCountry" required>
-
-          <option value="India" selected>India (+91)</option>
-          <option value="Bangladesh">Bangladesh (+880)</option>
-          <option value="Nepal">Nepal (+977)</option>
-          <option value="Bhutan">Bhutan (+975)</option>
-          <option value="United States">United States (+1)</option>
-          <option value="United Kingdom">United Kingdom (+44)</option>
-          <option value="United Arab Emirates">UAE (+971)</option>
-          <option value="Other">Other</option>
-
-        </select>
-
-      </div>
-
-      <div class="form-group">
-
-        <label for="enquiryPhone">
-          Mobile Number *
-        </label>
-
-        <input
-          type="tel"
-          id="enquiryPhone"
-          placeholder="Enter mobile number"
-          required
-          maxlength="20"
-        >
-
-      </div>
-
-      <div class="form-group">
-
-        <label for="enquiryEmail">
-          Email Address
-        </label>
-
-        <input
-          type="email"
-          id="enquiryEmail"
-          placeholder="Enter your email address"
-          maxlength="150"
-        >
-
-      </div>
-
-      <div class="form-group">
-
-        <label for="enquiryProductName">
-          Product / Service
-        </label>
-
-        <input
-          type="text"
-          id="enquiryProductName"
-          name="productName"
-          placeholder="Product or service name"
-          maxlength="200"
-        >
-
-        <input
-          type="hidden"
-          id="enquiryProductId"
-          name="productId"
-        >
-
-      </div>
-
-      <div class="form-group">
-
-        <label for="enquiryMessage">
-          Your Message
-        </label>
-
-        <textarea
-          id="enquiryMessage"
-          placeholder="Write your enquiry here..."
-          maxlength="2000"
-        ></textarea>
-
-      </div>
-
-      <button
-        type="submit"
-        id="submitEnquiryBtn"
-        class="submit-btn"
-      >
-        Submit Enquiry
-      </button>
-
-      <div
-        id="enquiryStatus"
-        class="enquiry-status"
-        role="status"
-        aria-live="polite"
-      ></div>
-
-    </form>
-
-    <!-- PRIVACY POLICY -->
-
-    <div class="privacy-text">
-
-      By submitting this form, you agree to our
-
-      <a
-        id="privacyPolicyLink"
-        href="privacy-policy.html"
-        target="_blank"
-      >
-        Privacy Policy
-      </a>
-
-    </div>
-
-    <!-- BACK LINK -->
-
-    <a href="index.html" class="back-link">
-      ← Back to Website
+    <a class="brand" id="businessBrand" href="index.html">
+      RB <span>TECH SOLUTION</span>
     </a>
 
-    <p style="text-align:center;font-size:12px;color:#98a2b3;margin-top:25px;">
-      © 2026 <span id="footerBusinessName">RB Tech Solution</span>
+    <a class="back-home" href="index.html">
+      ← Back to Home
+    </a>
+
+  </header>
+
+  <!-- HERO -->
+
+  <section class="inquiry-hero">
+
+    <h1>Product Inquiry</h1>
+
+    <p id="heroDescription">
+      Looking for products or services?
+      Share your requirements and our team will get in touch with you.
     </p>
+
+  </section>
+
+  <!-- MAIN FORM -->
+
+  <main class="inquiry-wrapper">
+
+    <section class="inquiry-card">
+
+      <div class="form-heading">
+
+        <h2>Send Your Inquiry</h2>
+
+        <p>
+          Fill in the details below.
+          Fields marked with * are required.
+        </p>
+
+      </div>
+
+      <form id="websiteInquiryForm">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+
+            <label for="websiteInquiryName">
+              Full Name <span class="required">*</span>
+            </label>
+
+            <input
+              id="websiteInquiryName"
+              name="name"
+              type="text"
+              placeholder="Enter your full name"
+              required
+              maxlength="100"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="websiteInquiryMobile">
+              Mobile Number <span class="required">*</span>
+            </label>
+
+            <input
+              id="websiteInquiryMobile"
+              name="mobile"
+              type="tel"
+              placeholder="Enter mobile number"
+              required
+              maxlength="20"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="websiteInquiryEmail">
+              Email Address
+            </label>
+
+            <input
+              id="websiteInquiryEmail"
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              maxlength="150"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="websiteInquiryCompany">
+              Company / Business Name
+            </label>
+
+            <input
+              id="websiteInquiryCompany"
+              name="company"
+              type="text"
+              placeholder="Enter company name"
+              maxlength="150"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="contactCountry">
+              Country
+            </label>
+
+            <input
+              id="contactCountry"
+              name="country"
+              type="text"
+              placeholder="Enter country"
+              value="India"
+              maxlength="100"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="contactState">
+              State
+            </label>
+
+            <input
+              id="contactState"
+              name="state"
+              type="text"
+              placeholder="Enter state"
+              maxlength="100"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="contactCity">
+              City
+            </label>
+
+            <input
+              id="contactCity"
+              name="city"
+              type="text"
+              placeholder="Enter city"
+              maxlength="100"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="contactPincode">
+              PIN Code
+            </label>
+
+            <input
+              id="contactPincode"
+              name="pincode"
+              type="text"
+              inputmode="numeric"
+              placeholder="Enter PIN code"
+              maxlength="12"
+            >
+
+          </div>
+
+          <div class="form-group full">
+
+            <label for="websiteInquiryProduct">
+              Product / Service <span class="required">*</span>
+            </label>
+
+            <select
+              id="websiteInquiryProduct"
+              name="product"
+              required
+            >
+
+              <option value="">Select product or service</option>
+
+              <option value="CCTV Cameras">CCTV Cameras</option>
+              <option value="IP Cameras">IP Cameras</option>
+              <option value="DVR">DVR</option>
+              <option value="NVR">NVR</option>
+              <option value="Video Door Phone">Video Door Phone</option>
+              <option value="CCTV Installation">CCTV Installation</option>
+              <option value="Maintenance / Repair">Maintenance / Repair</option>
+              <option value="Other">Other Inquiry</option>
+
+            </select>
+
+          </div>
+
+          <div class="form-group full">
+
+            <label for="websiteInquiryMessage">
+              Your Requirement <span class="required">*</span>
+            </label>
+
+            <textarea
+              id="websiteInquiryMessage"
+              name="message"
+              placeholder="Describe your requirement..."
+              required
+              maxlength="5000"
+            ></textarea>
+
+          </div>
+
+        </div>
+
+        <div class="privacy-row">
+
+          <input
+            type="checkbox"
+            id="contactPrivacy"
+            required
+          >
+
+          <label for="contactPrivacy" id="privacyLabel">
+            I agree to be contacted by RB Tech Solution regarding my inquiry.
+          </label>
+
+        </div>
+
+        <button
+          type="submit"
+          class="submit-btn"
+          id="websiteInquirySubmit"
+        >
+          Submit Inquiry →
+        </button>
+
+        <div
+          id="websiteInquiryStatus"
+          class="form-status"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+      </form>
+
+      <!-- CONTACT DETAILS -->
+
+      <div class="contact-details">
+
+        <div class="contact-box" id="phoneContactBox">
+
+          <strong>📞 Phone / WhatsApp</strong>
+
+          <a
+            id="businessPhone"
+            href="https://wa.me/919663116089"
+            target="_blank"
+            rel="noopener"
+          >
+            +91 96631 16089
+          </a>
+
+        </div>
+
+        <div class="contact-box" id="emailContactBox">
+
+          <strong>✉️ Email</strong>
+
+          <a
+            id="businessEmail"
+            href="mailto:ajayhasda623@gmail.com"
+          >
+            ajayhasda623@gmail.com
+          </a>
+
+        </div>
+
+        <div class="contact-box" id="addressContactBox">
+
+          <strong>📍 Location</strong>
+
+          <span id="businessAddress">
+            India
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
 
   </main>
 
-  <!-- CUSTOMER WEBSITE JAVASCRIPT -->
+  <!-- FOOTER -->
 
-  <script type="module" src="./customer-website.js"></script>
+  <footer class="inquiry-footer">
+
+    © 2026 <span id="footerBusinessName">RB Tech Solution</span>.
+    All Rights Reserved.
+
+  </footer>
+
+  <!-- FIREBASE JAVASCRIPT -->
+
+  <script type="module">
+
+    import { db } from "./firebase.js";
+
+    import {
+      collection,
+      addDoc,
+      doc,
+      getDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+
+    // =====================================
+    // HTML ELEMENTS
+    // =====================================
+
+    const form = document.getElementById("websiteInquiryForm");
+
+    const submitButton =
+      document.getElementById("websiteInquirySubmit");
+
+    const statusBox =
+      document.getElementById("websiteInquiryStatus");
+
+
+    // =====================================
+    // DEFAULT BRANDING
+    // =====================================
+
+    let inquiryCustomerId = "";
+
+    let websiteBrand = {
+
+      name: "RB Tech Solution",
+
+      phone: "919663116089",
+
+      email: "ajayhasda623@gmail.com",
+
+      logo: "images/logo.png",
+
+      address: "Mangalore, Karnataka, India"
+
+    };
+
+
+    // =====================================
+    // STATUS MESSAGE
+    // =====================================
+
+    function showStatus(message, success = false) {
+
+      statusBox.textContent = message;
+
+      statusBox.style.color =
+        success ? "#087f3c" : "#dc2626";
+
+    }
+
+
+    // =====================================
+    // IDENTIFY CUSTOMER WEBSITE
+    // =====================================
+
+    function identifyCustomer() {
+
+      const hostname = window.location.hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+
+      const params =
+        new URLSearchParams(window.location.search);
+
+      const previewTenant = params.get("tenant");
+
+      if (previewTenant) {
+
+        inquiryCustomerId = previewTenant
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]/g, "");
+
+        return;
+      }
+
+      const domainMap = {
+
+        "ajayhasdapadmob.github.io": "customer1",
+
+        "rb-tech-solution-camera-pluse-pages.pages.dev": "customer1",
+
+        "intelloelectric.com": "intelloelectric"
+
+      };
+
+      if (domainMap[hostname]) {
+
+        inquiryCustomerId = domainMap[hostname];
+
+        return;
+      }
+
+      // Other customer domains:
+      // Example: customerdomain.com -> customerdomain
+
+      inquiryCustomerId = hostname
+        .split(".")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
+
+    }
+
+
+    // =====================================
+    // LOAD CUSTOMER DETAILS FROM FIRESTORE
+    // =====================================
+
+    async function loadCustomerBranding() {
+
+      identifyCustomer();
+
+      if (!inquiryCustomerId) {
+        throw new Error("Customer ID not identified.");
+      }
+
+      const customerRef = doc(
+        db,
+        "customers",
+        inquiryCustomerId
+      );
+
+      const customerSnap = await getDoc(customerRef);
+
+      if (customerSnap.exists()) {
+
+        const customer = customerSnap.data();
+
+        websiteBrand = {
+
+          name:
+            customer.businessName ||
+            websiteBrand.name,
+
+          phone:
+            customer.phone ||
+            customer.whatsapp ||
+            websiteBrand.phone,
+
+          email:
+            customer.email ||
+            websiteBrand.email,
+
+          logo:
+            customer.logoUrl ||
+            customer.logo ||
+            websiteBrand.logo,
+
+          address:
+            customer.address ||
+            websiteBrand.address
+
+        };
+
+      } else if (inquiryCustomerId !== "customer1") {
+
+        throw new Error(
+          "Customer profile not found: " + inquiryCustomerId
+        );
+
+      }
+
+      applyInquiryBranding();
+
+    }
+
+
+    // =====================================
+    // APPLY BRANDING
+    // =====================================
+
+    function applyInquiryBranding() {
+
+      document.title =
+        "Product Inquiry | " + websiteBrand.name;
+
+      // Header brand
+
+      const brand =
+        document.getElementById("businessBrand");
+
+      if (brand) {
+
+        brand.replaceChildren();
+
+        if (websiteBrand.logo) {
+
+          const logo = document.createElement("img");
+
+          logo.src = websiteBrand.logo;
+
+          logo.alt = websiteBrand.name + " Logo";
+
+          logo.className = "brand-logo";
+
+          logo.onerror = () => {
+            logo.style.display = "none";
+          };
+
+          brand.appendChild(logo);
+
+        }
+
+        const brandText = document.createElement("span");
+
+        brandText.textContent = websiteBrand.name;
+
+        brandText.style.color = "#22c6c8";
+
+        brand.appendChild(brandText);
+
+      }
+
+      // Footer
+
+      document.getElementById(
+        "footerBusinessName"
+      ).textContent = websiteBrand.name;
+
+      // Privacy text
+
+      document.getElementById(
+        "privacyLabel"
+      ).textContent =
+        "I agree to be contacted by " +
+        websiteBrand.name +
+        " regarding my inquiry.";
+
+      // Phone / WhatsApp
+
+      const phoneBox =
+        document.getElementById("phoneContactBox");
+
+      const phoneLink =
+        document.getElementById("businessPhone");
+
+      if (websiteBrand.phone) {
+
+        let digits = String(websiteBrand.phone)
+          .replace(/\D/g, "");
+
+        if (digits.length === 10) {
+          digits = "91" + digits;
+        }
+
+        phoneLink.href = "https://wa.me/" + digits;
+
+        phoneLink.textContent = websiteBrand.phone;
+
+      } else {
+
+        phoneBox.style.display = "none";
+
+      }
+
+      // Email
+
+      const emailBox =
+        document.getElementById("emailContactBox");
+
+      const emailLink =
+        document.getElementById("businessEmail");
+
+      if (websiteBrand.email) {
+
+        emailLink.href =
+          "mailto:" + websiteBrand.email;
+
+        emailLink.textContent =
+          websiteBrand.email;
+
+      } else {
+
+        emailBox.style.display = "none";
+
+      }
+
+      // Address
+
+      const addressBox =
+        document.getElementById("addressContactBox");
+
+      if (websiteBrand.address) {
+
+        document.getElementById(
+          "businessAddress"
+        ).textContent = websiteBrand.address;
+
+      } else {
+
+        addressBox.style.display = "none";
+
+      }
+
+      // Intello Electric product options
+
+      if (inquiryCustomerId === "intelloelectric") {
+
+        const productSelect =
+          document.getElementById("websiteInquiryProduct");
+
+        productSelect.innerHTML = `
+          <option value="">Select product or service</option>
+          <option value="Electrical Products">Electrical Products</option>
+          <option value="Lighting Products">Lighting Products</option>
+          <option value="Wires & Cables">Wires & Cables</option>
+          <option value="Switches & Switchgear">Switches & Switchgear</option>
+          <option value="Electrical Installation">Electrical Installation</option>
+          <option value="Maintenance / Repair">Maintenance / Repair</option>
+          <option value="Other">Other Inquiry</option>
+        `;
+
+      }
+
+    }
+
+
+    // =====================================
+    // PRODUCT ID FROM URL
+    // =====================================
+
+    function getInquiryProductId() {
+
+      const params =
+        new URLSearchParams(window.location.search);
+
+      return (
+        params.get("productId") ||
+        params.get("customerProductId") ||
+        ""
+      ).trim();
+
+    }
+
+
+    // =====================================
+    // PRODUCT NAME FROM URL
+    // =====================================
+
+    function getInquiryProductName() {
+
+      const params =
+        new URLSearchParams(window.location.search);
+
+      return (
+        params.get("productName") ||
+        params.get("product") ||
+        ""
+      ).trim();
+
+    }
+
+
+    // =====================================
+    // PREFILL PRODUCT
+    // =====================================
+
+    function prefillProduct() {
+
+      const productName = getInquiryProductName();
+
+      const productId = getInquiryProductId();
+
+      const productSelect =
+        document.getElementById("websiteInquiryProduct");
+
+      if (productName) {
+
+        const existingOption = Array.from(
+          productSelect.options
+        ).find(option =>
+          option.value.toLowerCase() === productName.toLowerCase()
+        );
+
+        if (existingOption) {
+
+          productSelect.value = existingOption.value;
+
+        } else {
+
+          const option = document.createElement("option");
+
+          option.value = productName;
+
+          option.textContent = productName;
+
+          productSelect.appendChild(option);
+
+          productSelect.value = productName;
+
+        }
+
+      }
+
+      if (productId) {
+
+        document.getElementById(
+          "websiteInquiryMessage"
+        ).value = "I am interested in product: " +
+          (productName || "Selected Product");
+
+      }
+
+    }
+
+
+    // =====================================
+    // SUBMIT INQUIRY
+    // =====================================
+
+    form.addEventListener("submit", async (event) => {
+
+      event.preventDefault();
+
+      if (!form.reportValidity()) {
+        return;
+      }
+
+      submitButton.disabled = true;
+
+      submitButton.textContent = "Submitting...";
+
+      showStatus(
+        "Please wait. Saving your inquiry...",
+        true
+      );
+
+      try {
+
+        if (!inquiryCustomerId) {
+
+          throw new Error(
+            "Customer website is not identified."
+          );
+
+        }
+
+        const productId = getInquiryProductId();
+
+        const inquiryData = {
+
+          customerId: inquiryCustomerId,
+
+          businessName: websiteBrand.name,
+
+          name: document.getElementById(
+            "websiteInquiryName"
+          ).value.trim(),
+
+          phone: document.getElementById(
+            "websiteInquiryMobile"
+          ).value.trim(),
+
+          email: document.getElementById(
+            "websiteInquiryEmail"
+          ).value.trim(),
+
+          company: document.getElementById(
+            "websiteInquiryCompany"
+          ).value.trim(),
+
+          country: document.getElementById(
+            "contactCountry"
+          ).value.trim(),
+
+          state: document.getElementById(
+            "contactState"
+          ).value.trim(),
+
+          city: document.getElementById(
+            "contactCity"
+          ).value.trim(),
+
+          pincode: document.getElementById(
+            "contactPincode"
+          ).value.trim(),
+
+          productName: document.getElementById(
+            "websiteInquiryProduct"
+          ).value,
+
+          message: document.getElementById(
+            "websiteInquiryMessage"
+          ).value.trim(),
+
+          source: "product-inquiry-page",
+
+          status: "new",
+
+          read: false,
+
+          createdAt: serverTimestamp(),
+
+          updatedAt: serverTimestamp()
+
+        };
+
+        if (productId) {
+
+          inquiryData.customerProductId = productId;
+
+        }
+
+        if (
+          !inquiryData.name ||
+          !inquiryData.phone ||
+          !inquiryData.productName ||
+          !inquiryData.message
+        ) {
+
+          throw new Error(
+            "Please fill in all required fields."
+          );
+
+        }
+
+        await addDoc(
+          collection(db, "enquiries"),
+          inquiryData
+        );
+
+        showStatus(
+          "Thank you! Your inquiry has been submitted successfully. We will contact you soon.",
+          true
+        );
+
+        form.reset();
+
+        document.getElementById(
+          "contactCountry"
+        ).value = "India";
+
+      } catch (error) {
+
+        console.error(
+          "Website inquiry submission error:",
+          error
+        );
+
+        let message =
+          "Unable to submit your inquiry. Please try again.";
+
+        if (error.code === "permission-denied") {
+
+          message =
+            "Permission denied. Please check Firestore security rules.";
+
+        } else if (error.code === "unavailable") {
+
+          message =
+            "Network unavailable. Please try again.";
+
+        } else if (error.message) {
+
+          message = error.message;
+
+        }
+
+        showStatus(message, false);
+
+      } finally {
+
+        submitButton.disabled = false;
+
+        submitButton.textContent = "Submit Inquiry →";
+
+      }
+
+    });
+
+
+    // =====================================
+    // START WEBSITE
+    // =====================================
+
+    try {
+
+      await loadCustomerBranding();
+
+      prefillProduct();
+
+      console.log(
+        "Inquiry website ready:",
+        inquiryCustomerId,
+        websiteBrand.name
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Inquiry website initialization error:",
+        error
+      );
+
+      showStatus(
+        "Website configuration error: " + error.message,
+        false
+      );
+
+    }
+
+  </script>
 
 </body>
 </html>
