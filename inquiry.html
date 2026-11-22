@@ -385,149 +385,265 @@
     © 2026 RB Tech Solution. All Rights Reserved.
   </footer>
 
-  <script type="module">
-    import { db } from "./firebase.js";
+ 
+import { db } from "./firebase.js";
 
-    import {
-      collection,
-      addDoc,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    const form = document.getElementById("websiteInquiryForm");
-    const submitButton = document.getElementById("websiteInquirySubmit");
-    const statusBox = document.getElementById("websiteInquiryStatus");
+const form = document.getElementById("websiteInquiryForm");
+const submitButton = document.getElementById("websiteInquirySubmit");
+const statusBox = document.getElementById("websiteInquiryStatus");
 
-    function showStatus(message, success = false) {
-      statusBox.textContent = message;
-      statusBox.style.color = success ? "#087f3c" : "#dc2626";
+let inquiryCustomerId = "";
+let websiteBrand = {
+  name: "RB Tech Solution",
+  phone: "919663116089",
+  email: "ajayhasda623@gmail.com",
+  logo: "images/logo.png"
+};
+
+function showStatus(message, success = false) {
+  statusBox.textContent = message;
+  statusBox.style.color = success ? "#087f3c" : "#dc2626";
+}
+
+// =====================================
+// IDENTIFY WEBSITE
+// =====================================
+
+async function initializeInquiryWebsite() {
+  const hostname = window.location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  const params = new URLSearchParams(window.location.search);
+  const previewTenant = params.get("tenant");
+
+  const legacyHosts = [
+    "ajayhasdapadmob.github.io",
+    "rb-tech-solution-camera-pluse-pages.dev",
+    "rb-tech-solution-camera-pluse-pages.pages.dev"
+  ];
+
+  if (legacyHosts.includes(hostname)) {
+    inquiryCustomerId = "customer1";
+    websiteBrand = {
+      name: "RB Tech Solution",
+      phone: "919663116089",
+      email: "ajayhasda623@gmail.com",
+      logo: "images/logo.png"
+    };
+  } else {
+    let mappingId = hostname;
+
+    if (
+      hostname === "intelloelectric.com" ||
+      previewTenant === "intelloelectric"
+    ) {
+      mappingId = "intelloelectric.com";
     }
 
-    /*
-      CUSTOMER ROUTING
+    const websiteRef = doc(db, "publicWebsites", mappingId);
+    const websiteSnap = await getDoc(websiteRef);
 
-      GitHub Pages legacy website:
-      ajayhasdapadmob.github.io -> customer1
-
-      Other websites:
-      customerId must be supplied in the URL.
-    */
-
-    function getInquiryCustomerId() {
-      const params = new URLSearchParams(window.location.search);
-
-      const hostname = window.location.hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-
-      const urlCustomerId = (
-        params.get("customerId") || ""
-      ).trim();
-
-      if (urlCustomerId) {
-        return urlCustomerId;
-      }
-
-      if (hostname === "ajayhasdapadmob.github.io") {
-        return "customer1";
-      }
-
-      return "";
+    if (!websiteSnap.exists()) {
+      throw new Error("Website mapping not found.");
     }
 
-    function getInquiryProductId() {
-      const params = new URLSearchParams(window.location.search);
-      return (params.get("productId") || "").trim();
+    const website = websiteSnap.data();
+
+    if (website.active !== true || !website.customerId) {
+      throw new Error("This customer website is inactive.");
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    inquiryCustomerId = website.customerId;
 
-      if (!form.reportValidity()) return;
+    websiteBrand = {
+      name: website.businessName || "Customer Website",
+      phone: website.phone || "",
+      email: website.email || "",
+      logo: website.logoUrl || ""
+    };
+  }
 
-      submitButton.disabled = true;
-      submitButton.textContent = "Submitting...";
-      showStatus("Please wait. Saving your inquiry...", true);
+  applyInquiryBranding();
+}
 
-      try {
-        const customerId = getInquiryCustomerId();
-        const productId = getInquiryProductId();
+// =====================================
+// APPLY CUSTOMER BRANDING
+// =====================================
 
-        if (!customerId) {
-          throw new Error(
-            "Customer website identify nahi hua. Please contact the website administrator."
-          );
-        }
+function applyInquiryBranding() {
+  document.title = "Product Inquiry | " + websiteBrand.name;
 
-        const inquiryData = {
-          name: document.getElementById("websiteInquiryName").value.trim(),
-          mobile: document.getElementById("websiteInquiryMobile").value.trim(),
-          email: document.getElementById("websiteInquiryEmail").value.trim(),
-          company: document.getElementById("websiteInquiryCompany").value.trim(),
+  const brand = document.querySelector(".brand");
 
-          country: document.getElementById("contactCountry").value.trim(),
-          state: document.getElementById("contactState").value.trim(),
-          city: document.getElementById("contactCity").value.trim(),
-          pincode: document.getElementById("contactPincode").value.trim(),
+  if (brand) {
+    brand.textContent = websiteBrand.name;
 
-          product: document.getElementById("websiteInquiryProduct").value,
-          message: document.getElementById("websiteInquiryMessage").value.trim(),
+    if (websiteBrand.logo) {
+      const logo = document.createElement("img");
+      logo.src = websiteBrand.logo;
+      logo.alt = websiteBrand.name + " Logo";
+      logo.style.cssText =
+        "height:38px;width:auto;max-width:130px;object-fit:contain;margin-right:10px;vertical-align:middle;";
 
-          source: "product-inquiry-page",
-          status: "new",
-          read: false,
+      brand.prepend(logo);
+    }
+  }
 
-          customerId: customerId,
-          productId: productId || null,
+  const privacyLabel = document.querySelector(
+    'label[for="contactPrivacy"]'
+  );
 
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
+  if (privacyLabel) {
+    privacyLabel.textContent =
+      "I agree to be contacted by " +
+      websiteBrand.name +
+      " regarding my inquiry.";
+  }
 
-        if (
-          !inquiryData.name ||
-          !inquiryData.mobile ||
-          !inquiryData.product ||
-          !inquiryData.message
-        ) {
-          throw new Error("Please fill in all required fields.");
-        }
+  const contactBoxes = document.querySelectorAll(".contact-box");
 
-        await addDoc(
-          collection(db, "enquiries"),
-          inquiryData
-        );
+  if (contactBoxes[0]) {
+    const phoneLink = contactBoxes[0].querySelector("a");
 
-        showStatus(
-          "Thank you! Your inquiry has been submitted successfully. We will contact you soon.",
-          true
-        );
+    if (websiteBrand.phone) {
+      const digits = websiteBrand.phone.replace(/\D/g, "");
+      phoneLink.href = "https://wa.me/" + digits;
+      phoneLink.textContent = websiteBrand.phone;
+    } else {
+      contactBoxes[0].style.display = "none";
+    }
+  }
 
-        form.reset();
+  if (contactBoxes[1]) {
+    const emailLink = contactBoxes[1].querySelector("a");
 
-        document.getElementById("contactCountry").value = "India";
+    if (websiteBrand.email) {
+      emailLink.href = "mailto:" + websiteBrand.email;
+      emailLink.textContent = websiteBrand.email;
+    } else {
+      contactBoxes[1].style.display = "none";
+    }
+  }
 
-      } catch (error) {
-        console.error("Website inquiry submission error:", error);
+  // Hide location until a customer address is configured
+  if (contactBoxes[2]) {
+    contactBoxes[2].style.display = "none";
+  }
 
-        let message = "Unable to submit your inquiry. Please try again.";
+  const footer = document.querySelector(".inquiry-footer");
 
-        if (error.code === "permission-denied") {
-          message = "Permission denied by Firestore. Please check your Firestore security rules.";
-        } else if (error.code === "unavailable") {
-          message = "Network unavailable. Please check your internet connection and try again.";
-        } else if (error.message) {
-          message = error.message;
-        }
+  if (footer) {
+    footer.textContent =
+      "© 2026 " + websiteBrand.name + ". All Rights Reserved.";
+  }
+}
 
-        showStatus(message, false);
+// =====================================
+// PRODUCT ID
+// =====================================
 
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "Submit Inquiry →";
-      }
-    });
-  </script>
+function getInquiryProductId() {
+  const params = new URLSearchParams(window.location.search);
+  return (params.get("productId") || "").trim();
+}
+
+// =====================================
+// SUBMIT INQUIRY
+// =====================================
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!form.reportValidity()) return;
+
+  submitButton.disabled = true;
+  submitButton.textContent = "Submitting...";
+  showStatus("Please wait. Saving your inquiry...", true);
+
+  try {
+    if (!inquiryCustomerId) {
+      throw new Error("Customer website identify nahi hua.");
+    }
+
+    const inquiryData = {
+      name: document.getElementById("websiteInquiryName").value.trim(),
+      mobile: document.getElementById("websiteInquiryMobile").value.trim(),
+      email: document.getElementById("websiteInquiryEmail").value.trim(),
+      company: document.getElementById("websiteInquiryCompany").value.trim(),
+
+      country: document.getElementById("contactCountry").value.trim(),
+      state: document.getElementById("contactState").value.trim(),
+      city: document.getElementById("contactCity").value.trim(),
+      pincode: document.getElementById("contactPincode").value.trim(),
+
+      product: document.getElementById("websiteInquiryProduct").value,
+      message: document.getElementById("websiteInquiryMessage").value.trim(),
+
+      source: "product-inquiry-page",
+      status: "new",
+      read: false,
+
+      customerId: inquiryCustomerId,
+      productId: getInquiryProductId() || null,
+
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    if (
+      !inquiryData.name ||
+      !inquiryData.mobile ||
+      !inquiryData.product ||
+      !inquiryData.message
+    ) {
+      throw new Error("Please fill in all required fields.");
+    }
+
+    await addDoc(collection(db, "enquiries"), inquiryData);
+
+    showStatus(
+      "Thank you! Your inquiry has been submitted successfully. We will contact you soon.",
+      true
+    );
+
+    form.reset();
+    document.getElementById("contactCountry").value = "India";
+
+  } catch (error) {
+    console.error("Website inquiry submission error:", error);
+
+    let message = "Unable to submit your inquiry. Please try again.";
+
+    if (error.code === "permission-denied") {
+      message = "Permission denied by Firestore. Please check your Firestore security rules.";
+    } else if (error.code === "unavailable") {
+      message = "Network unavailable. Please try again.";
+    } else if (error.message) {
+      message = error.message;
+    }
+
+    showStatus(message, false);
+
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Submit Inquiry →";
+  }
+});
+
+// Start website
+initializeInquiryWebsite().catch(error => {
+  console.error("Inquiry website initialization error:", error);
+  showStatus("Website configuration error. Please contact support.");
+});
 
 </body>
 </html>
