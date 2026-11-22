@@ -37,7 +37,89 @@ const INTELLO_LOGO =
 
 const DEFAULT_IMAGE =
   "https://ajayhasdapadmob.github.io/RB-Tech-solution-camera-pluse/images/products/jaise%20camera-01.jpg.png";
+// =====================================
+// WEBSITE TENANT RESOLVER
+// =====================================
 
+async function resolveWebsiteTenant() {
+  try {
+    const hostname = window.location.hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+
+    const params = new URLSearchParams(window.location.search);
+    const previewTenant = params.get("tenant");
+
+    let mappingId = "";
+
+    // Intello custom domain or SPCK preview
+    if (
+      hostname === "intelloelectric.com" ||
+      previewTenant === "intelloelectric"
+    ) {
+      mappingId = "intelloelectric.com";
+    } else {
+      // Other mapped customer domains
+      mappingId = hostname;
+    }
+
+    // Read only the public website mapping
+    const websiteRef = doc(db, "publicWebsites", mappingId);
+    const websiteSnap = await getDoc(websiteRef);
+
+    if (websiteSnap.exists()) {
+      const website = websiteSnap.data();
+
+      if (website.active !== true || !website.customerId) {
+        console.error("Website mapping is inactive or incomplete.");
+        return false;
+      }
+
+      currentTenantId = website.customerId;
+      currentWebsiteMode = "customer";
+
+      currentTenant = {
+        businessName: website.businessName || "Intello Electric",
+        phone: website.phone || "",
+        whatsapp: website.phone || "",
+        email: website.email || "",
+        websiteLogo: website.logoUrl || "",
+        logoUrl: website.logoUrl || "",
+        domain: website.domain || hostname
+      };
+
+      return true;
+    }
+
+    // Existing RB Tech Solution website
+    const legacyHosts = [
+      "ajayhasdapadmob.github.io",
+      "rb-tech-solution-camera-pluse-pages.pages.dev"
+    ];
+
+    if (legacyHosts.includes(hostname)) {
+      currentTenantId = "customer1";
+      currentWebsiteMode = "legacy";
+
+      currentTenant = {
+        businessName: "RB Tech Solution",
+        phone: LEGACY_WHATSAPP_NUMBER,
+        whatsapp: LEGACY_WHATSAPP_NUMBER,
+        email: "ajayhasda623@gmail.com",
+        websiteLogo: "images/logo.png"
+      };
+
+      return true;
+    }
+
+    console.error("No active website mapping found:", hostname);
+    return false;
+
+  } catch (error) {
+    console.error("Tenant resolver error:", error);
+    return false;
+  }
+}
 /* =========================================
    BRANDING HELPERS
 ========================================= */
