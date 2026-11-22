@@ -745,169 +745,32 @@ function addProductDetailsStyles() {
   document.head.appendChild(style);
 }
 
-/* =========================================
-   RESOLVE WEBSITE TENANT
-========================================= */
-
-async function resolveWebsiteTenant() {
-  const hostname = location.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
-  const pathname = location.pathname.toLowerCase();
-
-  // SPCK preview
-  if (
-    new URLSearchParams(location.search).get("tenant") ===
-    "intelloelectric"
-  ) {
-    const snap = await getDoc(
-      doc(db, "customers", "intelloelectric")
-    );
-
-    if (!snap.exists() || snap.data().status !== "active") {
-      return false;
-    }
-
-    currentTenantId = "intelloelectric";
-    currentTenant = {
-      id: currentTenantId,
-      ...snap.data()
-    };
-
-    currentWebsiteMode = "customer";
-    return true;
-  }
-
-  // RB Tech official website
-const isLegacyWebsite =
-    hostname === "rb-tech-solution-camera-pluse.pages.dev" ||
-    hostname === "rb-tech-solution-camera-pluse-pages.pages.dev" ||
-    (
-      hostname === "ajayhasdapadmob.github.io" &&
-      pathname.startsWith("/rb-tech-solution-camera-pluse/")
-    ) ||
-    hostname === "localhost" ||
-    hostname === "127.0.0.1";
-
-  if (isLegacyWebsite) {
-    const snap = await getDoc(
-      doc(db, "customers", "customer1")
-    );
-
-    currentTenantId = "customer1";
-    currentTenant = snap.exists()
-      ? { id: currentTenantId, ...snap.data() }
-      : null;
-
-    currentWebsiteMode = "legacy";
-    return true;
-  }
-
-  // INTELLO ELECTRIC OFFICIAL DOMAIN
-  if (hostname === "intelloelectric.com") {
-    const snap = await getDoc(
-      doc(db, "customers", "intelloelectric")
-    );
-
-    if (!snap.exists() || snap.data().status !== "active") {
-      console.error("Intello Electric customer is not active.");
-      return false;
-    }
-
-    currentTenantId = "intelloelectric";
-    currentTenant = {
-      id: currentTenantId,
-      ...snap.data()
-    };
-
-    currentWebsiteMode = "customer";
-
-    console.log("Intello Electric website loaded.");
-    return true;
-  }
-
-  // Custom domain mapping
+// INTELLO ELECTRIC OFFICIAL DOMAIN
+if (hostname === "intelloelectric.com") {
   const websiteSnap = await getDoc(
-    doc(db, "publicWebsites", hostname)
+    doc(db, "publicWebsites", "intelloelectric.com")
   );
 
   if (
-    websiteSnap.exists() &&
-    websiteSnap.data().active === true
+    !websiteSnap.exists() ||
+    websiteSnap.data().active !== true
   ) {
-    const website = websiteSnap.data();
-
-    if (
-      website.domain &&
-      website.domain.toLowerCase().replace(/^www\./, "") !== hostname
-    ) {
-      return false;
-    }
-
-    const customerId = website.customerId;
-    if (!customerId) return false;
-
-    const customerSnap = await getDoc(
-      doc(db, "customers", customerId)
-    );
-
-    if (
-      !customerSnap.exists() ||
-      customerSnap.data().status !== "active"
-    ) {
-      return false;
-    }
-
-    currentTenantId = customerId;
-    currentTenant = {
-      id: customerId,
-      ...customerSnap.data()
-    };
-
-    currentWebsiteMode = "customer";
-
-    console.log("Customer website:", currentTenantId);
-    return true;
-  }
-
-  // Fallback: search domain in customer records
-  const customersSnap = await getDocs(
-    collection(db, "customers")
-  );
-
-  const matched = customersSnap.docs.find(item => {
-    const data = item.data();
-
-    const domains = [
-      data.domain,
-      data.customDomain,
-      data.websiteDomain,
-      ...(Array.isArray(data.domains) ? data.domains : [])
-    ]
-      .filter(Boolean)
-      .map(value =>
-        String(value).toLowerCase().replace(/^www\./, "")
-      );
-
-    return domains.includes(hostname);
-  });
-
-  if (!matched || matched.data().status !== "active") {
-    console.error("No active tenant found:", hostname);
     return false;
   }
 
-  currentTenantId = matched.id;
+  currentTenantId = websiteSnap.data().customerId;
   currentTenant = {
-    id: matched.id,
-    ...matched.data()
+    id: currentTenantId,
+    businessName: "Intello Electric",
+    phone: "9448735433",
+    email: "intelloelectric@gmail.com"
   };
 
   currentWebsiteMode = "customer";
+
+  console.log("Intello Electric website loaded.");
   return true;
 }
-
 /* =========================================
    LOAD TENANT-SPECIFIC PRODUCTS
 ========================================= */
