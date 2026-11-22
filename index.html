@@ -1281,6 +1281,193 @@ body {
     })();
   </script>
 
+<!-- INTELLO ELECTRIC DOMAIN BRANDING -->
+<script>
+(function () {
+  const hostname = window.location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  const params = new URLSearchParams(window.location.search);
+
+  const isIntello =
+    hostname === "intelloelectric.com" ||
+    params.get("tenant") === "intelloelectric";
+
+  if (!isIntello) return;
+
+  const brand = "INTELLO ELECTRIC";
+  const tagline = "COMPUTER AND CCTV SALES AND SERVICES";
+  const phone = "+91 94487 73543";
+  const phoneNumber = "919448773543";
+  const email = "intelloelectric@gmail.com";
+  const logo = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
+  const whatsapp = "https://wa.me/" + phoneNumber;
+
+  // SEO DETAILS
+  document.title = brand + " | Computer and CCTV Sales and Services";
+
+  const description = document.querySelector('meta[name="description"]');
+  if (description) {
+    description.content =
+      "Intello Electric - Computer and CCTV sales and services in Mangalore, Karnataka.";
+  }
+
+  const keywords = document.querySelector('meta[name="keywords"]');
+  if (keywords) {
+    keywords.content =
+      "Intello Electric, Computer Sales, CCTV Camera, CCTV Services, Mangalore";
+  }
+
+  const author = document.querySelector('meta[name="author"]');
+  if (author) author.content = brand;
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.href = "https://intelloelectric.com/";
+
+  // HEADER LOGO AND NAME
+  const brandLink = document.querySelector(".brand");
+
+  if (brandLink) {
+    const logoImage = brandLink.querySelector("img");
+    const heading = brandLink.querySelector("h1");
+    const taglineElement = brandLink.querySelector("span");
+
+    if (logoImage) {
+      logoImage.src = logo;
+      logoImage.alt = brand + " Logo";
+      logoImage.style.display = "block";
+    }
+
+    if (heading) heading.textContent = brand;
+    if (taglineElement) taglineElement.textContent = tagline;
+  }
+
+  // TOP PHONE NUMBER
+  const topPhone = document.querySelector(".top-strip a");
+
+  if (topPhone) {
+    topPhone.href = "tel:+" + phoneNumber;
+    topPhone.textContent = phone;
+  }
+
+  // HERO IMAGE ALT
+  const heroImage = document.querySelector(".hero-static-image");
+  if (heroImage) heroImage.alt = brand;
+
+  // PARTNER SECTION
+  const partnerText = document.querySelector("#partner .section-heading p");
+  if (partnerText) {
+    partnerText.textContent =
+      "Interested in working with " + brand +
+      "? Contact us to discuss business and partnership opportunities.";
+  }
+
+  // CTA SECTION
+  const ctaText = document.querySelector(".newsletter-section p");
+  if (ctaText) {
+    ctaText.textContent =
+      "Contact " + brand +
+      " for computer, CCTV cameras and complete security solutions.";
+  }
+
+  // FOOTER BRANDING
+  const footer = document.querySelector(".site-footer");
+
+  if (footer) {
+    const footerHeading = footer.querySelector(".footer-grid > div:first-child h3");
+    if (footerHeading) footerHeading.textContent = brand;
+
+    const footerDescription =
+      footer.querySelector(".footer-grid > div:first-child > p");
+
+    if (footerDescription) {
+      footerDescription.textContent =
+        tagline + ". Providing computer, CCTV products and services.";
+    }
+
+    const footerLinks = footer.querySelectorAll(
+      '.footer-grid a[href^="https://wa.me/"]'
+    );
+
+    footerLinks.forEach(link => {
+      link.href = whatsapp;
+      link.textContent = phone;
+    });
+
+    const footerEmail = footer.querySelector(
+      '.footer-grid a[href^="mailto:"]'
+    );
+
+    if (footerEmail) {
+      footerEmail.href = "mailto:" + email;
+      footerEmail.textContent = email;
+    }
+
+    const copyright = footer.querySelector(".footer-bottom p");
+
+    if (copyright) {
+      copyright.innerHTML =
+        '© <span id="footerYear">' +
+        new Date().getFullYear() +
+        "</span> " + brand + ". All Rights Reserved.";
+    }
+  }
+
+  // FLOATING WHATSAPP BUTTON
+  const floatingWhatsApp = document.querySelector(".whatsapp-float");
+
+  if (floatingWhatsApp) {
+    floatingWhatsApp.href = whatsapp;
+    floatingWhatsApp.setAttribute(
+      "aria-label",
+      "Contact " + brand + " on WhatsApp"
+    );
+  }
+
+  // CONTACT POPUP DETAILS
+  const contactItems = document.querySelectorAll(
+    "#contactPopup .contact-detail-item"
+  );
+
+  if (contactItems.length >= 5) {
+    contactItems[0].innerHTML =
+      "<strong>Company</strong>" + brand;
+
+    contactItems[1].innerHTML =
+      "<strong>Business</strong>" + tagline;
+
+    contactItems[2].innerHTML =
+      '<strong>Phone / WhatsApp</strong><a href="' +
+      whatsapp + '" target="_blank" rel="noopener">' +
+      phone + "</a>";
+
+    contactItems[3].innerHTML =
+      '<strong>E-mail</strong><a href="mailto:' +
+      email + '">' + email + "</a>";
+
+    contactItems[4].innerHTML =
+      "<strong>Address</strong>Mangalore, Karnataka, India";
+  }
+
+  const popupDescription = document.querySelector(
+    "#contactPopup .contact-popup-header p"
+  );
+
+  if (popupDescription) {
+    popupDescription.textContent =
+      "Contact " + brand + " for enquiries and assistance.";
+  }
+
+  // FAVICON
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = logo;
+
+  console.log("Intello Electric branding activated.");
+})();
+</script>
+<!-- END INTELLO ELECTRIC DOMAIN BRANDING -->
+
   <!-- EXISTING APP JAVASCRIPT -->
   <script type="module" src="app.js"></script>
 
