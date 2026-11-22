@@ -57,9 +57,18 @@ function escapeHTML(value = "") {
   })[char]);
 }
 
+
 function safeURL(value) {
   try {
-    const url = new URL(String(value || ""));
+    let raw = String(value || "").trim();
+
+    // Markdown link से असली URL निकालें
+    const markdownMatch = raw.match(/^\[.*?\]\((https?:\/\/[^)]+)\)$/i);
+    if (markdownMatch) {
+      raw = markdownMatch[1];
+    }
+
+    const url = new URL(raw);
 
     return ["https:", "http:"].includes(url.protocol)
       ? url.href
