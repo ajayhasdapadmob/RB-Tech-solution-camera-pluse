@@ -1535,5 +1535,88 @@ color: #08a045 !important;
   transform: translateY(-12px);
 }
 </style>
+  
+<!-- INTELLO ELECTRIC VISIBLE BRANDING -->
+<script>
+(function () {
+  const host = location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  if (host !== "intelloelectric.com") return;
+
+  const replacements = [
+    ["RB TECH SOLUTION", "INTELLO ELECTRIC"],
+    ["RB Tech Solution", "Intello Electric"],
+    ["RB TECH", "INTELLO ELECTRIC"],
+    ["RB Tech", "Intello Electric"],
+    ["CCTV & SECURITY SYSTEMS",
+     "COMPUTER AND CCTV SALES AND SERVICES"],
+    ["CCTV & Security Systems",
+     "Computer and CCTV Sales and Services"],
+    ["+91 96631 16089", "+91 94487 73543"],
+    ["96631 16089", "94487 73543"],
+    ["9663116089", "9448735433"],
+    ["ajayhasda623@gmail.com",
+     "intelloelectric@gmail.com"]
+  ];
+
+  function updateText(root) {
+    const walker = document.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT
+    );
+
+    let node;
+
+    while ((node = walker.nextNode())) {
+      let value = node.nodeValue;
+
+      replacements.forEach(([oldText, newText]) => {
+        value = value.split(oldText).join(newText);
+      });
+
+      if (value !== node.nodeValue) {
+        node.nodeValue = value;
+      }
+    }
+  }
+
+  function updateBranding() {
+    updateText(document.body);
+
+    document.title =
+      "Intello Electric | Computer and CCTV Sales & Services";
+
+    document.querySelectorAll("a[href^='tel:']")
+      .forEach(a => {
+        a.href = "tel:+919448773543";
+      });
+
+    document.querySelectorAll("a[href*='wa.me/']")
+      .forEach(a => {
+        a.href = "https://wa.me/919448773543";
+      });
+
+    document.querySelectorAll("a[href^='mailto:']")
+      .forEach(a => {
+        a.href = "mailto:intelloelectric@gmail.com";
+      });
+  }
+
+  updateBranding();
+
+  const observer = new MutationObserver(() => {
+    updateBranding();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+})();
+</script>
 </body>
 </html>
