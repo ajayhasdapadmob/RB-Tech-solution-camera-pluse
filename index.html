@@ -25,7 +25,8 @@
 <meta name="twitter:title" content="Intello Electric | Computer and CCTV Sales & Services">
 <meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="images/logo.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="images/intello-favicon.png">
+<link rel="apple-touch-icon" href="images/intello-favicon.png">
   <style>
     /* =====================================
        CONTACT POPUP
@@ -655,18 +656,23 @@ body {
 </div>
 
 
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="header-inner">
+ 
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
 
-      <a href="#home" class="brand">
-        <img src="images/logo.png" alt="RB Tech Solution Logo"
-          onerror="this.style.display='none'">
-        <div>
-          <h1>RB TECH SOLUTION</h1>
-          <span>CCTV & SECURITY SYSTEMS</span>
-        </div>
-      </a>
+    <a href="#home" class="brand">
+      <img id="siteBrandLogo"
+        src="images/logo.png"
+        alt="RB Tech Solution Logo"
+        onerror="this.style.display='none'">
+
+      <div>
+        <h1 id="siteBrandName">RB TECH SOLUTION</h1>
+        <span id="siteBrandTagline">CCTV & SECURITY SYSTEMS</span>
+      </div>
+    </a>
+
 
       <button id="menuToggle" type="button"
         aria-label="Open navigation menu" aria-expanded="false">☰</button>
@@ -1626,6 +1632,30 @@ color: #08a045 !important;
     characterData: true
   });
 
+})();
+</script>
+  
+<script>
+(function () {
+  const host = location.hostname.replace(/^www\./, "");
+
+  if (host === "intelloelectric.com") {
+    const logo = document.getElementById("siteBrandLogo");
+    const name = document.getElementById("siteBrandName");
+    const tagline = document.getElementById("siteBrandTagline");
+
+    if (logo) {
+      logo.src = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
+      logo.alt = "Intello Electric Logo";
+      logo.style.display = "";
+    }
+
+    if (name) name.textContent = "INTELLO ELECTRIC";
+
+    if (tagline) {
+      tagline.textContent = "COMPUTER AND CCTV SALES AND SERVICES";
+    }
+  }
 })();
 </script>
 </body>
