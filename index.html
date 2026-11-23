@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,8 +33,18 @@
 <meta name="twitter:title" content="Intello Electric | Computer and CCTV Sales & Services">
 <meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">
   <link rel="stylesheet" href="style.css">
-<link id="siteFavicon" rel="icon" type="image/png" href="images/logo.png">
-<link id="siteAppleIcon" rel="apple-touch-icon" href="images/logo.png">
+  <script>
+(function () {
+  const host = location.hostname.replace(/^www\./, "");
+
+  const icon = host === "intelloelectric.com"
+    ? "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png"
+    : "images/logo.png";
+
+  document.write('<link rel="icon" type="image/png" href="' + icon + '?v=2">');
+  document.write('<link rel="apple-touch-icon" href="' + icon + '?v=2">');
+})();
+</script>
   <style>
     /* =====================================
        CONTACT POPUP
@@ -1484,19 +1493,9 @@ body {
       "Contact " + brand + " for enquiries and assistance.";
   }
 
-  // DOMAIN-SPECIFIC FAVICON
-const intelloFavicon = "images/products/intello-favicon.png";
-
-const favicon = document.getElementById("siteFavicon");
-if (favicon) {
-  favicon.href = intelloFavicon + "?v=3";
-  favicon.type = "image/png";
-}
-
-const appleIcon = document.getElementById("siteAppleIcon");
-if (appleIcon) {
-  appleIcon.href = intelloFavicon + "?v=3";
-}
+  // FAVICON
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = logo;
 
   console.log("Intello Electric branding activated.");
 })();
