@@ -25,7 +25,10 @@
 <meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">
   <link rel="stylesheet" href="style.css">
  <link rel="stylesheet" href="style.css">
-<link rel="icon" href="images/logo.png">
+<link rel="icon" id="siteFavicon" type="image/png"
+      href="images/logo.png">
+<link rel="apple-touch-icon" id="siteAppleIcon"
+      href="images/logo.png">
   <style>
     /* =====================================
        CONTACT POPUP
@@ -1474,9 +1477,15 @@ body {
       "Contact " + brand + " for enquiries and assistance.";
   }
 
-  // FAVICON
-  const favicon = document.querySelector('link[rel="icon"]');
-  if (favicon) favicon.href = logo;
+  // INTELLO FAVICON
+const intelloFavicon =
+  "https://rb-tech-solution-camera-pluse-pages.pages.dev/images/products/intello-favicon.png?v=8";
+
+const favicon = document.getElementById("siteFavicon");
+if (favicon) favicon.href = intelloFavicon;
+
+const appleIcon = document.getElementById("siteAppleIcon");
+if (appleIcon) appleIcon.href = intelloFavicon;
 
   console.log("Intello Electric branding activated.");
 })();
