@@ -33,8 +33,18 @@
 <meta name="twitter:title" content="Intello Electric | Computer and CCTV Sales & Services">
 <meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">
   <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="style.css">
-<link rel="icon" href="images/logo.png">
+  <script>
+(function () {
+  const host = location.hostname.replace(/^www\./, "");
+
+  const icon = host === "intelloelectric.com"
+    ? "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png"
+    : "images/logo.png";
+
+  document.write('<link rel="icon" type="image/png" href="' + icon + '?v=2">');
+  document.write('<link rel="apple-touch-icon" href="' + icon + '?v=2">');
+})();
+</script>
   <style>
     /* =====================================
        CONTACT POPUP
@@ -1322,7 +1332,7 @@ body {
 
   const brand = "INTELLO ELECTRIC";
   const tagline = "COMPUTER AND CCTV SALES AND SERVICES";
-  const phone = "+91 9448773543";
+  const phone = "+91 94487 73543";
   const phoneNumber = "919448773543";
   const email = "intelloelectric@gmail.com";
   const logo = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
@@ -1483,18 +1493,9 @@ body {
       "Contact " + brand + " for enquiries and assistance.";
   }
 
-  // DOMAIN-SPECIFIC FAVICON
-const intelloFavicon = "/images/products/intello-favicon.png?v=4";
-
-const favicon = document.getElementById("siteFavicon");
-if (favicon) {
-  favicon.href = intelloFavicon;
-}
-
-const appleIcon = document.getElementById("siteAppleIcon");
-if (appleIcon) {
-  appleIcon.href = intelloFavicon;
-}
+  // FAVICON
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = logo;
 
   console.log("Intello Electric branding activated.");
 })();
@@ -1587,8 +1588,8 @@ color: #08a045 !important;
      "COMPUTER AND CCTV SALES AND SERVICES"],
     ["CCTV & Security Systems",
      "Computer and CCTV Sales and Services"],
-    ["+91 96631 16089", "+91 9448773543"],
-    ["96631 16089", "9448773543"],
+    ["+91 96631 16089", "+91 94487 73543"],
+    ["96631 16089", "94487 73543"],
     ["9663116089", "9448735433"],
     ["ajayhasda623@gmail.com",
      "intelloelectric@gmail.com"]
