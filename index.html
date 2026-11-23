@@ -1483,9 +1483,18 @@ body {
       "Contact " + brand + " for enquiries and assistance.";
   }
 
-  // FAVICON
-  const favicon = document.querySelector('link[rel="icon"]');
-  if (favicon) favicon.href = logo;
+  // DOMAIN-SPECIFIC FAVICON
+const intelloFavicon = "/images/products/intello-favicon.png?v=4";
+
+const favicon = document.getElementById("siteFavicon");
+if (favicon) {
+  favicon.href = intelloFavicon;
+}
+
+const appleIcon = document.getElementById("siteAppleIcon");
+if (appleIcon) {
+  appleIcon.href = intelloFavicon;
+}
 
   console.log("Intello Electric branding activated.");
 })();
