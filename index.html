@@ -25,8 +25,18 @@
 <meta name="twitter:title" content="Intello Electric | Computer and CCTV Sales & Services">
 <meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" sizes="512x512" href="images/intello-favicon.png">
-<link rel="apple-touch-icon" href="images/intello-favicon.png">
+  <script>
+(function () {
+  const host = location.hostname.replace(/^www\./, "");
+
+  if (host === "intelloelectric.com") {
+    document.write('<link rel="icon" type="image/png" href="images/products/intello-favicon.png">');
+    document.write('<link rel="apple-touch-icon" href="images/products/intello-favicon.png">');
+  } else {
+    document.write('<link rel="icon" href="images/logo.png">');
+  }
+})();
+</script>
   <style>
     /* =====================================
        CONTACT POPUP
