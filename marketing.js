@@ -538,14 +538,30 @@ function renderGallerySlider(grid, items) {
 
     const photo = card.querySelector("img");
 
-    if (photo) {
-      photo.style.width = "100%";
-      photo.style.height = "190px";
-      photo.style.objectFit = "cover";
-      photo.style.display = "block";
-      photo.style.cursor = "pointer";
-    }
+card.style.display = "block";
+card.style.visibility = "visible";
+card.style.opacity = "1";
+card.style.background = "#ffffff";
+card.style.minHeight = "230px";
 
+if (photo) {
+  photo.style.width = "100%";
+  photo.style.height = "190px";
+  photo.style.objectFit = "contain";
+  photo.style.display = "block";
+  photo.style.visibility = "visible";
+  photo.style.opacity = "1";
+  photo.style.background = "#f5f5f5";
+  photo.style.cursor = "pointer";
+
+  photo.addEventListener("error", () => {
+    console.error("Gallery photo failed:", photo.src);
+  });
+
+  photo.addEventListener("load", () => {
+    console.log("Gallery photo loaded:", photo.src);
+  });
+}
     return card;
   });
 
