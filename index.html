@@ -1,66 +1,174 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>RB Tech Solution | CCTV & Security Systems</title>
-  <meta name="description" content="RB Tech Solution - CCTV cameras, security systems, networking and surveillance solutions.">
-  <meta name="keywords" content="RB Tech Solution, CCTV Cameras, Security Systems, IP Cameras">
-  <meta name="author" content="RB Tech Solution">
-  <meta name="theme-color" content="#087f3c">
+<title>Intello Electric | Computer, CCTV Sales & Services in Mangalore</title>
 
-  <link rel="stylesheet" href="style.css">
+<meta name="description" content="Intello Electric, Mangalore offers computer sales and services, CCTV cameras, IP cameras, networking and security solutions. Contact us for sales and support.">
 
-  <link rel="icon" type="image/png" href="images/logo.png" id="siteFavicon">
+<meta name="keywords" content="Intello Electric, Computer Sales Mangalore, CCTV Sales Mangalore, CCTV Services, IP Cameras, Computer Services">
 
-  <!-- Intello SEO and favicon: only on Intello domain -->
-  <script>
-    (function () {
-      const host = location.hostname.toLowerCase().replace(/^www\./, "");
-      const isIntello =
-        host === "intelloelectric.com" ||
-        new URLSearchParams(location.search).get("tenant") === "intelloelectric";
+<meta name="author" content="Intello Electric">
+<meta name="theme-color" content="#087f3c">
 
-      if (!isIntello) return;
+<link rel="canonical" href="https://intelloelectric.com/">
 
-      document.title = "Intello Electric | Computer, CCTV Sales & Services in Mangalore";
+<meta property="og:title" content="Intello Electric | Computer and CCTV Sales & Services">
+<meta property="og:description" content="Computer and CCTV sales and services in Mangalore. Contact Intello Electric for products and support.">
+<meta property="og:url" content="https://intelloelectric.com/">
+<meta property="og:type" content="website">
 
-      const meta = document.querySelector('meta[name="description"]');
-      if (meta) {
-        meta.content = "Intello Electric, Mangalore offers computer sales and services, CCTV cameras, IP cameras, networking and security solutions.";
-      }
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Intello Electric | Computer and CCTV Sales & Services">
+<meta name="twitter:description" content="Computer and CCTV sales and services in Mangalore.">
+ <link rel="stylesheet" href="style.css">
 
-      const keywords = document.querySelector('meta[name="keywords"]');
-      if (keywords) {
-        keywords.content = "Intello Electric, Computer Sales Mangalore, CCTV Sales Mangalore, CCTV Services, IP Cameras, Computer Services";
-      }
+<link rel="icon" type="image/png"
+href="images/products/intello-favicon.png">
 
-      const author = document.querySelector('meta[name="author"]');
-      if (author) author.content = "Intello Electric";
+<style>
 
-      const theme = document.querySelector('meta[name="theme-color"]');
-      if (theme) theme.content = "#087f3c";
+/* =====================================
+   CONTACT POPUP
+===================================== */
+    .contact-popup {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0, 0, 0, .78);
+      padding: 20px;
+      overflow-y: auto;
+      align-items: center;
+      justify-content: center;
+    }
 
-      const canonical = document.createElement("link");
-      canonical.rel = "canonical";
-      canonical.href = "https://intelloelectric.com/";
-      document.head.appendChild(canonical);
+    .contact-popup.active {
+      display: flex;
+    }
 
-      const favicon = document.getElementById("siteFavicon");
-      if (favicon) {
-        favicon.href = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
-      }
-    })();
-  </script>
-
-  <style>
-    /* Marketing cards */
-    .marketing-grid,
-    .news-grid {
-      display: block !important;
+    .contact-popup-box {
+      position: relative;
+      background: #fff;
+      color: #26352b;
       width: 100%;
+      max-width: 750px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 35px;
+      border-radius: 12px;
+      box-shadow: 0 15px 55px rgba(0,0,0,.3);
+    }
+
+    .contact-popup-header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 0 35px;
+    }
+
+    .contact-popup-header h2 {
+      color: #075b30;
+      font-size: 30px;
+      margin: 5px 0 10px;
+    }
+
+    .contact-popup-header p {
+      color: #555;
+      margin: 0;
+    }
+
+    .contact-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      border: 0;
+      background: #075b30;
+      color: white;
+      font-size: 27px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .contact-close:hover {
+      background: #dc2626;
+    }
+
+    .contact-popup-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 100%;
+      gap: 0;
+    }
+
+    .contact-details-box {
+      background: #f8faf8;
+      padding: 25px;
+      border-radius: 8px;
+      border: 1px solid #e1e9e2;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .contact-details-box h3 {
+      color: #075b30;
+      margin: 0 0 20px;
+    }
+
+    .contact-detail-item {
+      margin-bottom: 18px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .contact-detail-item strong {
+      display: block;
+      color: #075b30;
+      margin-bottom: 3px;
+    }
+
+    .contact-detail-item a {
+      color: #087f3c;
+      text-decoration: none;
+    }
+
+    .contact-detail-item a:hover {
+      text-decoration: underline;
+    }
+
+    @media(max-width: 768px) {
+      .contact-popup {
+        padding: 10px;
+        align-items: flex-start;
+      }
+
+      .contact-popup-box {
+        padding: 55px 16px 20px;
+        max-height: 96vh;
+      }
+
+      .contact-popup-header h2 {
+        font-size: 23px;
+      }
+
+      .contact-details-box {
+        padding: 17px;
+      }
+    }
+
+    /* =====================================
+       MARKETING CONTENT
+    ===================================== */
+
+    .marketing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 22px;
+      margin-top: 25px;
     }
 
     .marketing-item {
@@ -68,7 +176,7 @@
       border: 1px solid #e2e8e3;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,.06);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, .06);
       color: #26352b;
     }
 
@@ -81,79 +189,48 @@
       background: #eef2ef;
     }
 
-    .marketing-item-body { padding: 17px; }
-    .marketing-item-body h3 { color: #075b30; }
+    .marketing-item-body {
+      padding: 17px;
+    }
+
+    .marketing-item-body h3 {
+      color: #075b30;
+      margin: 0 0 10px;
+    }
+
     .marketing-item-body p {
       color: #555;
       line-height: 1.6;
       white-space: pre-line;
     }
 
-    .marketing-slider {
-      position: relative;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 48px;
-    }
-
-    .marketing-slider-viewport {
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .marketing-slider-track {
-      display: flex;
-      width: max-content;
-      align-items: stretch;
-      will-change: transform;
-    }
-
-    .marketing-slider-group {
-      display: flex;
-      flex: 0 0 auto;
-      width: max-content;
-      gap: 20px;
-      padding-right: 20px;
-    }
-
-    .marketing-slider-group .marketing-item {
-      flex: 0 0 280px;
-      width: 280px;
-      min-width: 280px;
-      max-width: 280px;
-      box-sizing: border-box;
-    }
-
-    .marketing-arrow {
-      position: absolute;
-      top: 50%;
-      z-index: 10;
-      transform: translateY(-50%);
-      width: 42px;
-      height: 42px;
+    .marketing-item button,
+    .marketing-item a {
+      display: inline-block;
+      margin: 5px 6px 0 0;
+      padding: 9px 15px;
       border: 0;
-      border-radius: 50%;
-      background: #08a045;
+      border-radius: 5px;
+      background: #087f3c;
       color: white;
-      font-size: 19px;
+      text-decoration: none;
       cursor: pointer;
     }
-
-    .marketing-left { left: 3px; }
-    .marketing-right { right: 3px; }
 
     .marketing-viewer {
       display: none;
       position: fixed;
       inset: 0;
       z-index: 100001;
-      background: rgba(0,0,0,.88);
+      background: rgba(0, 0, 0, .88);
       padding: 20px;
       align-items: center;
       justify-content: center;
     }
 
-    .marketing-viewer.active { display: flex; }
+    .marketing-viewer.active {
+      display: flex;
+    }
 
     .marketing-viewer-box {
       position: relative;
@@ -187,24 +264,140 @@
       max-width: 100%;
       width: 100%;
       max-height: 75vh;
-      object-fit: contain;
+      object-fit: cover;
       border: 0;
     }
 
-    /* Hero slider */
+    #marketingViewerContent h2 {
+      color: #075b30;
+    }
+
+    @media(max-width: 600px) {
+      .marketing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* =====================================
+       CONTINUOUS MARKETING SLIDER
+    ===================================== */
+
+    .marketing-grid,
+    .news-grid {
+      display: block !important;
+      width: 100%;
+    }
+
+    .marketing-slider {
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 48px;
+    }
+
+    .marketing-slider-viewport {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .marketing-slider-track {
+      display: flex;
+      width: max-content;
+      align-items: stretch;
+      will-change: transform;
+    }
+
+    .marketing-slider-group {
+      display: flex;
+      flex: 0 0 auto;
+      width: max-content;
+      gap: 20px;
+      padding-right: 20px;
+      align-items: stretch;
+    }
+
+    .marketing-slider-group .marketing-item {
+      flex: 0 0 280px;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      box-sizing: border-box;
+    }
+
+    .marketing-arrow {
+      position: absolute;
+      top: 50%;
+      z-index: 10;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: #08a045;
+      color: white;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .marketing-left {
+      left: 3px;
+    }
+
+    .marketing-right {
+      right: 3px;
+    }
+
+    .marketing-arrow:hover {
+      background: #075b30;
+    }
+
+    .marketing-slider-group video {
+      display: block;
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      background: #000;
+    }
+
+    @media(max-width: 600px) {
+      .marketing-slider {
+        padding: 10px 38px;
+      }
+
+      .marketing-slider-group .marketing-item {
+        flex: 0 0 245px;
+        width: 245px;
+        min-width: 245px;
+        max-width: 245px;
+      }
+
+      .marketing-arrow {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+      }
+    }
+
+    /* =====================================
+       FULL SCREEN HERO IMAGE / VIDEO SLIDER
+    ===================================== */
+
     .hero-section {
       position: relative !important;
       display: block !important;
       width: 100% !important;
-      height: 65vh !important;
-      height: 65svh !important;
+
+      /* Header ke neeche bachi hui poori screen */
+      height: calc(100vh - var(--site-header-height, 0px)) !important;
+      height: calc(100svh - var(--site-header-height, 0px)) !important;
+
       min-height: 300px;
       margin: 0 !important;
       padding: 0 !important;
       overflow: hidden !important;
       background: #071b2b;
       box-sizing: border-box;
-      z-index: 0;
     }
 
     .hero-marketing-slider {
@@ -212,20 +405,13 @@
       inset: 0 !important;
       width: 100% !important;
       height: 100% !important;
-      overflow: hidden !important;
-      background: #071b2b;
-    }
-
-    .hero-static-image,
-    .hero-marketing-slide img,
-    .hero-marketing-slide video {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
+      min-height: 0 !important;
       max-width: none !important;
-      max-height: none !important;
-      object-fit: cover !important;
-      object-position: center;
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
       background: #071b2b;
     }
 
@@ -245,6 +431,96 @@
       z-index: 1;
     }
 
+    
+/* HERO IMAGE AND VIDEO SIZE */
+
+.hero-marketing-slider > .hero-static-image,
+.hero-marketing-slide img,
+.hero-marketing-slide video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center;
+  background: #071b2b;
+  border: 0 !important;
+}
+
+/* HERO SLIDE */
+
+.hero-marketing-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .7s ease;
+  overflow: hidden;
+}
+
+.hero-marketing-slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+/* HERO ARROWS */
+
+.hero-marketing-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.hero-marketing-prev {
+  left: 15px;
+}
+
+.hero-marketing-next {
+  right: 15px;
+}
+
+/* HERO DOTS */
+
+.hero-marketing-dots {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-marketing-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .6);
+  cursor: pointer;
+}
+
+.hero-marketing-dot.active {
+  background: #08a045;
+  transform: scale(1.3);
+}
+
+
     .hero-marketing-arrow {
       position: absolute;
       top: 50%;
@@ -254,14 +530,23 @@
       height: 42px;
       border: 0;
       border-radius: 50%;
-      background: rgba(0,0,0,.65);
-      color: white;
+      background: rgba(0, 0, 0, .65);
+      color: #fff;
       font-size: 23px;
       cursor: pointer;
     }
 
-    .hero-marketing-prev { left: 15px; }
-    .hero-marketing-next { right: 15px; }
+    .hero-marketing-arrow:hover {
+      background: #087f3c;
+    }
+
+    .hero-marketing-prev {
+      left: 15px;
+    }
+
+    .hero-marketing-next {
+      right: 15px;
+    }
 
     .hero-marketing-dots {
       position: absolute;
@@ -280,7 +565,7 @@
       padding: 0;
       border: 0;
       border-radius: 50%;
-      background: rgba(255,255,255,.6);
+      background: rgba(255, 255, 255, .6);
       cursor: pointer;
     }
 
@@ -289,139 +574,15 @@
       transform: scale(1.3);
     }
 
-    /* Header */
-    .top-strip,
-    .site-header {
-      position: relative !important;
-      z-index: 1000 !important;
-    }
-
-    .site-header #mainNav > a,
-    .site-header #mainNav > .nav-dropdown > .dropdown-toggle {
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
-      font-weight: 700 !important;
-      text-shadow: 1px 2px 5px #000 !important;
-    }
-
-    .site-header #mainNav .mega-menu,
-    .site-header #mainNav .mega-menu *,
-    .site-header #mainNav .dropdown-menu,
-    .site-header #mainNav .dropdown-menu * {
-      color: #000 !important;
-      -webkit-text-fill-color: #000 !important;
-      text-shadow: none !important;
-    }
-
-    .site-header #mainNav .mega-menu a:hover,
-    .site-header #mainNav .dropdown-menu a:hover {
-      color: #08a045 !important;
-      -webkit-text-fill-color: #08a045 !important;
-    }
-
-    /* Contact popup */
-    .contact-popup {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: rgba(0,0,0,.78);
-      padding: 20px;
-      overflow-y: auto;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .contact-popup.active { display: flex; }
-
-    .contact-popup-box {
-      position: relative;
-      background: #fff;
-      color: #26352b;
-      width: 100%;
-      max-width: 750px;
-      max-height: 92vh;
-      overflow-y: auto;
-      padding: 35px;
-      border-radius: 12px;
-      box-shadow: 0 15px 55px rgba(0,0,0,.3);
-    }
-
-    .contact-popup-header {
-      text-align: center;
-      margin-bottom: 25px;
-      padding: 0 35px;
-    }
-
-    .contact-popup-header h2 {
-      color: #075b30;
-      font-size: 30px;
-    }
-
-    .contact-close {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      border: 0;
-      background: #075b30;
-      color: white;
-      font-size: 27px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    .contact-details-box {
-      background: #f8faf8;
-      padding: 25px;
-      border-radius: 8px;
-      border: 1px solid #e1e9e2;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .contact-details-box h3,
-    .contact-detail-item strong { color: #075b30; }
-
-    .contact-detail-item {
-      margin-bottom: 18px;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .contact-detail-item strong {
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    .contact-detail-item a {
-      color: #087f3c;
-      text-decoration: none;
+    .hero-image-label {
+      display: none !important;
     }
 
     @media(max-width: 768px) {
-      .contact-popup {
-        padding: 10px;
-        align-items: flex-start;
-      }
-
-      .contact-popup-box { padding: 55px 16px 20px; }
-      .contact-popup-header h2 { font-size: 23px; }
-      .contact-details-box { padding: 17px; }
-      .marketing-slider { padding: 10px 38px; }
-
-      .marketing-slider-group .marketing-item {
-        flex: 0 0 245px;
-        width: 245px;
-        min-width: 245px;
-        max-width: 245px;
-      }
-
-      .marketing-arrow {
-        width: 34px;
-        height: 34px;
-        font-size: 15px;
+      .hero-section {
+        height: calc(100vh - var(--site-header-height, 0px)) !important;
+        height: calc(100svh - var(--site-header-height, 0px)) !important;
+        min-height: 300px;
       }
 
       .hero-marketing-arrow {
@@ -430,447 +591,637 @@
         font-size: 19px;
       }
 
-      .hero-marketing-prev { left: 8px; }
-      .hero-marketing-next { right: 8px; }
+      .hero-marketing-prev {
+        left: 8px;
+      }
+
+      .hero-marketing-next {
+        right: 8px;
+      }
     }
+    
+/* =========================================
+   HERO MEDIA BEHIND TOP STRIP AND HEADER
+========================================= */
+
+body {
+  position: relative;
+  padding-top: 0 !important;
+}
+
+/* Top strip and header stay visible */
+.top-strip,
+.site-header {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+/* Hero starts from the very top */
+.hero-section {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 0 !important;
+}
+
+/* Keep the photo/video full screen */
+.hero-marketing-slider {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Other sections remain below the hero */
+.trust-strip {
+  position: relative;
+  z-index: 1;
+  margin-top: 00vh;
+  margin-top: 00svh;
+}
+
   </style>
+  <script>
+document.addEventListener("error", function(event) {
+  const img = event.target;
+
+  if (
+    img instanceof HTMLImageElement &&
+    img.closest(".hero-section")
+  ) {
+    img.style.display = "none";
+  }
+}, true);
+</script>
 </head>
 
 <body>
 
+  
 <!-- TOP STRIP -->
 <div class="top-strip">
-  <a id="topPhoneLink" href="tel:+919663116089">+91 96631 16089</a>
+  <a href="tel:+919663116089">+91 96631 16089</a>
 </div>
 
+
+ 
 <!-- HEADER -->
 <header class="site-header">
   <div class="header-inner">
+
     <a href="#home" class="brand">
       <img
-        id="siteBrandLogo"
-        src="images/logo.png"
-        alt="RB Tech Solution Logo"
-        onerror="this.style.display='none'"
-      >
+  id="siteBrandLogo"
+  src="https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png"
+  alt="Intello Electric Logo"
+  onerror="this.style.display='none'"
+>
       <div>
-        <h1 id="siteBrandName">RB TECH SOLUTION</h1>
-        <span id="siteBrandTagline">CCTV & SECURITY SYSTEMS</span>
+        <h1 id="siteBrandName">INTELLO ELECTRIC</h1>
+<span id="siteBrandTagline">COMPUTER AND CCTV SALES AND SERVICES</span>
       </div>
     </a>
 
-    <button id="menuToggle" type="button"
-      aria-label="Open navigation menu" aria-expanded="false">☰</button>
 
-    <nav id="mainNav">
-      <a href="#home">Home</a>
+      <button id="menuToggle" type="button"
+        aria-label="Open navigation menu" aria-expanded="false">☰</button>
 
-      <div class="nav-dropdown">
-        <a href="#products" class="dropdown-toggle">Products</a>
-        <div class="mega-menu">
-          <div>
-            <h3>Camera Solutions</h3>
-            <a href="#products" data-category="IP Cameras">Network Camera / IP Camera</a>
-            <a href="#products" data-category="CCTV Cameras">Analog HD Camera</a>
-            <a href="#products" data-category="Wireless Cameras">Wireless Cameras</a>
-            <a href="#products" data-category="PTZ Cameras">Speed Dome / PTZ</a>
-          </div>
-          <div>
-            <h3>Recording & Access</h3>
-            <a href="#products" data-category="DVR & NVR">DVR & NVR</a>
-            <a href="#products" data-category="Video Door Phone">Video Door Phones</a>
-            <a href="#products" data-category="Biometric Systems">Time & Attendance</a>
-            <a href="#products" data-category="Accessories">Accessories</a>
-          </div>
-          <div>
-            <h3>Other Products</h3>
-            <a href="#products" data-category="Networking">Networking & Switches</a>
-            <a href="#products" data-category="Storage">Storage & Memory</a>
-            <a href="#products">View All Products</a>
+      <nav id="mainNav">
+        <a href="#home">Home</a>
+
+        <div class="nav-dropdown">
+          <a href="#products" class="dropdown-toggle">Products</a>
+          <div class="mega-menu">
+            <div>
+              <h3>Camera Solutions</h3>
+              <a href="#products" data-category="IP Cameras">Network Camera / IP Camera</a>
+              <a href="#products" data-category="CCTV Cameras">Analog HD Camera</a>
+              <a href="#products" data-category="Wireless Cameras">Wireless Cameras</a>
+              <a href="#products" data-category="PTZ Cameras">Speed Dome / PTZ</a>
+            </div>
+
+            <div>
+              <h3>Recording & Access</h3>
+              <a href="#products" data-category="DVR & NVR">DVR & NVR</a>
+              <a href="#products" data-category="Video Door Phone">Video Door Phones</a>
+              <a href="#products" data-category="Biometric Systems">Time & Attendance</a>
+              <a href="#products" data-category="Accessories">Accessories</a>
+            </div>
+
+            <div>
+              <h3>Other Products</h3>
+              <a href="#products" data-category="Networking">Networking & Switches</a>
+              <a href="#products" data-category="Storage">Storage & Memory</a>
+              <a href="#products">View All Products →</a>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="nav-dropdown">
+        <div class="nav-dropdown">
         <a href="#marketing" class="dropdown-toggle">Marketing</a>
-        <div class="dropdown-menu">
-          <a href="#companyNews">Company News</a>
-          <a href="#brochures">Product Brochures</a>
-          <a href="#videos">Videos</a>
-          <a href="#gallery">Gallery</a>
-          <a href="#printPress">Print & Press</a>
+          <div class="dropdown-menu">
+            <a href="#companyNews">Company News</a>
+            <a href="#brochures">Product Brochures</a>
+            <a href="#videos">Videos</a>
+            <a href="#gallery">Gallery</a>
+            <a href="#printPress">Print & Press</a>
+          </div>
         </div>
-      </div>
 
-      <div class="nav-dropdown">
-        <a href="#solutions" class="dropdown-toggle">Solutions</a>
-        <div class="dropdown-menu">
-          <a href="#solutions">Banking</a>
-          <a href="#solutions">Campus</a>
-          <a href="#solutions">Hospitality & Healthcare</a>
-          <a href="#solutions">Industrial</a>
-          <a href="#solutions">Retail</a>
-          <a href="#solutions">Safe City</a>
-          <a href="#solutions">Smart Traffic</a>
-          <a href="#solutions">Transport</a>
+        <div class="nav-dropdown">
+          <a href="#solutions" class="dropdown-toggle">Solutions</a>
+          <div class="dropdown-menu">
+            <a href="#solutions">Banking</a>
+            <a href="#solutions">Campus</a>
+            <a href="#solutions">Hospitality & Healthcare</a>
+            <a href="#solutions">Industrial</a>
+            <a href="#solutions">Retail</a>
+            <a href="#solutions">Safe City</a>
+            <a href="#solutions">Smart Traffic</a>
+            <a href="#solutions">Transport</a>
+          </div>
         </div>
-      </div>
 
-      <div class="nav-dropdown">
-        <a href="#support" class="dropdown-toggle">Support</a>
-        <div class="dropdown-menu">
-          <a href="#support">Technical Support</a>
-          <a href="#support">Warranty Support</a>
-          <a href="#support">Downloads</a>
-          <a href="#" class="open-contact">Contact Support</a>
+        <div class="nav-dropdown">
+          <a href="#support" class="dropdown-toggle">Support</a>
+          <div class="dropdown-menu">
+            <a href="#support">Technical Support</a>
+            <a href="#support">Warranty Support</a>
+            <a href="#support">Downloads</a>
+            <a href="#" class="open-contact">Contact Support</a>
+          </div>
         </div>
-      </div>
 
-      <a href="inquiry.html">Inquiry</a>
-      <a href="#partner">Partner Connect</a>
-      <a href="#" class="open-contact">Contact Us</a>
-    </nav>
-  </div>
-</header>
+        <a href="inquiry.html">Inquiry</a>
+        <a href="#partner">Partner Connect</a>
+        <a href="#" class="open-contact">Contact Us</a>
+      </nav>
+    </div>
+  </header>
 
-<!-- HERO SLIDER -->
-<section class="hero-section" id="home">
-  <div id="heroMarketingSlider" class="hero-marketing-slider">
-    <img
-      src="images/products/jaise%20camera-01.jpg.png"
-      alt="Security camera solutions"
-      class="hero-static-image"
-      onerror="this.style.display='none'"
-    >
-  </div>
-</section>
+  <!-- FULL SCREEN HERO MEDIA SLIDER -->
+  <section class="hero-section" id="home">
 
-<!-- TRENDING PRODUCTS -->
-<section id="trending">
-  <div class="section-heading">
-    <h2>Trending Products</h2>
-    <p>Discover featured and popular security products.</p>
-  </div>
-  <div id="trendingGrid">
-    <p>Loading trending products...</p>
-  </div>
-  <div style="text-align:center;margin-top:25px;">
-    <a href="#products"
-      style="display:inline-block;padding:12px 25px;background:#08a045;color:white;border-radius:6px;font-weight:bold;">
-      SHOW ALL PRODUCTS
-    </a>
-  </div>
-</section>
+    <div id="heroMarketingSlider" class="hero-marketing-slider">
+      <img
+        src="images/products/jaise%20camera-01.jpg.png"
+        alt="RB Tech Solution"
+        class="hero-static-image">
+    </div>
 
-<!-- PRODUCT CATEGORIES -->
-<section id="productCategories">
-  <div class="section-heading">
-    <h2>Product Categories</h2>
-    <p>Find the right products for your requirements.</p>
-  </div>
+  </section>
 
-  <div class="category-grid">
-    <button class="category-card" type="button" data-category="IP Cameras"><img src="images/products/jaise%20camera-01.jpg.png" alt="IP Camera"><h3>Network Cameras</h3></button>
-    <button class="category-card" type="button" data-category="DVR & NVR"><img src="images/products/jaise%20camera-01.jpg.png" alt="NVR"><h3>NVR & DVR</h3></button>
-    <button class="category-card" type="button" data-category="CCTV Cameras"><img src="images/products/jaise%20camera-01.jpg.png" alt="Analog CCTV"><h3>Analog HD Cameras</h3></button>
-    <button class="category-card" type="button" data-category="Wireless Cameras"><img src="images/products/jaise%20camera-01.jpg.png" alt="Wireless Camera"><h3>Wireless Cameras</h3></button>
-    <button class="category-card" type="button" data-category="PTZ Cameras"><img src="images/products/jaise%20camera-01.jpg.png" alt="PTZ Camera"><h3>Speed Dome / PTZ</h3></button>
-    <button class="category-card" type="button" data-category="Video Door Phone"><img src="images/products/jaise%20camera-01.jpg.png" alt="Video Door Phone"><h3>Video Door Phones</h3></button>
-    <button class="category-card" type="button" data-category="Biometric Systems"><img src="images/products/jaise%20camera-01.jpg.png" alt="Biometric"><h3>Time & Attendance</h3></button>
-    <button class="category-card" type="button" data-category="Networking"><img src="images/products/jaise%20camera-01.jpg.png" alt="Networking"><h3>Networking & Switches</h3></button>
-    <button class="category-card" type="button" data-category="Storage"><img src="images/products/jaise%20camera-01.jpg.png" alt="Storage"><h3>Storage & Memory</h3></button>
-    <button class="category-card" type="button" data-category="Accessories"><img src="images/products/jaise%20camera-01.jpg.png" alt="Accessories"><h3>Accessories</h3></button>
-  </div>
-</section>
+  
 
-<!-- PRODUCTS -->
-<section id="products">
-  <div class="section-heading">
-    <h2>Our Products</h2>
-    <p>Explore our product collection.</p>
-  </div>
+  <!-- TRENDING PRODUCTS -->
+  <section id="trending">
+    <div class="section-heading">
+      <h2>Trending Products</h2>
+      <p>Discover featured and popular security products.</p>
+    </div>
 
-  <div class="product-toolbar">
-    <input type="search" id="searchInput"
-      placeholder="Search products, model or category..."
-      aria-label="Search products">
+    <div id="trendingGrid">
+      <p>Loading trending products...</p>
+    </div>
 
-    <select id="categoryFilter" aria-label="Filter by product category">
-      <option value="">All Categories</option>
-      <option value="CCTV Cameras">CCTV Cameras</option>
-      <option value="Wireless Cameras">Wireless Cameras</option>
-      <option value="DVR & NVR">DVR & NVR</option>
-      <option value="IP Cameras">IP Cameras</option>
-      <option value="PTZ Cameras">PTZ Cameras</option>
-      <option value="Video Door Phone">Video Door Phone</option>
-      <option value="Biometric Systems">Biometric Systems</option>
-      <option value="Networking">Networking</option>
-      <option value="Storage">Storage</option>
-      <option value="Accessories">Accessories</option>
-    </select>
-  </div>
+    <div style="text-align:center;margin-top:25px;">
+      <a href="#products"
+        style="display:inline-block;padding:12px 25px;background:#08a045;color:white;border-radius:6px;font-weight:bold;">
+        SHOW ALL PRODUCTS
+      </a>
+    </div>
+  </section>
 
-  <div id="productGrid"><p>Loading products...</p></div>
-</section>
+  <!-- PRODUCT CATEGORIES -->
+  <section id="productCategories">
+    <div class="section-heading">
+      <h2>Product Categories</h2>
+      <p>Find the right security products for your requirements.</p>
+    </div>
 
-<!-- SOLUTIONS -->
-<section id="solutions">
-  <div class="section-heading">
-    <h2>Solutions For Every Industry</h2>
-    <p>Solutions designed for different environments and business requirements.</p>
-  </div>
+    <div class="category-grid">
+      <button class="category-card" type="button" data-category="IP Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="IP Camera">
+        <h3>Network Cameras</h3>
+      </button>
 
-  <div class="solutions-grid">
-    <a href="#" class="solution-card open-contact"><h3>Banking</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Campus</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Hospitality & Healthcare</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Industrial</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Law Enforcement</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Real Estate</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Retail</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Safe City</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Smart Traffic</h3></a>
-    <a href="#" class="solution-card open-contact"><h3>Transport</h3></a>
-  </div>
-</section>
+      <button class="category-card" type="button" data-category="DVR & NVR">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="NVR">
+        <h3>NVR & DVR</h3>
+      </button>
 
-<!-- MARKETING -->
+      <button class="category-card" type="button" data-category="CCTV Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Analog CCTV">
+        <h3>Analog HD Cameras</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Wireless Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Wireless Camera">
+        <h3>Wireless Cameras</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="PTZ Cameras">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="PTZ Camera">
+        <h3>Speed Dome / PTZ</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Video Door Phone">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Video Door Phone">
+        <h3>Video Door Phones</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Biometric Systems">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Biometric">
+        <h3>Time & Attendance</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Networking">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Networking">
+        <h3>Networking & Switches</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Storage">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Storage">
+        <h3>Storage & Memory</h3>
+      </button>
+
+      <button class="category-card" type="button" data-category="Accessories">
+        <img src="images/products/jaise%20camera-01.jpg.png" alt="Accessories">
+        <h3>Accessories</h3>
+      </button>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products">
+    <div class="section-heading">
+      <h2>Our Products</h2>
+      <p>Explore our CCTV and security product collection.</p>
+    </div>
+
+    <div class="product-toolbar">
+      <input type="search" id="searchInput"
+        placeholder="Search products, model or category..."
+        aria-label="Search products">
+
+      <select id="categoryFilter" aria-label="Filter by product category">
+        <option value="">All Categories</option>
+        <option value="CCTV Cameras">CCTV Cameras</option>
+        <option value="Wireless Cameras">Wireless Cameras</option>
+        <option value="DVR & NVR">DVR & NVR</option>
+        <option value="IP Cameras">IP Cameras</option>
+        <option value="PTZ Cameras">PTZ Cameras</option>
+        <option value="Video Door Phone">Video Door Phone</option>
+        <option value="Biometric Systems">Biometric Systems</option>
+        <option value="Networking">Networking</option>
+        <option value="Storage">Storage</option>
+        <option value="Accessories">Accessories</option>
+      </select>
+    </div>
+
+    <div id="productGrid">
+      <p>Loading products...</p>
+    </div>
+  </section>
+
+  <!-- SOLUTIONS -->
+  <section id="solutions">
+    <div class="section-heading">
+      <h2>Solutions For Every Industry</h2>
+      <p>Security solutions designed for different environments and business requirements.</p>
+    </div>
+
+    <div class="solutions-grid">
+      <a href="#" class="solution-card open-contact"><h3>Banking</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Campus</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Hospitality & Healthcare</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Industrial</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Law Enforcement</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Real Estate</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Retail</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Safe City</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Smart Traffic</h3></a>
+      <a href="#" class="solution-card open-contact"><h3>Transport</h3></a>
+    </div>
+  </section>
+
+
+<!-- MARKETING CONTENT -->
+
 <div id="marketing">
+
   <section id="companyNews">
-    <div class="section-heading"><h2>Company News</h2><p>Latest company news and announcements.</p></div>
-    <div id="companyNewsGrid" class="marketing-grid"><p>Loading company news...</p></div>
+    <div class="section-heading">
+      <h2>Company News</h2>
+      <p>Latest company news and announcements.</p>
+    </div>
+    <div id="companyNewsGrid" class="marketing-grid">
+      <p>Loading company news...</p>
+    </div>
   </section>
 
   <section id="brochures">
-    <div class="section-heading"><h2>Product Brochures</h2><p>View and download product brochures and documents.</p></div>
-    <div id="brochuresGrid" class="marketing-grid"><p>Loading brochures...</p></div>
+    <div class="section-heading">
+      <h2>Product Brochures</h2>
+      <p>View and download product brochures and documents.</p>
+    </div>
+    <div id="brochuresGrid" class="marketing-grid">
+      <p>Loading brochures...</p>
+    </div>
   </section>
 
   <section id="videos">
-    <div class="section-heading"><h2>Videos</h2><p>Watch product demonstrations and solution videos.</p></div>
-    <div id="videosGrid" class="marketing-grid"><p>Loading videos...</p></div>
+    <div class="section-heading">
+      <h2>Videos</h2>
+      <p>Watch product demonstrations and security solution videos.</p>
+    </div>
+    <div id="videosGrid" class="marketing-grid">
+      <p>Loading videos...</p>
+    </div>
   </section>
 
   <section id="gallery">
-    <div class="section-heading"><h2>Gallery</h2><p>Explore photos of products, installations and company activities.</p></div>
-    <div id="galleryGrid" class="marketing-grid"><p>Loading gallery...</p></div>
+    <div class="section-heading">
+      <h2>Gallery</h2>
+      <p>Explore photos of products, installations and company activities.</p>
+    </div>
+    <div id="galleryGrid" class="marketing-grid">
+      <p>Loading gallery...</p>
+    </div>
   </section>
 
   <section id="printPress">
-    <div class="section-heading"><h2>Print & Press</h2><p>Company publications, press releases and media resources.</p></div>
-    <div id="printPressGrid" class="marketing-grid"><p>Loading Print & Press content...</p></div>
+    <div class="section-heading">
+      <h2>Print & Press</h2>
+      <p>Company publications, press releases and media resources.</p>
+    </div>
+    <div id="printPressGrid" class="marketing-grid">
+      <p>Loading Print & Press content...</p>
+    </div>
   </section>
+
 </div>
-
-<!-- MARKETING VIEWER -->
-<div id="marketingViewer" class="marketing-viewer"
-  role="dialog" aria-modal="true" aria-label="Media viewer">
-  <div class="marketing-viewer-box">
-    <button type="button" id="closeMarketingViewer" aria-label="Close">×</button>
-    <div id="marketingViewerContent"></div>
+  <!-- MARKETING MEDIA VIEWER -->
+  <div id="marketingViewer" class="marketing-viewer"
+    role="dialog" aria-modal="true" aria-label="Media viewer">
+    <div class="marketing-viewer-box">
+      <button type="button" id="closeMarketingViewer"
+        aria-label="Close">×</button>
+      <div id="marketingViewerContent"></div>
+    </div>
   </div>
-</div>
 
-<!-- SUPPORT -->
-<section id="support">
-  <div class="section-heading">
-    <h2>Customer Support</h2>
-    <p>We are here to help you with product and service enquiries.</p>
-  </div>
-  <div class="support-grid">
-    <div class="support-card"><h3>Technical Support</h3><p>Get assistance with products and services.</p></div>
-    <div class="support-card"><h3>Warranty Support</h3><p>Contact us for warranty-related enquiries.</p></div>
-    <div class="support-card"><h3>Downloads</h3><p>Ask us for product manuals and documentation.</p></div>
-    <div class="support-card"><h3>Product Assistance</h3><p>Get help choosing the right solution.</p></div>
-  </div>
-</section>
+  <!-- SUPPORT -->
+  <section id="support">
+    <div class="section-heading">
+      <h2>Customer Support</h2>
+      <p>We are here to help you with product and service enquiries.</p>
+    </div>
 
-<!-- PARTNER CONNECT -->
-<section id="partner">
-  <div class="section-heading">
-    <h2>Partner Connect</h2>
-    <p id="partnerDescription">Interested in working with RB Tech Solution? Contact us to discuss business and partnership opportunities.</p>
-    <a href="inquiry.html">Become a Partner</a>
-  </div>
-</section>
+    <div class="support-grid">
+      <div class="support-card">
+        <h3>Technical Support</h3>
+        <p>Get assistance with CCTV and security products.</p>
+      </div>
 
-<!-- CAREERS -->
-<section id="careers">
-  <div class="section-heading">
-    <h2>Working With Us</h2>
-    <p>Interested in working with our team? Contact us to discuss available opportunities.</p>
-    <a href="inquiry.html">Contact Us</a>
-  </div>
-</section>
+      <div class="support-card">
+        <h3>Warranty Support</h3>
+        <p>Contact us for warranty-related enquiries.</p>
+      </div>
 
-<!-- CTA -->
-<section class="newsletter-section">
-  <h2>Need a Security Solution?</h2>
-  <p id="ctaDescription">Contact RB Tech Solution for CCTV cameras and complete security solutions.</p>
-  <a href="inquiry.html">Send Inquiry Today</a>
-</section>
+      <div class="support-card">
+        <h3>Downloads</h3>
+        <p>Ask us for product manuals and documentation.</p>
+      </div>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div>
-      <h3 id="footerBrandName">RB TECH SOLUTION</h3>
-      <p id="footerBrandDescription">CCTV & Security Systems. Providing security products and surveillance solutions for homes, offices and businesses.</p>
-      <p style="margin-top:12px;">
-        Phone / WhatsApp:
-        <a id="footerPhoneLink" href="https://wa.me/919663116089" target="_blank" rel="noopener">+91 96631 16089</a>
+      <div class="support-card">
+        <h3>Product Assistance</h3>
+        <p>Get help choosing the right security solution.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARTNER CONNECT -->
+  <section id="partner">
+    <div class="section-heading">
+      <h2>Partner Connect</h2>
+      <p>
+        Interested in working with RB Tech Solution?
+        Contact us to discuss business and partnership opportunities.
       </p>
-      <p>Email: <a id="footerEmailLink" href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a></p>
-      <p>Address: <span id="footerAddress">Mangalore, Karnataka, India</span></p>
+      <a href="inquiry.html">Become a Partner</a>
+    </div>
+  </section>
+
+  <!-- CAREERS -->
+  <section id="careers">
+    <div class="section-heading">
+      <h2>Working With Us</h2>
+      <p>Interested in working with our team? Contact us to discuss available opportunities.</p>
+      <a href="inquiry.html">Contact Us</a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="newsletter-section">
+    <h2>Need a Security Solution?</h2>
+    <p>Contact RB Tech Solution for CCTV cameras and complete security solutions.</p>
+    <a href="inquiry.html">Send Inquiry Today</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-grid">
+
+      <div>
+        <h3>RB TECH SOLUTION</h3>
+        <p>
+          CCTV & Security Systems. Providing security products
+          and surveillance solutions for homes, offices and businesses.
+        </p>
+        <p style="margin-top:12px;">
+          Phone / WhatsApp:
+          <a href="https://wa.me/919663116089" target="_blank" rel="noopener">
+            +91 96631 16089
+          </a>
+        </p>
+        <p>Email: <a href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a></p>
+        <p>Address: Mangalore, Karnataka, India</p>
+      </div>
+
+      <div>
+        <h3>Products</h3>
+        <a href="#products">CCTV Cameras</a>
+        <a href="#products">IP Cameras</a>
+        <a href="#products">DVR & NVR</a>
+        <a href="#products">Wireless Cameras</a>
+        <a href="#products">Video Door Phones</a>
+        <a href="#products">Accessories</a>
+      </div>
+
+      <div>
+        <h3>Solutions</h3>
+        <a href="#solutions">Banking</a>
+        <a href="#solutions">Campus</a>
+        <a href="#solutions">Healthcare</a>
+        <a href="#solutions">Industrial</a>
+        <a href="#solutions">Retail</a>
+        <a href="#solutions">Safe City</a>
+      </div>
+
+      <div>
+        <h3>Quick Links</h3>
+        <a href="#about">About Us</a>
+        <a href="#marketing">Marketing</a>
+        <a href="#support">Support</a>
+        <a href="inquiry.html">Inquiry</a>
+        <a href="#partner">Partner Connect</a>
+        <a href="#" class="open-contact">Contact Us</a>
+      </div>
+
     </div>
 
-    <div>
-      <h3>Products</h3>
-      <a href="#products">CCTV Cameras</a>
-      <a href="#products">IP Cameras</a>
-      <a href="#products">DVR & NVR</a>
-      <a href="#products">Wireless Cameras</a>
-      <a href="#products">Video Door Phones</a>
-      <a href="#products">Accessories</a>
+    <div class="footer-bottom">
+      <p>© <span id="footerYear">2026</span> RB Tech Solution. All Rights Reserved.</p>
     </div>
+  </footer>
 
-    <div>
-      <h3>Solutions</h3>
-      <a href="#solutions">Banking</a>
-      <a href="#solutions">Campus</a>
-      <a href="#solutions">Healthcare</a>
-      <a href="#solutions">Industrial</a>
-      <a href="#solutions">Retail</a>
-      <a href="#solutions">Safe City</a>
+  <!-- WHATSAPP FLOATING BUTTON -->
+  <a class="whatsapp-float"
+    href="https://wa.me/919663116089"
+    target="_blank" rel="noopener"
+    aria-label="Contact RB Tech Solution on WhatsApp">☎</a>
+
+  <!-- PRODUCT DETAILS MODAL -->
+  <div id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
+    <div id="modalContent">
+      <button id="modalClose" type="button" aria-label="Close product details">×</button>
     </div>
+  </div>
 
-    <div>
-      <h3>Quick Links</h3>
-      <a href="#marketing">Marketing</a>
-      <a href="#support">Support</a>
-      <a href="inquiry.html">Inquiry</a>
-      <a href="#partner">Partner Connect</a>
-      <a href="#" class="open-contact">Contact Us</a>
+  <!-- CONTACT POPUP -->
+  <div id="contactPopup" class="contact-popup"
+    role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
+
+    <div class="contact-popup-box">
+
+      <button type="button" id="closeContactPopup"
+        class="contact-close" aria-label="Close Contact Popup">×</button>
+
+      <div class="contact-popup-header">
+        <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
+        <p>We would love to hear from you. Please contact us.</p>
+      </div>
+
+      <div class="contact-popup-layout">
+
+        <div class="contact-details-box">
+          <h3>Contact Details</h3>
+
+          <div class="contact-detail-item">
+            <strong>Company</strong>
+            RB Tech Solution
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Contact Person</strong>
+            Ajay Hasda
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Phone / WhatsApp</strong>
+            <a href="https://wa.me/919663116089"
+              target="_blank" rel="noopener">
+              +91 96631 16089
+            </a>
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>E-mail</strong>
+            <a href="mailto:ajayhasda623@gmail.com">
+              ajayhasda623@gmail.com
+            </a>
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Address</strong>
+            Mangalore, Karnataka, India
+          </div>
+
+          <div class="contact-detail-item">
+            <strong>Business Hours</strong>
+            Please contact us by phone or WhatsApp for assistance.
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <div class="footer-bottom">
-    <p>© <span id="footerYear">2026</span> <span id="footerCopyrightBrand">RB Tech Solution</span>. All Rights Reserved.</p>
-  </div>
-</footer>
+  <!-- CONTACT POPUP JAVASCRIPT -->
+  <script>
+    (function () {
+      const popup = document.getElementById("contactPopup");
+      const closeButton = document.getElementById("closeContactPopup");
 
-<!-- WHATSAPP BUTTON -->
-<a id="whatsappFloat" class="whatsapp-float"
-  href="https://wa.me/919663116089"
-  target="_blank" rel="noopener"
-  aria-label="Contact us on WhatsApp">☎</a>
+      if (!popup || !closeButton) return;
 
-<!-- PRODUCT DETAILS MODAL -->
-<div id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
-  <div id="modalContent">
-    <button id="modalClose" type="button" aria-label="Close product details">×</button>
-  </div>
-</div>
+      let previousFocus = null;
 
-<!-- CONTACT POPUP -->
-<div id="contactPopup" class="contact-popup"
-  role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
-  <div class="contact-popup-box">
-    <button type="button" id="closeContactPopup"
-      class="contact-close" aria-label="Close Contact Popup">×</button>
+      function openPopup(event) {
+        if (event) event.preventDefault();
 
-    <div class="contact-popup-header">
-      <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
-      <p id="contactPopupDescription">We would love to hear from you. Please contact us.</p>
-    </div>
+        previousFocus = document.activeElement;
 
-    <div class="contact-details-box">
-      <h3>Contact Details</h3>
+        popup.classList.add("active");
+        document.body.style.overflow = "hidden";
 
-      <div class="contact-detail-item">
-        <strong>Company</strong>
-        <span id="contactCompany">RB Tech Solution</span>
-      </div>
+        closeButton.focus();
+      }
 
-      <div class="contact-detail-item">
-        <strong>Contact Person</strong>
-        <span id="contactPerson">Ajay Hasda</span>
-      </div>
+      function closePopup() {
+        popup.classList.remove("active");
+        document.body.style.overflow = "";
 
-      <div class="contact-detail-item">
-        <strong>Phone / WhatsApp</strong>
-        <a id="contactPhoneLink" href="https://wa.me/919663116089">+91 96631 16089</a>
-      </div>
+        if (previousFocus && typeof previousFocus.focus === "function") {
+          previousFocus.focus();
+        }
+      }
 
-      <div class="contact-detail-item">
-        <strong>E-mail</strong>
-        <a id="contactEmailLink" href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a>
-      </div>
+      document.querySelectorAll(".open-contact").forEach(link => {
+        link.addEventListener("click", openPopup);
+      });
 
-      <div class="contact-detail-item">
-        <strong>Address</strong>
-        <span id="contactAddress">Mangalore, Karnataka, India</span>
-      </div>
+      closeButton.addEventListener("click", closePopup);
 
-      <div class="contact-detail-item">
-        <strong>Business Hours</strong>
-        Please contact us by phone or WhatsApp for assistance.
-      </div>
-    </div>
-  </div>
-</div>
+      popup.addEventListener("click", function (event) {
+        if (event.target === popup) {
+          closePopup();
+        }
+      });
 
-<!-- CONTACT POPUP SCRIPT -->
-<script>
-(function () {
-  const popup = document.getElementById("contactPopup");
-  const closeButton = document.getElementById("closeContactPopup");
-  if (!popup || !closeButton) return;
+      document.addEventListener("keydown", function (event) {
+        if (
+          event.key === "Escape" &&
+          popup.classList.contains("active")
+        ) {
+          closePopup();
+        }
+      });
+    })();
+  </script>
 
-  let previousFocus = null;
+  <!-- MOBILE MENU -->
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const mainNav = document.getElementById("mainNav");
 
-  function openPopup(event) {
-    if (event) event.preventDefault();
-    previousFocus = document.activeElement;
-    popup.classList.add("active");
-    document.body.style.overflow = "hidden";
-    closeButton.focus();
-  }
-
-  function closePopup() {
-    popup.classList.remove("active");
-    document.body.style.overflow = "";
-    if (previousFocus && typeof previousFocus.focus === "function") {
-      previousFocus.focus();
-    }
-  }
-
-  document.querySelectorAll(".open-contact").forEach(link => {
-    link.addEventListener("click", openPopup);
-  });
-
-  closeButton.addEventListener("click", closePopup);
-
-  popup.addEventListener("click", event => {
-    if (event.target === popup) closePopup();
-  });
-
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && popup.classList.contains("active")) {
-      closePopup();
-    }
-  });
-})();
-</script>
-
-<!-- MOBILE MENU -->
-<script>
-(function () {
-  const menuToggle = document.getElementById("menuToggle");
-  const mainNav = document.getElementById("mainNav");
-
-  if (menuToggle && mainNav) {
-    menuToggle.addEventListener("click", function () {
+    menuToggle?.addEventListener("click", function () {
       const isOpen = mainNav.classList.toggle("active");
       menuToggle.setAttribute("aria-expanded", String(isOpen));
       menuToggle.textContent = isOpen ? "✕" : "☰";
@@ -880,14 +1231,19 @@
       link.addEventListener("click", function (event) {
         if (window.innerWidth <= 768) {
           event.preventDefault();
+
           const parent = this.closest(".nav-dropdown");
-          const menu = parent && parent.querySelector(".mega-menu, .dropdown-menu");
+          const menu = parent.querySelector(".mega-menu, .dropdown-menu");
+
           if (!menu) return;
 
           const isOpen = menu.style.display === "block";
 
-          document.querySelectorAll("#mainNav .mega-menu, #mainNav .dropdown-menu")
-            .forEach(item => item.style.display = "none");
+          document.querySelectorAll(
+            "#mainNav .mega-menu, #mainNav .dropdown-menu"
+          ).forEach(item => {
+            item.style.display = "none";
+          });
 
           menu.style.display = isOpen ? "none" : "block";
         }
@@ -896,27 +1252,73 @@
 
     document.querySelectorAll("#mainNav a").forEach(link => {
       link.addEventListener("click", () => {
-        if (window.innerWidth <= 768 && !link.classList.contains("dropdown-toggle")) {
+        if (
+          window.innerWidth <= 768 &&
+          !link.classList.contains("dropdown-toggle")
+        ) {
           mainNav.classList.remove("active");
           menuToggle.setAttribute("aria-expanded", "false");
           menuToggle.textContent = "☰";
         }
       });
     });
-  }
-})();
-</script>
 
-<!-- FOOTER YEAR -->
-<script>
-document.getElementById("footerYear").textContent = new Date().getFullYear();
-</script>
+    const footerYear = document.getElementById("footerYear");
 
-<!-- TENANT BRANDING -->
+    if (footerYear) {
+      footerYear.textContent = new Date().getFullYear();
+    }
+  </script>
+
+  <!-- CALCULATE AVAILABLE HERO SCREEN HEIGHT -->
+  <script>
+    (function () {
+      const hero = document.querySelector(".hero-section");
+      const topStrip = document.querySelector(".top-strip");
+      const header = document.querySelector(".site-header");
+
+      if (!hero) return;
+
+      function updateHeroHeight() {
+        const stripHeight = topStrip
+          ? topStrip.getBoundingClientRect().height
+          : 0;
+
+        const headerHeight = header
+          ? header.getBoundingClientRect().height
+          : 0;
+
+        const availableHeight = Math.max(
+          300,
+          window.innerHeight - stripHeight - headerHeight
+        );
+
+        hero.style.setProperty(
+          "--site-header-height",
+          (window.innerHeight - availableHeight) + "px"
+        );
+
+        hero.style.height = availableHeight + "px";
+      }
+
+      updateHeroHeight();
+
+      window.addEventListener("resize", updateHeroHeight);
+
+      window.addEventListener("orientationchange", function () {
+        setTimeout(updateHeroHeight, 150);
+      });
+    })();
+  </script>
+
+<!-- INTELLO ELECTRIC DOMAIN BRANDING -->
 <script>
 (function () {
-  const hostname = location.hostname.toLowerCase().replace(/^www\./, "");
-  const params = new URLSearchParams(location.search);
+  const hostname = window.location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  const params = new URLSearchParams(window.location.search);
 
   const isIntello =
     hostname === "intelloelectric.com" ||
@@ -927,122 +1329,324 @@ document.getElementById("footerYear").textContent = new Date().getFullYear();
   const brand = "INTELLO ELECTRIC";
   const tagline = "COMPUTER AND CCTV SALES AND SERVICES";
   const phone = "+91 94487 73543";
-  const phoneDigits = "919448773543";
+  const phoneNumber = "919448773543";
   const email = "intelloelectric@gmail.com";
   const logo = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
-  const whatsapp = "https://wa.me/" + phoneDigits;
+  const whatsapp = "https://wa.me/" + phoneNumber;
 
-  document.title = "Intello Electric | Computer, CCTV Sales & Services in Mangalore";
+  // SEO DETAILS
+  document.title = brand + " | Computer and CCTV Sales and Services";
 
-  // Header branding
-  const logoImage = document.getElementById("siteBrandLogo");
-  if (logoImage) {
-    logoImage.src = logo;
-    logoImage.alt = "Intello Electric Logo";
-    logoImage.style.display = "block";
-    logoImage.onerror = function () {
-      this.style.display = "none";
-    };
+  const description = document.querySelector('meta[name="description"]');
+  if (description) {
+    description.content =
+      "Intello Electric - Computer and CCTV sales and services in Mangalore, Karnataka.";
   }
 
-  const brandName = document.getElementById("siteBrandName");
-  if (brandName) brandName.textContent = brand;
+  const keywords = document.querySelector('meta[name="keywords"]');
+  if (keywords) {
+    keywords.content =
+      "Intello Electric, Computer Sales, CCTV Camera, CCTV Services, Mangalore";
+  }
 
-  const brandTagline = document.getElementById("siteBrandTagline");
-  if (brandTagline) brandTagline.textContent = tagline;
+  const author = document.querySelector('meta[name="author"]');
+  if (author) author.content = brand;
 
-  // Phone strip
-  const topPhone = document.getElementById("topPhoneLink");
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.href = "https://intelloelectric.com/";
+
+  // HEADER LOGO AND NAME
+  const brandLink = document.querySelector(".brand");
+
+  if (brandLink) {
+    const logoImage = brandLink.querySelector("img");
+    const heading = brandLink.querySelector("h1");
+    const taglineElement = brandLink.querySelector("span");
+
+    if (logoImage) {
+      logoImage.src = logo;
+      logoImage.alt = brand + " Logo";
+      logoImage.style.display = "block";
+    }
+
+    if (heading) heading.textContent = brand;
+    if (taglineElement) taglineElement.textContent = tagline;
+  }
+
+  // TOP PHONE NUMBER
+  const topPhone = document.querySelector(".top-strip a");
+
   if (topPhone) {
-    topPhone.href = "tel:+" + phoneDigits;
+    topPhone.href = "tel:+" + phoneNumber;
     topPhone.textContent = phone;
   }
 
-  // Hero image alternative text
+  // HERO IMAGE ALT
   const heroImage = document.querySelector(".hero-static-image");
-  if (heroImage) heroImage.alt = "Intello Electric computer and CCTV solutions";
+  if (heroImage) heroImage.alt = brand;
 
-  // Partner and CTA
-  const partnerDescription = document.getElementById("partnerDescription");
-  if (partnerDescription) {
-    partnerDescription.textContent =
+  // PARTNER SECTION
+  const partnerText = document.querySelector("#partner .section-heading p");
+  if (partnerText) {
+    partnerText.textContent =
       "Interested in working with " + brand +
       "? Contact us to discuss business and partnership opportunities.";
   }
 
-  const ctaDescription = document.getElementById("ctaDescription");
-  if (ctaDescription) {
-    ctaDescription.textContent =
+  // CTA SECTION
+  const ctaText = document.querySelector(".newsletter-section p");
+  if (ctaText) {
+    ctaText.textContent =
       "Contact " + brand +
-      " for computer sales, CCTV cameras, services and complete security solutions.";
+      " for computer, CCTV cameras and complete security solutions.";
   }
 
-  // Footer
-  const footerBrandName = document.getElementById("footerBrandName");
-  if (footerBrandName) footerBrandName.textContent = brand;
+  // FOOTER BRANDING
+  const footer = document.querySelector(".site-footer");
 
-  const footerDescription = document.getElementById("footerBrandDescription");
-  if (footerDescription) {
-    footerDescription.textContent =
-      tagline + ". Providing computer, CCTV products and services.";
+  if (footer) {
+    const footerHeading = footer.querySelector(".footer-grid > div:first-child h3");
+    if (footerHeading) footerHeading.textContent = brand;
+
+    const footerDescription =
+      footer.querySelector(".footer-grid > div:first-child > p");
+
+    if (footerDescription) {
+      footerDescription.textContent =
+        tagline + ". Providing computer, CCTV products and services.";
+    }
+
+    const footerLinks = footer.querySelectorAll(
+      '.footer-grid a[href^="https://wa.me/"]'
+    );
+
+    footerLinks.forEach(link => {
+      link.href = whatsapp;
+      link.textContent = phone;
+    });
+
+    const footerEmail = footer.querySelector(
+      '.footer-grid a[href^="mailto:"]'
+    );
+
+    if (footerEmail) {
+      footerEmail.href = "mailto:" + email;
+      footerEmail.textContent = email;
+    }
+
+    const copyright = footer.querySelector(".footer-bottom p");
+
+    if (copyright) {
+      copyright.innerHTML =
+        '© <span id="footerYear">' +
+        new Date().getFullYear() +
+        "</span> " + brand + ". All Rights Reserved.";
+    }
   }
 
-  const footerPhone = document.getElementById("footerPhoneLink");
-  if (footerPhone) {
-    footerPhone.href = whatsapp;
-    footerPhone.textContent = phone;
-  }
+  // FLOATING WHATSAPP BUTTON
+  const floatingWhatsApp = document.querySelector(".whatsapp-float");
 
-  const footerEmail = document.getElementById("footerEmailLink");
-  if (footerEmail) {
-    footerEmail.href = "mailto:" + email;
-    footerEmail.textContent = email;
-  }
-
-  const copyrightBrand = document.getElementById("footerCopyrightBrand");
-  if (copyrightBrand) copyrightBrand.textContent = brand;
-
-  // WhatsApp floating button
-  const floatingWhatsApp = document.getElementById("whatsappFloat");
   if (floatingWhatsApp) {
     floatingWhatsApp.href = whatsapp;
-    floatingWhatsApp.setAttribute("aria-label", "Contact " + brand + " on WhatsApp");
+    floatingWhatsApp.setAttribute(
+      "aria-label",
+      "Contact " + brand + " on WhatsApp"
+    );
   }
 
-  // Contact popup
-  const contactCompany = document.getElementById("contactCompany");
-  if (contactCompany) contactCompany.textContent = brand;
+  // CONTACT POPUP DETAILS
+  const contactItems = document.querySelectorAll(
+    "#contactPopup .contact-detail-item"
+  );
 
-  const contactPerson = document.getElementById("contactPerson");
-  if (contactPerson) contactPerson.textContent = "Intello Electric";
+  if (contactItems.length >= 5) {
+    contactItems[0].innerHTML =
+      "<strong>Company</strong>" + brand;
 
-  const contactPhone = document.getElementById("contactPhoneLink");
-  if (contactPhone) {
-    contactPhone.href = whatsapp;
-    contactPhone.textContent = phone;
+    contactItems[1].innerHTML =
+      "<strong>Business</strong>" + tagline;
+
+    contactItems[2].innerHTML =
+      '<strong>Phone / WhatsApp</strong><a href="' +
+      whatsapp + '" target="_blank" rel="noopener">' +
+      phone + "</a>";
+
+    contactItems[3].innerHTML =
+      '<strong>E-mail</strong><a href="mailto:' +
+      email + '">' + email + "</a>";
+
+    contactItems[4].innerHTML =
+      "<strong>Address</strong>Mangalore, Karnataka, India";
   }
 
-  const contactEmail = document.getElementById("contactEmailLink");
-  if (contactEmail) {
-    contactEmail.href = "mailto:" + email;
-    contactEmail.textContent = email;
-  }
+  const popupDescription = document.querySelector(
+    "#contactPopup .contact-popup-header p"
+  );
 
-  const contactPopupDescription = document.getElementById("contactPopupDescription");
-  if (contactPopupDescription) {
-    contactPopupDescription.textContent =
+  if (popupDescription) {
+    popupDescription.textContent =
       "Contact " + brand + " for enquiries and assistance.";
   }
 
-  console.log("Intello Electric tenant branding activated.");
+  // FAVICON
+  const favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = logo;
+
+  console.log("Intello Electric branding activated.");
 })();
 </script>
+<!-- END INTELLO ELECTRIC DOMAIN BRANDING -->
 
-<!-- APP JAVASCRIPT -->
-<script type="module" src="app.js"></script>
+  <!-- EXISTING APP JAVASCRIPT -->
+  <script type="module" src="app.js"></script>
 
-<!-- PUBLIC MARKETING JAVASCRIPT -->
-<script type="module" src="marketing.js"></script>
+  <!-- PUBLIC MARKETING JAVASCRIPT -->
+  <script type="module" src="marketing.js"></script>
 
+<style>
+/* Both header sections transparent */
+.top-strip,
+.site-header,
+.header-inner {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep header content above hero media */
+.top-strip,
+.site-header {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+
+/* HERO SLIDER - FULL WIDTH, REDUCED HEIGHT */
+.hero-section {
+  margin-top: calc(-1 * var(--site-header-height, 0px)) !important;
+  width: 100% !important;
+  height: 65vh !important;
+  height: 65svh !important;
+  min-height: 300px !important;
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+</style>
+
+<style>
+/* MAIN NAVIGATION - WHITE */
+.site-header #mainNav > a,
+.site-header #mainNav > .nav-dropdown > .dropdown-toggle {
+color: #ffffff !important;
+-webkit-text-fill-color: #ffffff !important;
+font-weight: 700 !important;
+text-shadow: 1px 2px 5px #000000 !important;
+}
+
+/* ALL DROPDOWN CONTENT - BLACK */
+.site-header #mainNav .mega-menu,
+.site-header #mainNav .mega-menu *,
+.site-header #mainNav .dropdown-menu,
+.site-header #mainNav .dropdown-menu * {
+color: #000000 !important;
+-webkit-text-fill-color: #000000 !important;
+text-shadow: none !important;
+}
+
+/* DROPDOWN HOVER - GREEN */
+.site-header #mainNav .mega-menu a:hover,
+.site-header #mainNav .dropdown-menu a:hover {
+color: #08a045 !important;
+-webkit-text-fill-color: #08a045 !important;
+}
+/* HEADER CONTENT MOVE UP */
+.site-header .header-inner {
+  transform: translateY(-12px);
+}
+</style>
+  
+<!-- INTELLO ELECTRIC VISIBLE BRANDING -->
+<script>
+(function () {
+  const host = location.hostname
+    .toLowerCase()
+    .replace(/^www\./, "");
+
+  if (host !== "intelloelectric.com") return;
+
+  const replacements = [
+    ["RB TECH SOLUTION", "INTELLO ELECTRIC"],
+    ["RB Tech Solution", "Intello Electric"],
+    ["RB TECH", "INTELLO ELECTRIC"],
+    ["RB Tech", "Intello Electric"],
+    ["CCTV & SECURITY SYSTEMS",
+     "COMPUTER AND CCTV SALES AND SERVICES"],
+    ["CCTV & Security Systems",
+     "Computer and CCTV Sales and Services"],
+    ["+91 96631 16089", "+91 94487 73543"],
+    ["96631 16089", "94487 73543"],
+    ["9663116089", "9448735433"],
+    ["ajayhasda623@gmail.com",
+     "intelloelectric@gmail.com"]
+  ];
+
+  function updateText(root) {
+    const walker = document.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT
+    );
+
+    let node;
+
+    while ((node = walker.nextNode())) {
+      let value = node.nodeValue;
+
+      replacements.forEach(([oldText, newText]) => {
+        value = value.split(oldText).join(newText);
+      });
+
+      if (value !== node.nodeValue) {
+        node.nodeValue = value;
+      }
+    }
+  }
+
+  function updateBranding() {
+    updateText(document.body);
+
+    document.title =
+      "Intello Electric | Computer and CCTV Sales & Services";
+
+    document.querySelectorAll("a[href^='tel:']")
+      .forEach(a => {
+        a.href = "tel:+919448773543";
+      });
+
+    document.querySelectorAll("a[href*='wa.me/']")
+      .forEach(a => {
+        a.href = "https://wa.me/919448773543";
+      });
+
+    document.querySelectorAll("a[href^='mailto:']")
+      .forEach(a => {
+        a.href = "mailto:intelloelectric@gmail.com";
+      });
+  }
+
+  updateBranding();
+
+  const observer = new MutationObserver(() => {
+    updateBranding();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+})();
+</script>
 </body>
 </html>
