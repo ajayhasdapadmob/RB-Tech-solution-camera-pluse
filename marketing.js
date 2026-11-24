@@ -99,15 +99,23 @@ function getText(item) {
 }
 
 function getImage(item) {
-  return safeURL(
-    item.thumbnailUrl ||
-    item.mediaUrl ||
-    item.imageUrl ||
-    item.image ||
-    item.photo
-  );
-}
+  const imageFields = [
+    item.thumbnailUrl,
+    item.mediaUrl,
+    item.imageUrl,
+    item.image,
+    item.photo,
+    item.fileUrl,
+    item.downloadURL
+  ];
 
+  for (const value of imageFields) {
+    const url = safeURL(value);
+    if (url) return url;
+  }
+
+  return "";
+}
 /* =====================================
    GALLERY DUPLICATE PROTECTION
 ===================================== */
