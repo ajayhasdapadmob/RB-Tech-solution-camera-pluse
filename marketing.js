@@ -38,6 +38,7 @@ let marketingWebsiteMode = "blocked";
 
 const LEGACY_HOSTS = [
   "rb-tech-solution-camera-pluse.pages.dev",
+  "rb-tech-solution-camera-pluse-pages.pages.dev",
   "ajayhasdapadmob.github.io",
   "localhost",
   "127.0.0.1"
@@ -57,22 +58,45 @@ function escapeHTML(value = "") {
   })[char]);
 }
 
+/*
+  URL handling:
+  - Normal HTTP/HTTPS URL
+  - Markdown link
+  - URL inside quotes
+  - URL inside angle brackets
+*/
 
 function safeURL(value) {
   try {
-    let raw = String(value || "").trim();
+    if (value === null || value === undefined) return "";
 
-    // Markdown link से असली URL निकालें
-    const markdownMatch = raw.match(/^\[.*?\]\((https?:\/\/[^)]+)\)$/i);
+    let raw = String(value).trim();
+
+    if (!raw) return "";
+
+    // Markdown link: [Image](https://example.com/image.jpg)
+    const markdownMatch = raw.match(
+      /\]\(\s*<?(https?:\/\/[^)\s>]+)>?\s*\)/i
+    );
+
     if (markdownMatch) {
       raw = markdownMatch[1];
     }
 
+    // Remove surrounding quotes and brackets
+    raw = raw
+      .replace(/^[\s"'`<\[]+/, "")
+      .replace(/[\s"'`\]>]+$/, "");
+
+    // URL must be absolute HTTP or HTTPS
     const url = new URL(raw);
 
-    return ["https:", "http:"].includes(url.protocol)
-      ? url.href
-      : "";
+    if (!["https:", "http:"].includes(url.protocol)) {
+      return "";
+    }
+
+    return url.href;
+
   } catch {
     return "";
   }
@@ -98,7 +122,13 @@ function getText(item) {
   return item.description || item.content || "";
 }
 
-function getImage(item) {
+/*
+  IMPORTANT FIX:
+  हर image field को अलग-अलग validate किया जाता है।
+  किसी एक गलत URL के कारण बाकी सही URL skip नहीं होंगे।
+*/
+
+function getImage(item = {}) {
   const imageFields = [
     item.thumbnailUrl,
     item.mediaUrl,
@@ -106,16 +136,28 @@ function getImage(item) {
     item.image,
     item.photo,
     item.fileUrl,
-    item.downloadURL
+    item.downloadURL,
+    item.downloadUrl,
+    item.url
   ];
 
   for (const value of imageFields) {
     const url = safeURL(value);
+
     if (url) return url;
   }
 
   return "";
 }
+
+function getVideo(item = {}) {
+  return safeURL(
+    item.mediaUrl ||
+    item.videoUrl ||
+    item.fileUrl
+  );
+}
+
 /* =====================================
    GALLERY DUPLICATE PROTECTION
 ===================================== */
@@ -127,13 +169,8 @@ function getGalleryImageKey(item) {
     return "cloudinary:" + publicId.toLowerCase();
   }
 
-  const image = safeURL(
-    item?.mediaUrl ||
-    item?.thumbnailUrl ||
-    item?.imageUrl ||
-    item?.image ||
-    item?.photo
-  );
+  // Use the same reliable image URL selector
+  const image = getImage(item);
 
   if (!image) return "";
 
@@ -144,6 +181,7 @@ function getGalleryImageKey(item) {
       url.hostname.toLowerCase() +
       url.pathname.toLowerCase()
     );
+
   } catch {
     return image.toLowerCase();
   }
@@ -156,6 +194,7 @@ function getUniqueGalleryItems(items = []) {
   items.forEach(item => {
     const key = getGalleryImageKey(item);
 
+    // No valid image URL: don't show an empty gallery card
     if (!key || seen.has(key)) return;
 
     seen.add(key);
@@ -179,7 +218,10 @@ function getViewerElements() {
 function openMarketingViewer(html) {
   const { viewer, content } = getViewerElements();
 
-  if (!viewer || !content) return;
+  if (!viewer || !content) {
+    console.warn("Marketing viewer elements not found");
+    return;
+  }
 
   content.innerHTML = html;
   viewer.classList.add("active");
@@ -218,9 +260,16 @@ function showArticle(item) {
   const image = getImage(item);
 
   openMarketingViewer(`
-    ${image
-      ? `<img src="${escapeHTML(image)}" alt="${title}">`
-      : ""}
+    ${
+      image
+        ? `
+          <img
+            src="${escapeHTML(image)}"
+            alt="${title}"
+            style="width:100%;max-height:500px;object-fit:contain">
+        `
+        : ""
+    }
 
     <h2>${title}</h2>
 
@@ -237,28 +286,30 @@ function showArticle(item) {
 ===================================== */
 
 function showImage(item) {
-  const image = safeURL(
-    item.mediaUrl ||
-    item.thumbnailUrl ||
-    item.imageUrl ||
-    item.image ||
-    item.photo
-  );
+  const image = getImage(item);
 
-  if (!image) return;
+  if (!image) {
+    console.warn("Gallery image URL missing:", item);
+    return;
+  }
 
   openMarketingViewer(`
     <img
       src="${escapeHTML(image)}"
-      alt="${escapeHTML(item.title || "Gallery image")}">
+      alt="${escapeHTML(item.title || "Gallery image")}"
+      style="width:100%;max-height:75vh;object-fit:contain">
 
-    ${item.title
-      ? `<h2>${escapeHTML(item.title)}</h2>`
-      : ""}
+    ${
+      item.title
+        ? `<h2>${escapeHTML(item.title)}</h2>`
+        : ""
+    }
 
-    ${getText(item)
-      ? `<p>${escapeHTML(getText(item))}</p>`
-      : ""}
+    ${
+      getText(item)
+        ? `<p>${escapeHTML(getText(item))}</p>`
+        : ""
+    }
   `);
 }
 
@@ -267,11 +318,12 @@ function showImage(item) {
 ===================================== */
 
 function showVideo(item) {
-  const video = safeURL(item.mediaUrl);
+  const video = getVideo(item);
 
   if (!video) return;
 
   const title = escapeHTML(item.title || "Video");
+  const poster = getImage(item);
 
   openMarketingViewer(`
     <h2>${title}</h2>
@@ -280,16 +332,22 @@ function showVideo(item) {
       controls
       autoplay
       playsinline
-      poster="${escapeHTML(getImage(item))}"
-      style="width:100%;background:#000">
+      ${
+        poster
+          ? `poster="${escapeHTML(poster)}"`
+          : ""
+      }
+      style="width:100%;max-height:75vh;background:#000">
 
       <source src="${escapeHTML(video)}">
       Your browser does not support video playback.
     </video>
 
-    ${getText(item)
-      ? `<p>${escapeHTML(getText(item))}</p>`
-      : ""}
+    ${
+      getText(item)
+        ? `<p>${escapeHTML(getText(item))}</p>`
+        : ""
+    }
   `);
 }
 
@@ -315,19 +373,23 @@ function createCard(item, type, index) {
   let mediaHTML = "";
 
   if (type === "videos") {
-    const videoURL = safeURL(item.mediaUrl);
+    const videoURL = getVideo(item);
 
     mediaHTML = videoURL
       ? `
         <video
           src="${escapeHTML(videoURL)}"
-          poster="${escapeHTML(image)}"
+          ${
+            image
+              ? `poster="${escapeHTML(image)}"`
+              : ""
+          }
           autoplay
           muted
           loop
           playsinline
           webkit-playsinline
-          preload="auto"
+          preload="metadata"
           disablepictureinpicture
           style="width:100%;height:190px;object-fit:cover;background:#000">
         </video>
@@ -337,19 +399,25 @@ function createCard(item, type, index) {
           Video unavailable
         </div>
       `;
+
   } else if (image) {
     mediaHTML = `
       <img
         src="${escapeHTML(image)}"
         alt="${title}"
-        loading="lazy">
+        loading="lazy"
+        style="width:100%;height:190px;object-fit:cover;display:block">
     `;
   }
 
   let actionHTML = "";
 
   if (type === "brochures") {
-    const fileURL = safeURL(item.mediaUrl);
+    const fileURL = safeURL(
+      item.mediaUrl ||
+      item.fileUrl ||
+      item.pdfUrl
+    );
 
     actionHTML = fileURL
       ? `
@@ -369,20 +437,25 @@ function createCard(item, type, index) {
     <div class="marketing-item-body">
       <h3>${title}</h3>
 
-      ${type !== "videos" && description
-        ? `
-          <p>
-            ${description.length > 160
-              ? description.slice(0, 160) + "..."
-              : description}
-          </p>
-        `
-        : ""}
+      ${
+        type !== "videos" && description
+          ? `
+            <p>
+              ${
+                description.length > 160
+                  ? description.slice(0, 160) + "..."
+                  : description
+              }
+            </p>
+          `
+          : ""
+      }
 
       ${actionHTML}
     </div>
   `;
 
+  // Video autoplay
   if (type === "videos") {
     const video = card.querySelector("video");
 
@@ -399,16 +472,19 @@ function createCard(item, type, index) {
     }
   }
 
-  if (
-    type === "gallery" ||
-    type === "companyNews" ||
-    type === "printPress"
-  ) {
-    const photo = card.querySelector("img");
+  // Image load error logging
+  const photo = card.querySelector("img");
 
-    if (photo) {
-      photo.style.cursor = "pointer";
-    }
+  if (photo) {
+    photo.style.cursor = "pointer";
+
+    photo.addEventListener("error", () => {
+      console.error(
+        "Marketing image failed to load:",
+        photo.src,
+        item
+      );
+    });
   }
 
   return card;
@@ -419,17 +495,24 @@ function createCard(item, type, index) {
 ===================================== */
 
 function renderGallerySlider(grid, items) {
+  grid.innerHTML = "";
+
   const uniqueGallery = getUniqueGalleryItems(items);
 
-  if (!uniqueGallery.length) return;
+  if (!uniqueGallery.length) {
+    console.log("No valid Gallery images found");
+    return;
+  }
 
   const slider = document.createElement("div");
   slider.className = "marketing-gallery-slider";
+
   slider.style.position = "relative";
   slider.style.width = "100%";
 
   const viewport = document.createElement("div");
   viewport.className = "marketing-gallery-viewport";
+
   viewport.style.width = "100%";
   viewport.style.overflow = "hidden";
 
@@ -438,7 +521,7 @@ function renderGallerySlider(grid, items) {
 
   track.style.display = "flex";
   track.style.gap = "20px";
-  track.style.width = "max-content";
+  track.style.width = "100%";
   track.style.transition = "transform 0.6s ease";
   track.style.willChange = "transform";
 
@@ -451,6 +534,7 @@ function renderGallerySlider(grid, items) {
 
     card.style.boxSizing = "border-box";
     card.style.minWidth = "0";
+    card.style.overflow = "hidden";
 
     const photo = card.querySelector("img");
 
@@ -468,6 +552,7 @@ function renderGallerySlider(grid, items) {
   let visibleCount = 3;
   let position = 0;
   let timer = null;
+
   const gap = 20;
 
   const left = document.createElement("button");
@@ -542,6 +627,7 @@ function renderGallerySlider(grid, items) {
     stopAuto();
 
     const width = viewport.clientWidth;
+
     if (!width) return;
 
     if (window.innerWidth <= 480) {
@@ -590,6 +676,7 @@ function renderGallerySlider(grid, items) {
     if (event.target.closest("a, button")) return;
 
     const card = event.target.closest(".marketing-item");
+
     if (!card) return;
 
     const index = Number(card.dataset.marketingIndex);
@@ -619,26 +706,44 @@ function renderGallerySlider(grid, items) {
 ===================================== */
 
 function renderNormalSlider(grid, type, items) {
+  grid.innerHTML = "";
+
+  if (!items.length) return;
+
   const slider = document.createElement("div");
   slider.className = "marketing-slider";
 
   const viewport = document.createElement("div");
   viewport.className = "marketing-slider-viewport";
 
+  viewport.style.width = "100%";
+  viewport.style.overflow = "hidden";
+
   const track = document.createElement("div");
   track.className = "marketing-slider-track";
+
+  track.style.display = "flex";
+  track.style.width = "max-content";
+  track.style.willChange = "transform";
 
   const group1 = document.createElement("div");
   group1.className = "marketing-slider-group";
 
+  group1.style.display = "flex";
+  group1.style.gap = "20px";
+
   viewport.appendChild(track);
   slider.appendChild(viewport);
   grid.appendChild(slider);
+
   track.appendChild(group1);
 
   function fillGroup(group) {
     let index = 0;
-    const targetWidth = viewport.clientWidth + 300;
+    const targetWidth = Math.max(
+      viewport.clientWidth + 300,
+      900
+    );
 
     while (
       group.scrollWidth < targetWidth ||
@@ -662,6 +767,7 @@ function renderNormalSlider(grid, type, items) {
 
   const group2 = group1.cloneNode(true);
   group2.setAttribute("aria-hidden", "true");
+
   track.appendChild(group2);
 
   function playAllVideos() {
@@ -777,9 +883,11 @@ function renderNormalSlider(grid, type, items) {
 
   track.addEventListener("click", event => {
     const card = event.target.closest(".marketing-item");
+
     if (!card) return;
 
     const clickedImage = event.target.closest("img");
+
     if (!clickedImage) return;
 
     const index = Number(card.dataset.marketingIndex);
@@ -789,6 +897,10 @@ function renderNormalSlider(grid, type, items) {
 
     if (type === "companyNews" || type === "printPress") {
       showArticle(item);
+    }
+
+    if (type === "videos") {
+      showVideo(item);
     }
   });
 
@@ -812,10 +924,15 @@ function renderNormalSlider(grid, type, items) {
 
 function renderSection(type, items) {
   const config = SECTION_CONFIG[type];
+
   if (!config) return;
 
   const grid = $(config.grid);
-  if (!grid) return;
+
+  if (!grid) {
+    console.warn("Section element not found:", config.grid);
+    return;
+  }
 
   grid.innerHTML = "";
 
@@ -836,7 +953,10 @@ function renderSection(type, items) {
       return bTime - aTime;
     });
 
-  if (!filtered.length) return;
+  if (!filtered.length) {
+    console.log("No items for section:", type);
+    return;
+  }
 
   if (type === "gallery") {
     renderGallerySlider(grid, filtered);
@@ -852,13 +972,19 @@ function renderSection(type, items) {
 
 function renderHeroSlider(items) {
   const slider = $("heroMarketingSlider");
-  if (!slider) return;
+
+  if (!slider) {
+    console.warn("heroMarketingSlider element not found");
+    return;
+  }
+
+  slider.innerHTML = "";
 
   const mediaItems = items.filter(item => {
     if (item.active !== true) return false;
 
     if (item.type === "videos") {
-      return Boolean(safeURL(item.mediaUrl));
+      return Boolean(getVideo(item));
     }
 
     if (
@@ -870,79 +996,102 @@ function renderHeroSlider(items) {
     return false;
   });
 
-  slider.innerHTML = "";
-
-  if (!mediaItems.length) return;
+  if (!mediaItems.length) {
+    console.log("No homepage hero media available");
+    return;
+  }
 
   let currentIndex = 0;
   let autoSlideTimer = null;
 
   const slides = [];
 
+  mediaItems.forEach((item, index) => {
+    const slide = document.createElement("div");
 
-mediaItems.forEach((item, index) => {
-  const slide = document.createElement("div");
-  slide.className = "hero-marketing-slide";
+    slide.className = "hero-marketing-slide";
 
-  if (item.type === "videos") {
-    const video = document.createElement("video");
+    slide.style.width = "100%";
+    slide.style.height = "100%";
+    slide.style.overflow = "hidden";
 
-    video.src = safeURL(item.mediaUrl);
-    video.muted = true;
-    video.defaultMuted = true;
-    video.autoplay = true;
-    video.loop = false;
-    video.controls = true;
-    video.playsInline = true;
-    video.preload = "auto";
+    if (item.type === "videos") {
+      const video = document.createElement("video");
 
-    video.style.width = "100%";
-    video.style.height = "100%";
-    video.style.objectFit = "cover";
-    video.style.background = "#000";
+      video.src = getVideo(item);
+      video.muted = true;
+      video.defaultMuted = true;
+      video.autoplay = true;
+      video.loop = false;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
 
-    const poster = safeURL(item.thumbnailUrl);
-    if (poster) {
-      video.poster = poster;
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.objectFit = "cover";
+      video.style.background = "#000";
+
+      const poster = getImage(item);
+
+      if (poster) {
+        video.poster = poster;
+      }
+
+      video.addEventListener("error", () => {
+        console.error(
+          "Hero video loading failed:",
+          item.title,
+          item.mediaUrl
+        );
+
+        if (slides[currentIndex] === slide) {
+          clearTimeout(autoSlideTimer);
+          autoSlideTimer = setTimeout(nextSlide, 5000);
+        }
+      });
+
+      video.addEventListener("ended", () => {
+        if (slides[currentIndex] === slide) {
+          nextSlide();
+        }
+      });
+
+      slide.appendChild(video);
+
+    } else {
+      const img = document.createElement("img");
+
+      img.src = getImage(item);
+
+      img.alt = item.title ||
+        (marketingWebsiteMode === "customer"
+          ? "Intello Electric"
+          : "RB Tech Solution");
+
+      img.loading = index === 0 ? "eager" : "lazy";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.style.display = "block";
+
+      img.addEventListener("error", () => {
+        console.error(
+          "Hero image failed to load:",
+          img.src,
+          item
+        );
+      });
+
+      slide.appendChild(img);
     }
 
-    video.addEventListener("error", () => {
-      console.error("Hero video loading failed:", item.title, item.mediaUrl);
-
-      if (slides[currentIndex] === slide) {
-        clearTimeout(autoSlideTimer);
-        autoSlideTimer = setTimeout(nextSlide, 5000);
-      }
-    });
-
-    video.addEventListener("ended", () => {
-      if (slides[currentIndex] === slide) {
-        nextSlide();
-      }
-    });
-
-    slide.appendChild(video);
-
-  } else {
-    const img = document.createElement("img");
-
-    img.src = getImage(item);
-    img.alt = item.title ||
-      (marketingWebsiteMode === "customer"
-        ? "Intello Electric"
-        : "RB Tech Solution");
-
-    img.loading = index === 0 ? "eager" : "lazy";
-
-    slide.appendChild(img);
-  }
-
-  slider.appendChild(slide);
-  slides.push(slide);
-});
-
+    slider.appendChild(slide);
+    slides.push(slide);
+  });
 
   const previous = document.createElement("button");
+
   previous.type = "button";
   previous.className =
     "hero-marketing-arrow hero-marketing-prev";
@@ -950,6 +1099,7 @@ mediaItems.forEach((item, index) => {
   previous.setAttribute("aria-label", "Previous slide");
 
   const next = document.createElement("button");
+
   next.type = "button";
   next.className =
     "hero-marketing-arrow hero-marketing-next";
@@ -957,6 +1107,7 @@ mediaItems.forEach((item, index) => {
   next.setAttribute("aria-label", "Next slide");
 
   const dots = document.createElement("div");
+
   dots.className = "hero-marketing-dots";
 
   const dotButtons = slides.map((slide, index) => {
@@ -973,6 +1124,7 @@ mediaItems.forEach((item, index) => {
     dot.addEventListener("click", () => showSlide(index));
 
     dots.appendChild(dot);
+
     return dot;
   });
 
@@ -995,8 +1147,9 @@ mediaItems.forEach((item, index) => {
         video.currentTime = 0;
 
         video.play().catch(error => {
-  console.error("Hero video play issue:", error);
-});
+          console.error("Hero video play issue:", error);
+        });
+
       } else {
         video.pause();
         video.currentTime = 0;
@@ -1034,12 +1187,19 @@ mediaItems.forEach((item, index) => {
         slides[currentIndex]?.querySelector("video");
 
       if (video) video.pause();
+
     } else {
       showSlide(currentIndex);
     }
   });
 
   showSlide(0);
+
+  console.log(
+    "Homepage hero slider initialized:",
+    mediaItems.length,
+    "items"
+  );
 }
 
 /* =====================================
@@ -1047,16 +1207,13 @@ mediaItems.forEach((item, index) => {
 ===================================== */
 
 function convertOldProductToGallery(product) {
-  const image = safeURL(
-    product.imageUrl ||
-    product.image ||
-    product.photo
-  );
+  const image = getImage(product);
 
   if (!image) return null;
 
   return {
     id: "website-product-" + product.id,
+
     type: "gallery",
     active: true,
 
@@ -1067,10 +1224,14 @@ function convertOldProductToGallery(product) {
       "Security Product",
 
     description: product.description || "",
+
     mediaUrl: image,
+
     publicId: product.publicId || "",
+
     productSource: "website",
     productId: product.id,
+
     createdAt: product.createdAt || null
   };
 }
@@ -1080,16 +1241,13 @@ function convertOldProductToGallery(product) {
 ===================================== */
 
 function convertCustomerProductToGallery(product) {
-  const image = safeURL(
-    product.imageUrl ||
-    product.image ||
-    product.photo
-  );
+  const image = getImage(product);
 
   if (!image) return null;
 
   return {
     id: "customer-product-" + product.id,
+
     type: "gallery",
     active: true,
 
@@ -1100,15 +1258,19 @@ function convertCustomerProductToGallery(product) {
       "Product",
 
     description: product.description || "",
+
     mediaUrl: image,
+
     publicId: product.publicId || "",
+
     productSource: "customer",
     productId: product.id,
+
     customerId: product.customerId || "",
+
     createdAt: product.createdAt || null
   };
 }
-
 
 /* =====================================
    RESOLVE CURRENT WEBSITE TENANT
@@ -1126,7 +1288,7 @@ async function resolveMarketingTenant() {
   marketingTenantUid = "";
   marketingWebsiteMode = "blocked";
 
-  // RB Tech पुरानी वेबसाइट
+  // RB Tech legacy website
   const isLegacyWebsite =
     hostname === "rb-tech-solution-camera-pluse.pages.dev" ||
     hostname === "rb-tech-solution-camera-pluse-pages.pages.dev" ||
@@ -1142,10 +1304,11 @@ async function resolveMarketingTenant() {
     marketingTenantId = "customer1";
 
     console.log("Marketing tenant: RB Tech Solution");
+
     return true;
   }
 
-  // दूसरे domains के लिए publicWebsites mapping
+  // Other customer domains
   try {
     const websiteRef = doc(
       db,
@@ -1186,7 +1349,7 @@ async function resolveMarketingTenant() {
       return false;
     }
 
-    marketingTenantId = websiteData.customerId;
+    marketingTenantId = websiteData.customerId.trim();
     marketingWebsiteMode = "customer";
 
     console.log("Marketing tenant:", marketingTenantId);
@@ -1210,7 +1373,10 @@ async function loadMarketingContent() {
 
   const heroSlider = $("heroMarketingSlider");
 
-  if (!allGrids.length && !heroSlider) return;
+  if (!allGrids.length && !heroSlider) {
+    console.warn("Marketing section elements not found");
+    return;
+  }
 
   try {
     const tenantResolved = await resolveMarketingTenant();
@@ -1220,7 +1386,9 @@ async function loadMarketingContent() {
         grid.innerHTML = "";
       });
 
-      if (heroSlider) heroSlider.innerHTML = "";
+      if (heroSlider) {
+        heroSlider.innerHTML = "";
+      }
 
       console.error(
         "Website blocked: tenant could not be verified."
@@ -1248,7 +1416,7 @@ async function loadMarketingContent() {
           )
         ),
 
-        // यह पुरानी products collection केवल RB Tech साइट पर लोड होती है
+        // Old RB Tech products
         getDocs(
           query(
             collection(db, "products"),
@@ -1256,6 +1424,7 @@ async function loadMarketingContent() {
           )
         ),
 
+        // RB customer products
         getDocs(
           query(
             collection(db, "customerProducts"),
@@ -1270,8 +1439,12 @@ async function loadMarketingContent() {
           id: d.id,
           ...d.data()
         }));
+
       } else {
-        console.error("RB marketing error:", results[0].reason);
+        console.error(
+          "RB marketing error:",
+          results[0].reason
+        );
       }
 
       if (results[1].status === "fulfilled") {
@@ -1279,8 +1452,12 @@ async function loadMarketingContent() {
           id: d.id,
           ...d.data()
         }));
+
       } else {
-        console.error("RB old products error:", results[1].reason);
+        console.error(
+          "RB old products error:",
+          results[1].reason
+        );
       }
 
       if (results[2].status === "fulfilled") {
@@ -1288,8 +1465,12 @@ async function loadMarketingContent() {
           id: d.id,
           ...d.data()
         }));
+
       } else {
-        console.error("RB customer products error:", results[2].reason);
+        console.error(
+          "RB customer products error:",
+          results[2].reason
+        );
       }
     }
 
@@ -1322,6 +1503,7 @@ async function loadMarketingContent() {
           id: d.id,
           ...d.data()
         }));
+
       } else {
         console.error(
           "Customer marketing error:",
@@ -1334,6 +1516,7 @@ async function loadMarketingContent() {
           id: d.id,
           ...d.data()
         }));
+
       } else {
         console.error(
           "Customer products error:",
@@ -1341,7 +1524,7 @@ async function loadMarketingContent() {
         );
       }
 
-      // Customer website पर RB Tech के पुराने products नहीं लाएँ
+      // Never load RB old products on a customer website
       oldProducts = [];
     }
 
@@ -1364,7 +1547,7 @@ async function loadMarketingContent() {
     ];
 
     /* =====================================
-       HERO SLIDER
+       HOMEPAGE TOP SLIDER
     ===================================== */
 
     renderHeroSlider(allMarketingItems);
@@ -1383,11 +1566,20 @@ async function loadMarketingContent() {
 
     console.log("Website mode:", marketingWebsiteMode);
     console.log("Tenant ID:", marketingTenantId);
+
     console.log("Marketing items:", marketingItems.length);
     console.log("Old products:", oldProducts.length);
     console.log("Customer products:", customerProducts.length);
-    console.log("Old product gallery:", oldProductGallery.length);
-    console.log("Customer product gallery:", customerProductGallery.length);
+
+    console.log(
+      "Old product gallery:",
+      oldProductGallery.length
+    );
+
+    console.log(
+      "Customer product gallery:",
+      customerProductGallery.length
+    );
 
     const finalGallery = getUniqueGalleryItems(
       allMarketingItems.filter(item =>
@@ -1401,6 +1593,20 @@ async function loadMarketingContent() {
       finalGallery.length
     );
 
+    console.log(
+      "Hero media items:",
+      allMarketingItems.filter(item =>
+        item.active === true &&
+        (
+          item.type === "videos" ||
+          (
+            ["companyNews", "gallery", "printPress"].includes(item.type) &&
+            Boolean(getImage(item))
+          )
+        )
+      ).length
+    );
+
   } catch (error) {
     console.error("Marketing loading error:", error);
 
@@ -1408,6 +1614,10 @@ async function loadMarketingContent() {
       grid.innerHTML =
         "<p>Unable to load content. Please try again later.</p>";
     });
+
+    if (heroSlider) {
+      heroSlider.innerHTML = "";
+    }
   }
 }
 
