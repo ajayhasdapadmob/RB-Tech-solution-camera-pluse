@@ -43,33 +43,14 @@ let editingProductId = null;
 let ocrLibrariesPromise = null;
 
 /* =====================================
-   CLOUDINARY SETTINGS
+   TIGRIS STORAGE SETTINGS
 ===================================== */
 
-const CLOUDINARY_CLOUD_NAME = "ch5mab4a";
-const CLOUDINARY_UPLOAD_PRESET = "rbtech_products";
-const CLOUDINARY_PRODUCT_FOLDER = "rb-tech-solution/products";
+const TIGRIS_WORKER_URL =
+  "https://rb-tech-media-api.ajayhasda623.workers.dev";
 
 const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_PRODUCT_PDF_BYTES = 15 * 1024 * 1024;
-const MAX_OCR_FILE_BYTES = 15 * 1024 * 1024;
-
-const ALLOWED_PRODUCT_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp"
-];
-
-const ALLOWED_OCR_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp"
-];
-
-if ($("year")) {
-  $("year").textContent = new Date().getFullYear();
-}
-
 /* =====================================
    COMMON HELPERS
 ===================================== */
