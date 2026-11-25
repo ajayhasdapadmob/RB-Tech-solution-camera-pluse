@@ -22,9 +22,8 @@ import {
    Print & Press
 ========================================== */
 
-const CLOUDINARY_NAME = "ch5mab4a";
-const CLOUDINARY_PRESET = "rbtech_products";
-function getMarketingCloudinaryFolder(type) {
+const TIGRIS_WORKER_URL =
+  "https://rb-tech-media-api.ajayhasda623.workers.dev";
   const customerId = String(marketingCustomer?.id || "")
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, "");
@@ -233,48 +232,102 @@ function marketingValidateFile(type, file) {
 }
 
 /* ==========================================
-   CLOUDINARY UPLOAD
+   TIGRIS WORKER UPLOAD
 ========================================== */
 
 async function uploadMarketingFile(file, type) {
-  const resource = marketingFileResource(type, file);
+  if (!file) {
+    throw new Error("Please select a file.");
+  }
 
-  const endpoint =
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_NAME}/${resource}/upload`;
+  if (!marketingValidateCustomer()) {
+    throw new Error("Customer login required.");
+  }
+
+  let kind = "";
+
+  if (file.type.startsWith("image/")) {
+    kind = "image";
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error("Only JPG, PNG and WebP images are supported.");
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error("Image size must be below 5 MB.");
+    }
+
+  } else if (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    kind = "pdf";
+
+    if (file.size > 15 * 1024 * 1024) {
+      throw new Error("PDF size must be below 15 MB.");
+    }
+
+  } else if (file.type.startsWith("video/")) {
+    throw new Error(
+      "Video upload is not enabled in the current Tigris Worker."
+    );
+
+  } else {
+    throw new Error("Unsupported file format.");
+  }
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("Please login again.");
+  }
+
+  const progress = marketingContainer?.querySelector(
+    "#marketingUploadProgress"
+  );
+
+  if (progress) {
+    progress.textContent = "Uploading file to secure storage...";
+  }
+
+  const idToken = await user.getIdToken();
 
   const formData = new FormData();
 
   formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_PRESET);
-  formData.append(
-  "folder",
-  getMarketingCloudinaryFolder(type)
-);
+  formData.append("kind", kind);
+  formData.append("customerId", marketingCustomer.id);
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    body: formData
-  });
+  const response = await fetch(
+    `${TIGRIS_WORKER_URL}/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      },
+      body: formData
+    }
+  );
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({}));
 
-  if (!response.ok || !result.secure_url) {
+  if (!response.ok || !result.success || !result.url) {
+    console.error("Tigris Marketing Upload Error:", result);
+
     throw new Error(
-      result.error?.message ||
-      "Cloudinary upload failed. Check your upload preset."
+      result.error || "Tigris upload failed."
     );
   }
 
   return {
-    url: result.secure_url,
-    publicId: result.public_id || "",
-    resourceType: result.resource_type || resource,
-    format: result.format || "",
+    url: result.url,
+    publicId: "",
+    resourceType: kind === "pdf" ? "raw" : "image",
+    format: file.name.split(".").pop().toLowerCase(),
     fileName: file.name,
     bytes: file.size
   };
 }
-
 /* ==========================================
    MARKETING FORM HTML
 ========================================== */
