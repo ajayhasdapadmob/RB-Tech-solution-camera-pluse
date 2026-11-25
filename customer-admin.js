@@ -1809,8 +1809,9 @@ console.log("OCR parsed specifications:", parsed.specifications);
   }
 }
 
+
 /* =====================================
-   CLOUDINARY IMAGE UPLOAD
+   TIGRIS IMAGE UPLOAD
 ===================================== */
 
 async function uploadProductImage(file) {
@@ -1824,46 +1825,48 @@ async function uploadProductImage(file) {
     throw new Error("Photo ka size 5 MB se kam hona chahiye.");
   }
 
+  if (!currentUser || !currentCustomer) {
+    throw new Error("Customer login required.");
+  }
+
   const status = $("imageUploadStatus");
 
   if (status) {
-    status.textContent = "Photo Cloudinary par upload ho rahi hai...";
+    status.textContent = "Photo Tigris par upload ho rahi hai...";
   }
 
+  const idToken = await currentUser.getIdToken();
+
   const formData = new FormData();
-
   formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", CLOUDINARY_PRODUCT_FOLDER);
+  formData.append("kind", "image");
+  formData.append("customerId", currentCustomer.id);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    {
-      method: "POST",
-      body: formData
-    }
-  );
+  const response = await fetch(`${TIGRIS_WORKER_URL}/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${idToken}`
+    },
+    body: formData
+  });
 
   const result = await response.json().catch(() => ({}));
 
-  if (!response.ok || !result.secure_url) {
-    console.error("Cloudinary image upload:", result);
-
-    throw new Error(
-      result.error?.message ||
-      "Photo upload nahi hui. Cloudinary unsigned preset check kijiye."
-    );
+  if (!response.ok || !result.success || !result.url) {
+    console.error("Tigris image upload:", result);
+    throw new Error(result.error || "Photo upload nahi hui.");
   }
 
   if (status) {
     status.textContent = "Photo upload successful.";
   }
 
-  return result.secure_url;
+  return result.url;
 }
 
+
 /* =====================================
-   CLOUDINARY PDF UPLOAD
+   TIGRIS PDF UPLOAD
 ===================================== */
 
 async function uploadProductPDF(file) {
@@ -1881,35 +1884,36 @@ async function uploadProductPDF(file) {
     throw new Error("PDF ka size 15 MB se kam hona chahiye.");
   }
 
+  if (!currentUser || !currentCustomer) {
+    throw new Error("Customer login required.");
+  }
+
   const status = $("productPDFStatus");
 
   if (status) {
-    status.textContent = "PDF Cloudinary par upload ho rahi hai...";
+    status.textContent = "PDF Tigris par upload ho rahi hai...";
   }
 
+  const idToken = await currentUser.getIdToken();
+
   const formData = new FormData();
-
   formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", CLOUDINARY_PRODUCT_FOLDER);
+  formData.append("kind", "pdf");
+  formData.append("customerId", currentCustomer.id);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
-    {
-      method: "POST",
-      body: formData
-    }
-  );
+  const response = await fetch(`${TIGRIS_WORKER_URL}/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${idToken}`
+    },
+    body: formData
+  });
 
   const result = await response.json().catch(() => ({}));
 
-  if (!response.ok || !result.secure_url) {
-    console.error("Cloudinary PDF upload:", result);
-
-    throw new Error(
-      result.error?.message ||
-      "PDF upload nahi hui. Cloudinary preset mein PDF/raw upload permission enable kijiye."
-    );
+  if (!response.ok || !result.success || !result.url) {
+    console.error("Tigris PDF upload:", result);
+    throw new Error(result.error || "PDF upload nahi hui.");
   }
 
   if (status) {
@@ -1917,7 +1921,7 @@ async function uploadProductPDF(file) {
   }
 
   return {
-    url: result.secure_url,
+    url: result.url,
     name: file.name
   };
 }
