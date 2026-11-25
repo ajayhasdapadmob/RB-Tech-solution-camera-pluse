@@ -28,16 +28,6 @@ import {
 
 const TIGRIS_WORKER_URL =
   "https://rb-tech-media-api.ajayhasda623.workers.dev";
-  const customerId = String(marketingCustomer?.id || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, "");
-
-  if (!customerId) {
-    throw new Error("Invalid customer ID.");
-  }
-
-  return `rb-tech-solution/tenants/${customerId}/marketing/${type}`;
-}
 
 const MARKETING_TYPES = {
   companyNews: {
