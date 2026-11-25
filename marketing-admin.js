@@ -22,6 +22,10 @@ import {
    Print & Press
 ========================================== */
 
+/* ==========================================
+   TIGRIS WORKER SETTINGS
+========================================== */
+
 const TIGRIS_WORKER_URL =
   "https://rb-tech-media-api.ajayhasda623.workers.dev";
   const customerId = String(marketingCustomer?.id || "")
