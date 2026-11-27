@@ -866,15 +866,16 @@ async function loadProducts() {
       });
     });
 
-    allProducts = Array.from(productMap.values());
-    filteredProducts = [...allProducts];
+   
+allProducts = Array.from(productMap.values());
+filteredProducts = [...allProducts];
 
-    console.log("Website mode:", currentWebsiteMode);
-    console.log("Current tenant:", currentTenantId);
-    console.log("Products loaded:", allProducts.length);
+// Load category images from existing Firebase products
+renderCategoryImages();
 
-    renderProducts();
-    renderTrendingProducts();
+renderProducts();
+renderTrendingProducts();
+
 
   } catch (error) {
     console.error("Product loading error:", error);
@@ -956,6 +957,117 @@ function renderTrendingProducts() {
   }
 
   grid.innerHTML = trending.map(productCardHTML).join("");
+}
+
+/* =========================================
+   AUTOMATIC CATEGORY PRODUCT IMAGES
+   Uses existing Firebase product images
+========================================= */
+
+function renderCategoryImages() {
+  const categoryAliases = {
+    "IP Cameras": [
+      "ip cameras",
+      "ip camera",
+      "network cameras",
+      "network camera"
+    ],
+    "DVR & NVR": [
+      "dvr & nvr",
+      "dvr",
+      "nvr"
+    ],
+    "CCTV Cameras": [
+      "cctv cameras",
+      "cctv camera",
+      "analog hd cameras",
+      "analog cctv"
+    ],
+    "Wireless Cameras": [
+      "wireless cameras",
+      "wireless camera"
+    ],
+    "PTZ Cameras": [
+      "ptz cameras",
+      "ptz camera",
+      "speed dome / ptz",
+      "speed dome"
+    ],
+    "Video Door Phone": [
+      "video door phone",
+      "video door phones"
+    ],
+    "Biometric Systems": [
+      "biometric systems",
+      "biometric system",
+      "biometric",
+      "time & attendance"
+    ],
+    "Networking": [
+      "networking",
+      "networking & switches",
+      "network switches",
+      "switches"
+    ],
+    "Storage": [
+      "storage",
+      "storage & memory",
+      "memory"
+    ],
+    "Accessories": [
+      "accessories",
+      "accessory"
+    ]
+  };
+
+  const normalizeCategory = value =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  const firstProductImage =
+    allProducts.find(product => {
+      const image = getProductImage(product);
+      return image && image !== getFallbackImage();
+    });
+
+  const fallbackImage = firstProductImage
+    ? getProductImage(firstProductImage)
+    : getFallbackImage();
+
+  document.querySelectorAll(
+    "#productCategories .category-card[data-category]"
+  ).forEach(card => {
+    const category = card.dataset.category;
+    const img = card.querySelector("img");
+
+    if (!img) return;
+
+    const aliases = (
+      categoryAliases[category] || [category]
+    ).map(normalizeCategory);
+
+    const matchingProduct = allProducts.find(product => {
+      const productCategory = normalizeCategory(
+        getProductCategory(product)
+      );
+
+      return aliases.includes(productCategory);
+    });
+
+    img.onerror = function () {
+      this.onerror = null;
+      this.src = fallbackImage;
+    };
+
+    img.src = matchingProduct
+      ? getProductImage(matchingProduct)
+      : fallbackImage;
+
+    img.alt = card.querySelector("h3")?.textContent.trim()
+      || category;
+  });
 }
 
 /* =========================================
