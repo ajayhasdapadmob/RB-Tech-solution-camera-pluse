@@ -436,13 +436,14 @@ href="images/products/intello-favicon.png">
 
 .hero-marketing-slider > .hero-static-image,
 .hero-marketing-slide img,
-.hero-marketing-slide video {
+.hero-marketing-slide video,
+.hero-marketing-slider > .hero-static-image {
   display: block;
   width: 100% !important;
   height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  object-fit: cover !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
   object-position: center center;
   background: #071b2b;
   border: 0 !important;
