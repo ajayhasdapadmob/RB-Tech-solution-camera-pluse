@@ -379,274 +379,54 @@ href="images/products/intello-favicon.png">
       }
     }
 
-    /* =====================================
-       FULL SCREEN HERO IMAGE / VIDEO SLIDER
-    ===================================== */
-
-    .hero-section {
-      position: relative !important;
-      display: block !important;
-      width: 100% !important;
-
-      /* Header ke neeche bachi hui poori screen */
-      height: calc(100vh - var(--site-header-height, 0px)) !important;
-      height: calc(100svh - var(--site-header-height, 0px)) !important;
-
-      min-height: 300px;
-      margin: 0 !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-      background: #071b2b;
-      box-sizing: border-box;
-    }
-
-    .hero-marketing-slider {
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      min-height: 0 !important;
-      max-width: none !important;
-      overflow: hidden !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border: 0 !important;
-      box-shadow: none !important;
-      background: #071b2b;
-    }
-
-    .hero-marketing-slide {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity .7s ease;
-    }
-
-    .hero-marketing-slide.active {
-      opacity: 1;
-      visibility: visible;
-      z-index: 1;
-    }
-
     
-/* HERO IMAGE AND VIDEO SIZE */
-
-.hero-marketing-slider > .hero-static-image,
-.hero-marketing-slide img,
-.hero-marketing-slide video,
-.hero-marketing-slider > .hero-static-image {
+/* =====================================
+   HERO IMAGE
+===================================== */
+.hero-section {
+  position: relative;
   display: block;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  object-fit: contain !important;
-  object-position: center center;
+  width: 100%;
+  height: 65vh;
+  height: 65svh;
+  min-height: 300px;
+  max-height: 760px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   background: #071b2b;
-  border: 0 !important;
+  box-sizing: border-box;
+  z-index: 1;
 }
-
-/* HERO SLIDE */
-
-.hero-marketing-slide {
+.hero-marketing-slider {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .7s ease;
   overflow: hidden;
-}
-
-.hero-marketing-slide.active {
-  opacity: 1;
-  visibility: visible;
-  z-index: 1;
-}
-
-/* HERO ARROWS */
-
-.hero-marketing-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  width: 42px;
-  height: 42px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .65);
-  color: #fff;
-  font-size: 23px;
-  cursor: pointer;
-}
-
-.hero-marketing-prev {
-  left: 15px;
-}
-
-.hero-marketing-next {
-  right: 15px;
-}
-
-/* HERO DOTS */
-
-.hero-marketing-dots {
-  position: absolute;
-  bottom: 18px;
-  left: 0;
-  right: 0;
-  z-index: 6;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.hero-marketing-dot {
-  width: 10px;
-  height: 10px;
+  margin: 0;
   padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .6);
-  cursor: pointer;
+  background: #071b2b;
+}
+.hero-static-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  background: #071b2b;
+}
+@media (max-width: 768px) {
+  .hero-section {
+    height: 52vh;
+    height: 52svh;
+    min-height: 260px;
+  }
 }
 
-.hero-marketing-dot.active {
-  background: #08a045;
-  transform: scale(1.3);
-}
-
-
-    .hero-marketing-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 5;
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, .65);
-      color: #fff;
-      font-size: 23px;
-      cursor: pointer;
-    }
-
-    .hero-marketing-arrow:hover {
-      background: #087f3c;
-    }
-
-    .hero-marketing-prev {
-      left: 15px;
-    }
-
-    .hero-marketing-next {
-      right: 15px;
-    }
-
-    .hero-marketing-dots {
-      position: absolute;
-      bottom: 18px;
-      left: 0;
-      right: 0;
-      z-index: 6;
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .hero-marketing-dot {
-      width: 10px;
-      height: 10px;
-      padding: 0;
-      border: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .6);
-      cursor: pointer;
-    }
-
-    .hero-marketing-dot.active {
-      background: #08a045;
-      transform: scale(1.3);
-    }
-
-    .hero-image-label {
-      display: none !important;
-    }
-
-    @media(max-width: 768px) {
-      .hero-section {
-        height: calc(100vh - var(--site-header-height, 0px)) !important;
-        height: calc(100svh - var(--site-header-height, 0px)) !important;
-        min-height: 300px;
-      }
-
-      .hero-marketing-arrow {
-        width: 34px;
-        height: 34px;
-        font-size: 19px;
-      }
-
-      .hero-marketing-prev {
-        left: 8px;
-      }
-
-      .hero-marketing-next {
-        right: 8px;
-      }
-    }
-    
-/* =========================================
-   HERO MEDIA BEHIND TOP STRIP AND HEADER
-========================================= */
-
-body {
-  position: relative;
-  padding-top: 0 !important;
-}
-
-/* Top strip and header stay visible */
-.top-strip,
-.site-header {
-  position: relative !important;
-  z-index: 1000 !important;
-}
-
-/* Hero starts from the very top */
-.hero-section {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100vh !important;
-  height: 100svh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 0 !important;
-}
-
-/* Keep the photo/video full screen */
-.hero-marketing-slider {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Other sections remain below the hero */
-.trust-strip {
-  position: relative;
-  z-index: 1;
-  margin-top: 00vh;
-  margin-top: 00svh;
-}
-
-  </style>
+</style>
   <script>
 document.addEventListener("error", function(event) {
   const img = event.target;
@@ -666,7 +446,7 @@ document.addEventListener("error", function(event) {
   
 <!-- TOP STRIP -->
 <div class="top-strip">
-  <a href="tel:+919663116089">+91 96631 16089</a>
+  <a href="tel:+919448735433">+91 9448735433</a>
 </div>
 
 
@@ -771,7 +551,7 @@ document.addEventListener("error", function(event) {
     <div id="heroMarketingSlider" class="hero-marketing-slider">
       <img
         src="images/products/jaise%20camera-01.jpg.png"
-        alt="RB Tech Solution"
+        alt="Intello Electric"
         class="hero-static-image">
     </div>
 
@@ -809,52 +589,52 @@ document.addEventListener("error", function(event) {
   <div class="category-grid">
 
     <button class="category-card" type="button" data-category="IP Cameras">
-      <img src="images/categories/ip-cameras.jpg" alt="IP Cameras">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/ip-cameras.jpg" alt="IP Cameras">
       <h3>IP Cameras</h3>
     </button>
 
     <button class="category-card" type="button" data-category="DVR & NVR">
-      <img src="images/categories/dvr-nvr.jpg" alt="DVR & NVR">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/dvr-nvr.jpg" alt="DVR & NVR">
       <h3>DVR & NVR</h3>
     </button>
 
     <button class="category-card" type="button" data-category="CCTV Cameras">
-      <img src="images/categories/cctv-cameras.jpg" alt="CCTV Cameras">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/cctv-cameras.jpg" alt="CCTV Cameras">
       <h3>CCTV Cameras</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Wireless Cameras">
-      <img src="images/categories/wireless-cameras.jpg" alt="Wireless Cameras">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/wireless-cameras.jpg" alt="Wireless Cameras">
       <h3>Wireless Cameras</h3>
     </button>
 
     <button class="category-card" type="button" data-category="PTZ Cameras">
-      <img src="images/categories/ptz-cameras.jpg" alt="PTZ Cameras">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/ptz-cameras.jpg" alt="PTZ Cameras">
       <h3>PTZ Cameras</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Video Door Phone">
-      <img src="images/categories/video-door-phone.jpg" alt="Video Door Phone">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/video-door-phone.jpg" alt="Video Door Phone">
       <h3>Video Door Phone</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Biometric Systems">
-      <img src="images/categories/biometric-systems.jpg" alt="Biometric Systems">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/biometric-systems.jpg" alt="Biometric Systems">
       <h3>Biometric Systems</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Networking">
-      <img src="images/categories/networking.jpg" alt="Networking">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/networking.jpg" alt="Networking">
       <h3>Networking</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Storage">
-      <img src="images/categories/storage.jpg" alt="Storage">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/storage.jpg" alt="Storage">
       <h3>Storage</h3>
     </button>
 
     <button class="category-card" type="button" data-category="Accessories">
-      <img src="images/categories/accessories.jpg" alt="Accessories">
+      <img loading="lazy" onerror="this.onerror=null;this.src='images/products/jaise%20camera-01.jpg.png'" src="images/categories/accessories.jpg" alt="Accessories">
       <h3>Accessories</h3>
     </button>
 
@@ -1015,7 +795,7 @@ document.addEventListener("error", function(event) {
     <div class="section-heading">
       <h2>Partner Connect</h2>
       <p>
-        Interested in working with RB Tech Solution?
+        Interested in working with Intello Electric?
         Contact us to discuss business and partnership opportunities.
       </p>
       <a href="inquiry.html">Become a Partner</a>
@@ -1034,7 +814,7 @@ document.addEventListener("error", function(event) {
   <!-- CTA -->
   <section class="newsletter-section">
     <h2>Need a Security Solution?</h2>
-    <p>Contact RB Tech Solution for CCTV cameras and complete security solutions.</p>
+    <p>Contact Intello Electric for CCTV cameras and complete security solutions.</p>
     <a href="inquiry.html">Send Inquiry Today</a>
   </section>
 
@@ -1043,18 +823,18 @@ document.addEventListener("error", function(event) {
     <div class="footer-grid">
 
       <div>
-        <h3>RB TECH SOLUTION</h3>
+        <h3>INTELLO ELECTRIC</h3>
         <p>
-          CCTV & Security Systems. Providing security products
+          Computer and CCTV Sales and Services. Providing security products
           and surveillance solutions for homes, offices and businesses.
         </p>
         <p style="margin-top:12px;">
           Phone / WhatsApp:
-          <a href="https://wa.me/919663116089" target="_blank" rel="noopener">
-            +91 96631 16089
+          <a href="https://wa.me/919448735433" target="_blank" rel="noopener">
+            +91 9448735433
           </a>
         </p>
-        <p>Email: <a href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a></p>
+        <p>Email: <a href="mailto:intelloelectric@gmail.com">intelloelectric@gmail.com</a></p>
         <p>Address: Mangalore, Karnataka, India</p>
       </div>
 
@@ -1080,7 +860,7 @@ document.addEventListener("error", function(event) {
 
       <div>
         <h3>Quick Links</h3>
-        <a href="#about">About Us</a>
+        <a href="#home">About Us</a>
         <a href="#marketing">Marketing</a>
         <a href="#support">Support</a>
         <a href="inquiry.html">Inquiry</a>
@@ -1091,15 +871,15 @@ document.addEventListener("error", function(event) {
     </div>
 
     <div class="footer-bottom">
-      <p>© <span id="footerYear">2026</span> RB Tech Solution. All Rights Reserved.</p>
+      <p>© <span id="footerYear">2026</span> Intello Electric. All Rights Reserved.</p>
     </div>
   </footer>
 
   <!-- WHATSAPP FLOATING BUTTON -->
   <a class="whatsapp-float"
-    href="https://wa.me/919663116089"
+    href="https://wa.me/919448735433"
     target="_blank" rel="noopener"
-    aria-label="Contact RB Tech Solution on WhatsApp">☎</a>
+    aria-label="Contact Intello Electric on WhatsApp">☎</a>
 
   <!-- PRODUCT DETAILS MODAL -->
   <div id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
@@ -1129,7 +909,7 @@ document.addEventListener("error", function(event) {
 
           <div class="contact-detail-item">
             <strong>Company</strong>
-            RB Tech Solution
+            Intello Electric
           </div>
 
           <div class="contact-detail-item">
@@ -1139,16 +919,16 @@ document.addEventListener("error", function(event) {
 
           <div class="contact-detail-item">
             <strong>Phone / WhatsApp</strong>
-            <a href="https://wa.me/919663116089"
+            <a href="https://wa.me/919448735433"
               target="_blank" rel="noopener">
-              +91 96631 16089
+              +91 9448735433
             </a>
           </div>
 
           <div class="contact-detail-item">
             <strong>E-mail</strong>
-            <a href="mailto:ajayhasda623@gmail.com">
-              ajayhasda623@gmail.com
+            <a href="mailto:intelloelectric@gmail.com">
+              intelloelectric@gmail.com
             </a>
           </div>
 
@@ -1274,84 +1054,26 @@ document.addEventListener("error", function(event) {
     }
   </script>
 
-  <!-- CALCULATE AVAILABLE HERO SCREEN HEIGHT -->
-  <script>
-    (function () {
-      const hero = document.querySelector(".hero-section");
-      const topStrip = document.querySelector(".top-strip");
-      const header = document.querySelector(".site-header");
-
-      if (!hero) return;
-
-      function updateHeroHeight() {
-        const stripHeight = topStrip
-          ? topStrip.getBoundingClientRect().height
-          : 0;
-
-        const headerHeight = header
-          ? header.getBoundingClientRect().height
-          : 0;
-
-        const availableHeight = Math.max(
-          300,
-          window.innerHeight - stripHeight - headerHeight
-        );
-
-        hero.style.setProperty(
-          "--site-header-height",
-          (window.innerHeight - availableHeight) + "px"
-        );
-
-        hero.style.height = availableHeight + "px";
-      }
-
-      updateHeroHeight();
-
-      window.addEventListener("resize", updateHeroHeight);
-
-      window.addEventListener("orientationchange", function () {
-        setTimeout(updateHeroHeight, 150);
-      });
-    })();
-  </script>
-
-<!-- INTELLO ELECTRIC DOMAIN BRANDING -->
+  <!-- INTELLO ELECTRIC BRANDING -->
 <script>
 (function () {
-  const hostname = window.location.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
-
-  const params = new URLSearchParams(window.location.search);
-
-  const isIntello =
-    hostname === "intelloelectric.com" ||
-    params.get("tenant") === "intelloelectric";
-
-  if (!isIntello) return;
-
   const brand = "INTELLO ELECTRIC";
   const tagline = "COMPUTER AND CCTV SALES AND SERVICES";
   const phone = "+91 9448735433";
   const phoneNumber = "919448735433";
   const email = "intelloelectric@gmail.com";
-  const logo = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
   const whatsapp = "https://wa.me/" + phoneNumber;
+  const logo = "https://raw.githubusercontent.com/ajayhasdapadmob/RB-Tech-solution-camera-pluse/main/images/products/intello-logo.png";
 
-  // SEO DETAILS
-  document.title = brand + " | Computer and CCTV Sales and Services";
+  document.title = "Intello Electric | Computer and CCTV Sales & Services";
 
   const description = document.querySelector('meta[name="description"]');
-  if (description) {
-    description.content =
-      "Intello Electric - Computer and CCTV sales and services in Mangalore, Karnataka.";
-  }
+  if (description) description.content =
+    "Intello Electric, Mangalore offers computer sales and services, CCTV cameras, IP cameras, networking and security solutions.";
 
   const keywords = document.querySelector('meta[name="keywords"]');
-  if (keywords) {
-    keywords.content =
-      "Intello Electric, Computer Sales, CCTV Camera, CCTV Services, Mangalore";
-  }
+  if (keywords) keywords.content =
+    "Intello Electric, Computer Sales Mangalore, CCTV Sales Mangalore, CCTV Services, IP Cameras, Computer Services";
 
   const author = document.querySelector('meta[name="author"]');
   if (author) author.content = brand;
@@ -1359,298 +1081,129 @@ document.addEventListener("error", function(event) {
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) canonical.href = "https://intelloelectric.com/";
 
-  // HEADER LOGO AND NAME
-  const brandLink = document.querySelector(".brand");
-
-  if (brandLink) {
-    const logoImage = brandLink.querySelector("img");
-    const heading = brandLink.querySelector("h1");
-    const taglineElement = brandLink.querySelector("span");
-
-    if (logoImage) {
-      logoImage.src = logo;
-      logoImage.alt = brand + " Logo";
-      logoImage.style.display = "block";
-    }
-
-    if (heading) heading.textContent = brand;
-    if (taglineElement) taglineElement.textContent = tagline;
+  const logoImage = document.getElementById("siteBrandLogo");
+  if (logoImage) {
+    logoImage.src = logo;
+    logoImage.alt = brand + " Logo";
   }
+  const brandName = document.getElementById("siteBrandName");
+  if (brandName) brandName.textContent = brand;
+  const brandTagline = document.getElementById("siteBrandTagline");
+  if (brandTagline) brandTagline.textContent = tagline;
 
-  // TOP PHONE NUMBER
-  const topPhone = document.querySelector(".top-strip a");
+  document.querySelectorAll('a[href^="tel:"]').forEach(a => {
+    a.href = "tel:+" + phoneNumber;
+    if (a.closest(".top-strip")) a.textContent = phone;
+  });
+  document.querySelectorAll('a[href*="wa.me/"]').forEach(a => {
+    a.href = whatsapp;
+    if (a.closest(".site-footer") || a.classList.contains("whatsapp-float") ||
+        a.closest("#contactPopup")) a.textContent = phone;
+  });
+  document.querySelectorAll('a[href^="mailto:"]').forEach(a => {
+    a.href = "mailto:" + email;
+    a.textContent = email;
+  });
 
-  if (topPhone) {
-    topPhone.href = "tel:+" + phoneNumber;
-    topPhone.textContent = phone;
-  }
-
-  // HERO IMAGE ALT
-  const heroImage = document.querySelector(".hero-static-image");
-  if (heroImage) heroImage.alt = brand;
-
-  // PARTNER SECTION
   const partnerText = document.querySelector("#partner .section-heading p");
-  if (partnerText) {
-    partnerText.textContent =
-      "Interested in working with " + brand +
-      "? Contact us to discuss business and partnership opportunities.";
-  }
+  if (partnerText) partnerText.textContent =
+    "Interested in working with " + brand +
+    "? Contact us to discuss business and partnership opportunities.";
 
-  // CTA SECTION
   const ctaText = document.querySelector(".newsletter-section p");
-  if (ctaText) {
-    ctaText.textContent =
-      "Contact " + brand +
-      " for computer, CCTV cameras and complete security solutions.";
-  }
+  if (ctaText) ctaText.textContent =
+    "Contact " + brand + " for computer, CCTV cameras and complete security solutions.";
 
-  // FOOTER BRANDING
   const footer = document.querySelector(".site-footer");
-
   if (footer) {
-    const footerHeading = footer.querySelector(".footer-grid > div:first-child h3");
-    if (footerHeading) footerHeading.textContent = brand;
-
-    const footerDescription =
-      footer.querySelector(".footer-grid > div:first-child > p");
-
-    if (footerDescription) {
-      footerDescription.textContent =
-        tagline + ". Providing computer, CCTV products and services.";
-    }
-
-    const footerLinks = footer.querySelectorAll(
-      '.footer-grid a[href^="https://wa.me/"]'
-    );
-
-    footerLinks.forEach(link => {
-      link.href = whatsapp;
-      link.textContent = phone;
-    });
-
-    const footerEmail = footer.querySelector(
-      '.footer-grid a[href^="mailto:"]'
-    );
-
-    if (footerEmail) {
-      footerEmail.href = "mailto:" + email;
-      footerEmail.textContent = email;
-    }
-
+    const heading = footer.querySelector(".footer-grid > div:first-child h3");
+    if (heading) heading.textContent = brand;
+    const desc = footer.querySelector(".footer-grid > div:first-child > p");
+    if (desc) desc.textContent = tagline + ". Providing computer, CCTV products and services.";
     const copyright = footer.querySelector(".footer-bottom p");
-
-    if (copyright) {
-      copyright.innerHTML =
-        '© <span id="footerYear">' +
-        new Date().getFullYear() +
-        "</span> " + brand + ". All Rights Reserved.";
-    }
+    if (copyright) copyright.innerHTML =
+      '© <span id="footerYear">' + new Date().getFullYear() +
+      '</span> ' + brand + '. All Rights Reserved.';
   }
 
-  // FLOATING WHATSAPP BUTTON
   const floatingWhatsApp = document.querySelector(".whatsapp-float");
-
   if (floatingWhatsApp) {
     floatingWhatsApp.href = whatsapp;
-    floatingWhatsApp.setAttribute(
-      "aria-label",
-      "Contact " + brand + " on WhatsApp"
-    );
+    floatingWhatsApp.setAttribute("aria-label", "Contact " + brand + " on WhatsApp");
   }
 
-  // CONTACT POPUP DETAILS
-  const contactItems = document.querySelectorAll(
-    "#contactPopup .contact-detail-item"
-  );
-
+  const contactItems = document.querySelectorAll("#contactPopup .contact-detail-item");
   if (contactItems.length >= 5) {
-    contactItems[0].innerHTML =
-      "<strong>Company</strong>" + brand;
-
-    contactItems[1].innerHTML =
-      "<strong>Business</strong>" + tagline;
-
-    contactItems[2].innerHTML =
-      '<strong>Phone / WhatsApp</strong><a href="' +
-      whatsapp + '" target="_blank" rel="noopener">' +
-      phone + "</a>";
-
-    contactItems[3].innerHTML =
-      '<strong>E-mail</strong><a href="mailto:' +
+    contactItems[0].innerHTML = "<strong>Company</strong>" + brand;
+    contactItems[1].innerHTML = "<strong>Business</strong>" + tagline;
+    contactItems[2].innerHTML = '<strong>Phone / WhatsApp</strong><a href="' +
+      whatsapp + '" target="_blank" rel="noopener">' + phone + "</a>";
+    contactItems[3].innerHTML = '<strong>E-mail</strong><a href="mailto:' +
       email + '">' + email + "</a>";
-
-    contactItems[4].innerHTML =
-      "<strong>Address</strong>Mangalore, Karnataka, India";
+    contactItems[4].innerHTML = "<strong>Address</strong>Mangalore, Karnataka, India";
   }
+  const popupDescription = document.querySelector("#contactPopup .contact-popup-header p");
+  if (popupDescription) popupDescription.textContent =
+    "Contact " + brand + " for enquiries and assistance.";
 
-  const popupDescription = document.querySelector(
-    "#contactPopup .contact-popup-header p"
-  );
-
-  if (popupDescription) {
-    popupDescription.textContent =
-      "Contact " + brand + " for enquiries and assistance.";
-  }
-
-  // FAVICON
   const favicon = document.querySelector('link[rel="icon"]');
-  if (favicon) favicon.href = logo;
+  if (favicon) favicon.href = "images/products/intello-favicon.png";
 
-  console.log("Intello Electric branding activated.");
+  const heroImage = document.querySelector(".hero-static-image");
+  if (heroImage) heroImage.alt = brand + " computer and CCTV solutions";
+
+  console.log("Intello Electric branding applied.");
 })();
 </script>
-<!-- END INTELLO ELECTRIC DOMAIN BRANDING -->
+<!-- END INTELLO ELECTRIC BRANDING -->
 
-  <!-- EXISTING APP JAVASCRIPT -->
+<!-- EXISTING APP JAVASCRIPT -->
   <script type="module" src="app.js"></script>
 
   <!-- PUBLIC MARKETING JAVASCRIPT -->
   <script type="module" src="marketing.js"></script>
 
 <style>
-/* Both header sections transparent */
+.top-strip,
+.site-header {
+  position: relative;
+  z-index: 1000;
+}
 .top-strip,
 .site-header,
 .header-inner {
-  background: transparent !important;
-  box-shadow: none !important;
+  background: transparent;
+  box-shadow: none;
 }
-
-/* Keep header content above hero media */
-.top-strip,
-.site-header {
-  position: relative !important;
-  z-index: 1000 !important;
-}
-
-
-/* HERO SLIDER - FULL WIDTH, REDUCED HEIGHT */
-.hero-section {
-  margin-top: calc(-1 * var(--site-header-height, 0px)) !important;
-  width: 100% !important;
-  height: 65vh !important;
-  height: 65svh !important;
-  min-height: 300px !important;
-  position: relative !important;
-  z-index: 0 !important;
-}
-
-</style>
-
-<style>
-/* MAIN NAVIGATION - WHITE */
 .site-header #mainNav > a,
 .site-header #mainNav > .nav-dropdown > .dropdown-toggle {
-color: #ffffff !important;
--webkit-text-fill-color: #ffffff !important;
-font-weight: 700 !important;
-text-shadow: 1px 2px 5px #000000 !important;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-weight: 700;
+  text-shadow: 1px 2px 5px #000;
 }
-
-/* ALL DROPDOWN CONTENT - BLACK */
 .site-header #mainNav .mega-menu,
 .site-header #mainNav .mega-menu *,
 .site-header #mainNav .dropdown-menu,
 .site-header #mainNav .dropdown-menu * {
-color: #000000 !important;
--webkit-text-fill-color: #000000 !important;
-text-shadow: none !important;
+  color: #000;
+  -webkit-text-fill-color: #000;
+  text-shadow: none;
 }
-
-/* DROPDOWN HOVER - GREEN */
 .site-header #mainNav .mega-menu a:hover,
 .site-header #mainNav .dropdown-menu a:hover {
-color: #08a045 !important;
--webkit-text-fill-color: #08a045 !important;
+  color: #08a045;
+  -webkit-text-fill-color: #08a045;
 }
-/* HEADER CONTENT MOVE UP */
-.site-header .header-inner {
-  transform: translateY(-12px);
+@media (max-width: 768px) {
+  .site-header #mainNav > a,
+  .site-header #mainNav > .nav-dropdown > .dropdown-toggle {
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+    text-shadow: none;
+  }
 }
 </style>
-  
-<!-- INTELLO ELECTRIC VISIBLE BRANDING -->
-<script>
-(function () {
-  const host = location.hostname
-    .toLowerCase()
-    .replace(/^www\./, "");
 
-  if (host !== "intelloelectric.com") return;
-
-  const replacements = [
-    ["RB TECH SOLUTION", "INTELLO ELECTRIC"],
-    ["RB Tech Solution", "Intello Electric"],
-    ["RB TECH", "INTELLO ELECTRIC"],
-    ["RB Tech", "Intello Electric"],
-    ["CCTV & SECURITY SYSTEMS",
-     "COMPUTER AND CCTV SALES AND SERVICES"],
-    ["CCTV & Security Systems",
-     "Computer and CCTV Sales and Services"],
-    ["+91 96631 16089", "+91 9448735433"],
-    ["96631 16089", "94487 73543"],
-    ["9663116089", "9448735433"],
-    ["ajayhasda623@gmail.com",
-     "intelloelectric@gmail.com"]
-  ];
-
-  function updateText(root) {
-    const walker = document.createTreeWalker(
-      root,
-      NodeFilter.SHOW_TEXT
-    );
-
-    let node;
-
-    while ((node = walker.nextNode())) {
-      let value = node.nodeValue;
-
-      replacements.forEach(([oldText, newText]) => {
-        value = value.split(oldText).join(newText);
-      });
-
-      if (value !== node.nodeValue) {
-        node.nodeValue = value;
-      }
-    }
-  }
-
-  function updateBranding() {
-    updateText(document.body);
-
-    document.title =
-      "Intello Electric | Computer and CCTV Sales & Services";
-
-    document.querySelectorAll("a[href^='tel:']")
-      .forEach(a => {
-        a.href = "tel:+919448735433";
-      });
-
-    document.querySelectorAll("a[href*='wa.me/']")
-      .forEach(a => {
-        a.href = "https://wa.me/919448735433";
-      });
-
-    document.querySelectorAll("a[href^='mailto:']")
-      .forEach(a => {
-        a.href = "mailto:intelloelectric@gmail.com";
-      });
-  }
-
-  updateBranding();
-
-  const observer = new MutationObserver(() => {
-    updateBranding();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
-
-})();
-</script>
 </body>
 </html>
