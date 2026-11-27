@@ -969,100 +969,92 @@ function renderTrendingProducts() {
    CATEGORY IMAGES - PRODUCT + ONLINE PHOTOS
 ========================================= */
 
-function renderCategoryImages() {
 
+function renderCategoryImages() {
   const categoryData = {
     "IP Cameras": {
-      aliases: ["ip cameras", "ip camera", "network camera", "network cameras"],
-      online: "https://loremflickr.com/640/420/ip,camera?lock=101"
+      aliases: ["ip cameras", "ip camera", "network cameras", "network camera"],
+      image: "https://loremflickr.com/640/420/security,camera?lock=101"
     },
-
     "DVR & NVR": {
       aliases: ["dvr & nvr", "dvr", "nvr"],
-      online: "https://loremflickr.com/640/420/cctv,recorder?lock=102"
+      image: "https://loremflickr.com/640/420/video,recorder?lock=102"
     },
-
     "CCTV Cameras": {
       aliases: ["cctv cameras", "cctv camera", "analog hd cameras", "analog cctv"],
-      online: "https://loremflickr.com/640/420/security,camera?lock=103"
+      image: "https://loremflickr.com/640/420/cctv,camera?lock=103"
     },
-
     "Wireless Cameras": {
       aliases: ["wireless cameras", "wireless camera"],
-      online: "https://loremflickr.com/640/420/wireless,security,camera?lock=104"
+      image: "https://loremflickr.com/640/420/wireless,camera?lock=104"
     },
-
     "PTZ Cameras": {
-      aliases: ["ptz cameras", "ptz camera", "speed dome", "speed dome / ptz"],
-      online: "https://loremflickr.com/640/420/ptz,camera?lock=105"
+      aliases: ["ptz cameras", "ptz camera", "speed dome / ptz", "speed dome"],
+      image: "https://loremflickr.com/640/420/ptz,camera?lock=105"
     },
-
     "Video Door Phone": {
       aliases: ["video door phone", "video door phones"],
-      online: "https://loremflickr.com/640/420/video,doorbell?lock=106"
+      image: "https://loremflickr.com/640/420/video,doorbell?lock=106"
     },
-
     "Biometric Systems": {
       aliases: ["biometric systems", "biometric system", "biometric", "time & attendance"],
-      online: "https://loremflickr.com/640/420/biometric,fingerprint?lock=107"
+      image: "https://loremflickr.com/640/420/fingerprint,scanner?lock=107"
     },
-
     "Networking": {
       aliases: ["networking", "networking & switches", "network switches", "switches"],
-      online: "https://loremflickr.com/640/420/network,switch?lock=108"
+      image: "https://loremflickr.com/640/420/network,switch?lock=108"
     },
-
     "Storage": {
       aliases: ["storage", "storage & memory", "memory"],
-      online: "https://loremflickr.com/640/420/hard,disk,drive?lock=109"
+      image: "https://loremflickr.com/640/420/hard,disk,drive?lock=109"
     },
-
     "Accessories": {
       aliases: ["accessories", "accessory"],
-      online: "https://loremflickr.com/640/420/security,electronics?lock=110"
+      image: "https://loremflickr.com/640/420/security,electronics?lock=110"
     }
   };
 
   const normalize = value =>
-    String(value || "").trim().toLowerCase();
+    String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+  const fallbackProduct = allProducts.find(product => {
+    const image = getProductImage(product);
+    return image && image !== getFallbackImage();
+  });
+
+  const fallbackImage = fallbackProduct
+    ? getProductImage(fallbackProduct)
+    : getFallbackImage();
 
   document.querySelectorAll(
     "#productCategories .category-card[data-category]"
   ).forEach(card => {
-
     const category = card.dataset.category;
     const img = card.querySelector("img");
-
-    if (!img) return;
-
     const config = categoryData[category];
 
-    if (!config) return;
+    if (!img || !config) return;
 
     const aliases = config.aliases.map(normalize);
 
-    const matchingProduct = allProducts.find(product => {
-      const productCategory = normalize(
-        getProductCategory(product)
-      );
+    const matchingProduct = allProducts.find(product =>
+      aliases.includes(normalize(getProductCategory(product)))
+    );
 
-      return aliases.includes(productCategory);
-    });
-
-    // Uploaded product image first, otherwise online image
     img.onerror = function () {
       this.onerror = null;
-      this.src = getFallbackImage();
+      this.src = fallbackImage;
     };
 
     img.src = matchingProduct
       ? getProductImage(matchingProduct)
-      : config.online;
+      : config.image;
 
     img.alt = category;
     img.loading = "lazy";
   });
 }
+
 
 /* =========================================
    SEARCH AND CATEGORY FILTER
