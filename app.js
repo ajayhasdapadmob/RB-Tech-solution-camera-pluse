@@ -964,109 +964,103 @@ function renderTrendingProducts() {
    Uses existing Firebase product images
 ========================================= */
 
+
+/* =========================================
+   CATEGORY IMAGES - PRODUCT + ONLINE PHOTOS
+========================================= */
+
 function renderCategoryImages() {
-  const categoryAliases = {
-    "IP Cameras": [
-      "ip cameras",
-      "ip camera",
-      "network cameras",
-      "network camera"
-    ],
-    "DVR & NVR": [
-      "dvr & nvr",
-      "dvr",
-      "nvr"
-    ],
-    "CCTV Cameras": [
-      "cctv cameras",
-      "cctv camera",
-      "analog hd cameras",
-      "analog cctv"
-    ],
-    "Wireless Cameras": [
-      "wireless cameras",
-      "wireless camera"
-    ],
-    "PTZ Cameras": [
-      "ptz cameras",
-      "ptz camera",
-      "speed dome / ptz",
-      "speed dome"
-    ],
-    "Video Door Phone": [
-      "video door phone",
-      "video door phones"
-    ],
-    "Biometric Systems": [
-      "biometric systems",
-      "biometric system",
-      "biometric",
-      "time & attendance"
-    ],
-    "Networking": [
-      "networking",
-      "networking & switches",
-      "network switches",
-      "switches"
-    ],
-    "Storage": [
-      "storage",
-      "storage & memory",
-      "memory"
-    ],
-    "Accessories": [
-      "accessories",
-      "accessory"
-    ]
+
+  const categoryData = {
+    "IP Cameras": {
+      aliases: ["ip cameras", "ip camera", "network camera", "network cameras"],
+      online: "https://loremflickr.com/640/420/ip,camera?lock=101"
+    },
+
+    "DVR & NVR": {
+      aliases: ["dvr & nvr", "dvr", "nvr"],
+      online: "https://loremflickr.com/640/420/cctv,recorder?lock=102"
+    },
+
+    "CCTV Cameras": {
+      aliases: ["cctv cameras", "cctv camera", "analog hd cameras", "analog cctv"],
+      online: "https://loremflickr.com/640/420/security,camera?lock=103"
+    },
+
+    "Wireless Cameras": {
+      aliases: ["wireless cameras", "wireless camera"],
+      online: "https://loremflickr.com/640/420/wireless,security,camera?lock=104"
+    },
+
+    "PTZ Cameras": {
+      aliases: ["ptz cameras", "ptz camera", "speed dome", "speed dome / ptz"],
+      online: "https://loremflickr.com/640/420/ptz,camera?lock=105"
+    },
+
+    "Video Door Phone": {
+      aliases: ["video door phone", "video door phones"],
+      online: "https://loremflickr.com/640/420/video,doorbell?lock=106"
+    },
+
+    "Biometric Systems": {
+      aliases: ["biometric systems", "biometric system", "biometric", "time & attendance"],
+      online: "https://loremflickr.com/640/420/biometric,fingerprint?lock=107"
+    },
+
+    "Networking": {
+      aliases: ["networking", "networking & switches", "network switches", "switches"],
+      online: "https://loremflickr.com/640/420/network,switch?lock=108"
+    },
+
+    "Storage": {
+      aliases: ["storage", "storage & memory", "memory"],
+      online: "https://loremflickr.com/640/420/hard,disk,drive?lock=109"
+    },
+
+    "Accessories": {
+      aliases: ["accessories", "accessory"],
+      online: "https://loremflickr.com/640/420/security,electronics?lock=110"
+    }
   };
 
-  const normalizeCategory = value =>
-    String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " ");
-
-  const firstProductImage =
-    allProducts.find(product => {
-      const image = getProductImage(product);
-      return image && image !== getFallbackImage();
-    });
-
-  const fallbackImage = firstProductImage
-    ? getProductImage(firstProductImage)
-    : getFallbackImage();
+  const normalize = value =>
+    String(value || "").trim().toLowerCase();
 
   document.querySelectorAll(
     "#productCategories .category-card[data-category]"
   ).forEach(card => {
+
     const category = card.dataset.category;
     const img = card.querySelector("img");
 
     if (!img) return;
 
-    const aliases = (
-      categoryAliases[category] || [category]
-    ).map(normalizeCategory);
+    const config = categoryData[category];
+
+    if (!config) return;
+
+    const aliases = config.aliases.map(normalize);
 
     const matchingProduct = allProducts.find(product => {
-      const productCategory = normalizeCategory(
+      const productCategory = normalize(
         getProductCategory(product)
       );
 
       return aliases.includes(productCategory);
     });
 
+    // Uploaded product image first, otherwise online image
     img.onerror = function () {
       this.onerror = null;
-      this.src = fallbackImage;
+      this.src = getFallbackImage();
     };
 
     img.src = matchingProduct
       ? getProductImage(matchingProduct)
-      : fallbackImage;
+      : config.online;
 
-    img.alt = card.querySelector("h3")?.textContent.trim()
-      || category;
+    img.alt = category;
+    img.loading = "lazy";
   });
 }
 
