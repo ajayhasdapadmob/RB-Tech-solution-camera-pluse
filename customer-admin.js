@@ -51,6 +51,23 @@ const TIGRIS_WORKER_URL =
 
 const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_PRODUCT_PDF_BYTES = 15 * 1024 * 1024;
+// OCR FILE SETTINGS
+
+const ALLOWED_OCR_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+const MAX_OCR_FILE_BYTES = 15 * 1024 * 1024;
+
+// Product image formats
+
+const ALLOWED_PRODUCT_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
 /* =====================================
    COMMON HELPERS
 ===================================== */
