@@ -994,9 +994,7 @@ function renderHeroSlider(items) {
     return;
   }
 
-  slider.innerHTML = "";
-
-  const mediaItems = items.filter(item => {
+    const mediaItems = items.filter(item => {
     if (item.active !== true) return false;
 
     if (item.type === "videos") {
@@ -1016,7 +1014,7 @@ function renderHeroSlider(items) {
     console.log("No homepage hero media available");
     return;
   }
-
+  slider.innerHTML = "";
   let currentIndex = 0;
   let autoSlideTimer = null;
 
