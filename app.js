@@ -399,7 +399,7 @@ function renderCategoryImages() {
     },
     "PTZ Cameras": {
       aliases: ["ptz cameras", "ptz camera", "speed dome", "speed dome ptz"],
-      online: "https://images.unsplash.com/photo-1563770660941-10a63607739e?w=800"
+      online: "https://www.gowifi.co.nz/images/stories/virtuemart/product/MS-C8241-X36PE.jpg"
     },
     "Video Door Phone": {
       aliases: ["video door phone", "video door phones", "video doorbell"],
