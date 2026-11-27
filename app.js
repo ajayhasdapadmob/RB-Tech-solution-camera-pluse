@@ -965,70 +965,67 @@ function renderTrendingProducts() {
 ========================================= */
 
 
+
 /* =========================================
-   CATEGORY IMAGES - PRODUCT + ONLINE PHOTOS
+   CATEGORY IMAGES
+   Existing Product Image + Online Fallback
 ========================================= */
 
-
 function renderCategoryImages() {
+
   const categoryData = {
     "IP Cameras": {
-      aliases: ["ip cameras", "ip camera", "network cameras", "network camera"],
-      image: "https://loremflickr.com/640/420/security,camera?lock=101"
+      aliases: ["ip cameras", "ip camera", "network camera", "network cameras"],
+      online: "https://loremflickr.com/800/500/security,camera?lock=101"
     },
     "DVR & NVR": {
       aliases: ["dvr & nvr", "dvr", "nvr"],
-      image: "https://loremflickr.com/640/420/video,recorder?lock=102"
+      online: "https://loremflickr.com/800/500/video,recorder?lock=102"
     },
     "CCTV Cameras": {
       aliases: ["cctv cameras", "cctv camera", "analog hd cameras", "analog cctv"],
-      image: "https://loremflickr.com/640/420/cctv,camera?lock=103"
+      online: "https://loremflickr.com/800/500/cctv,camera?lock=103"
     },
     "Wireless Cameras": {
       aliases: ["wireless cameras", "wireless camera"],
-      image: "https://loremflickr.com/640/420/wireless,camera?lock=104"
+      online: "https://loremflickr.com/800/500/wireless,camera?lock=104"
     },
     "PTZ Cameras": {
-      aliases: ["ptz cameras", "ptz camera", "speed dome / ptz", "speed dome"],
-      image: "https://loremflickr.com/640/420/ptz,camera?lock=105"
+      aliases: ["ptz cameras", "ptz camera", "speed dome", "speed dome / ptz"],
+      online: "https://loremflickr.com/800/500/security,dome,camera?lock=105"
     },
     "Video Door Phone": {
       aliases: ["video door phone", "video door phones"],
-      image: "https://loremflickr.com/640/420/video,doorbell?lock=106"
+      online: "https://loremflickr.com/800/500/video,doorbell?lock=106"
     },
     "Biometric Systems": {
       aliases: ["biometric systems", "biometric system", "biometric", "time & attendance"],
-      image: "https://loremflickr.com/640/420/fingerprint,scanner?lock=107"
+      online: "https://loremflickr.com/800/500/fingerprint,scanner?lock=107"
     },
     "Networking": {
       aliases: ["networking", "networking & switches", "network switches", "switches"],
-      image: "https://loremflickr.com/640/420/network,switch?lock=108"
+      online: "https://loremflickr.com/800/500/network,switch?lock=108"
     },
     "Storage": {
       aliases: ["storage", "storage & memory", "memory"],
-      image: "https://loremflickr.com/640/420/hard,disk,drive?lock=109"
+      online: "https://loremflickr.com/800/500/hard,disk,drive?lock=109"
     },
     "Accessories": {
       aliases: ["accessories", "accessory"],
-      image: "https://loremflickr.com/640/420/security,electronics?lock=110"
+      online: "https://loremflickr.com/800/500/electronic,accessories?lock=110"
     }
   };
 
   const normalize = value =>
-    String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
-
-  const fallbackProduct = allProducts.find(product => {
-    const image = getProductImage(product);
-    return image && image !== getFallbackImage();
-  });
-
-  const fallbackImage = fallbackProduct
-    ? getProductImage(fallbackProduct)
-    : getFallbackImage();
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
 
   document.querySelectorAll(
     "#productCategories .category-card[data-category]"
   ).forEach(card => {
+
     const category = card.dataset.category;
     const img = card.querySelector("img");
     const config = categoryData[category];
@@ -1037,18 +1034,50 @@ function renderCategoryImages() {
 
     const aliases = config.aliases.map(normalize);
 
-    const matchingProduct = allProducts.find(product =>
-      aliases.includes(normalize(getProductCategory(product)))
-    );
+    const matchingProduct = allProducts.find(product => {
+
+      const productCategory = normalize(
+        getProductCategory(product)
+      );
+
+      const productImage =
+        product.imageUrl ||
+        product.image ||
+        product.photo ||
+        product.productImage;
+
+      return (
+        aliases.includes(productCategory) &&
+        /^https?:\/\//i.test(String(productImage || "").trim())
+      );
+    });
+
+    // First choice: uploaded product image
+    // Second choice: online category image
+    // Last choice: website fallback image
 
     img.onerror = function () {
+
+      if (this.dataset.fallbackStep === "1") {
+        this.dataset.fallbackStep = "2";
+        this.src = getFallbackImage();
+        return;
+      }
+
+      if (this.dataset.fallbackStep !== "2") {
+        this.dataset.fallbackStep = "1";
+        this.src = config.online;
+        return;
+      }
+
       this.onerror = null;
-      this.src = fallbackImage;
     };
+
+    img.dataset.fallbackStep = "0";
 
     img.src = matchingProduct
       ? getProductImage(matchingProduct)
-      : config.image;
+      : config.online;
 
     img.alt = category;
     img.loading = "lazy";
