@@ -159,7 +159,7 @@ function replaceTenantText() {
 function applyTenantBranding() {
   const isIntello = currentTenantId !== "customer1";
   const name = isIntello ? "Intello Electric" : "RB Tech Solution";
-  const phone = isIntello ? "+91 94487 73543" : "+91 96631 16089";
+  const phone = isIntello ? "+91 9448735433" : "+91 9663116089";
   const digits = isIntello ? INTELLO_WHATSAPP_NUMBER : LEGACY_WHATSAPP_NUMBER;
   const email = isIntello ? INTELLO_EMAIL : "ajayhasda623@gmail.com";
   const logoPath = isIntello ? INTELLO_LOGO : "images/logo.png";
