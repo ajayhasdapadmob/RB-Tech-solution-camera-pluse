@@ -2143,7 +2143,7 @@ select:focus-visible {
   position: absolute !important;
   top: 0 !important;
   left: 50% !important;
-  width: 120% !important;
+  width: 140% !important;
   height: 100% !important;
   max-width: none !important;
   object-fit: contain !important;
