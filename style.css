@@ -2157,7 +2157,7 @@ transform: translateX(-50%) !important;
 #home.hero-section {
   display: block !important;
   width: 100% !important;
-  min-height: 600px !important;
-  height: 600px !important;
+  min-height: 550px !important;
+  height: 550px !important;
   padding: 0 !important;
 }
