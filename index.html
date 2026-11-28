@@ -761,6 +761,10 @@ document.addEventListener("error", function(event) {
         <a href="inquiry.html">Inquiry</a>
         <a href="#partner">Partner Connect</a>
         <a href="#" class="open-contact">Contact Us</a>
+        <a href="https://maps.google.com/maps?q=12.9898828,74.8312714&z=17"
+   target="_blank" rel="noopener">
+   📍 Customer Location
+</a>
       </nav>
     </div>
   </header>
@@ -1056,6 +1060,13 @@ document.addEventListener("error", function(event) {
         </p>
         <p>Email: <a href="mailto:ajayhasda623@gmail.com">ajayhasda623@gmail.com</a></p>
         <p>Address: Mangalore, Karnataka, India</p>
+      <p>
+  📍 Customer Location:
+  <a href="https://maps.google.com/maps?q=12.9898828,74.8312714&z=17"
+     target="_blank" rel="noopener">
+    View on Google Maps
+  </a>
+</p>
       </div>
 
       <div>
@@ -1108,65 +1119,89 @@ document.addEventListener("error", function(event) {
     </div>
   </div>
 
-  <!-- CONTACT POPUP -->
-  <div id="contactPopup" class="contact-popup"
-    role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
+ <!-- CONTACT POPUP -->
+<div id="contactPopup" class="contact-popup"
+  role="dialog" aria-modal="true" aria-labelledby="contactPopupTitle">
 
-    <div class="contact-popup-box">
+  <div class="contact-popup-box">
 
-      <button type="button" id="closeContactPopup"
-        class="contact-close" aria-label="Close Contact Popup">×</button>
+    <button type="button" id="closeContactPopup"
+      class="contact-close" aria-label="Close Contact Popup">×</button>
 
-      <div class="contact-popup-header">
-        <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
-        <p>We would love to hear from you. Please contact us.</p>
-      </div>
+    <div class="contact-popup-header">
+      <h2 id="contactPopupTitle">Have queries, doubts or suggestions?</h2>
+      <p>We would love to hear from you. Please contact us.</p>
+    </div>
 
-      <div class="contact-popup-layout">
+    <div class="contact-popup-layout">
 
-        <div class="contact-details-box">
-          <h3>Contact Details</h3>
+      <div class="contact-details-box">
+        <h3>Contact Details</h3>
 
-          <div class="contact-detail-item">
-            <strong>Company</strong>
-            RB Tech Solution
-          </div>
+        <div class="contact-detail-item">
+          <strong>Company</strong>
+          Intello Electric
+        </div>
 
-          <div class="contact-detail-item">
-            <strong>Contact Person</strong>
-            Ajay Hasda
-          </div>
+        <div class="contact-detail-item">
+          <strong>Business</strong>
+          Computer and CCTV Sales and Services
+        </div>
 
-          <div class="contact-detail-item">
-            <strong>Phone / WhatsApp</strong>
-            <a href="https://wa.me/919663116089"
-              target="_blank" rel="noopener">
-              +91 96631 16089
-            </a>
-          </div>
+        <div class="contact-detail-item">
+          <strong>Customer Location</strong>
+          <a href="https://www.google.com/maps?q=12.9898889,74.8312778&z=17"
+             target="_blank" rel="noopener">
+            📍 Get Directions on Google Maps
+          </a>
+        </div>
 
-          <div class="contact-detail-item">
-            <strong>E-mail</strong>
-            <a href="mailto:ajayhasda623@gmail.com">
-              ajayhasda623@gmail.com
-            </a>
-          </div>
+        <div class="intello-location-map">
+          <iframe
+            src="https://maps.google.com/maps?q=12.9898889,74.8312778&z=17&output=embed"
+            width="100%"
+            height="300"
+            style="border:0;"
+            allowfullscreen
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
 
-          <div class="contact-detail-item">
-            <strong>Address</strong>
-            Mangalore, Karnataka, India
-          </div>
+        <div class="contact-detail-item">
+          <strong>Contact Person</strong>
+          Ajay Hasda
+        </div>
 
-          <div class="contact-detail-item">
-            <strong>Business Hours</strong>
-            Please contact us by phone or WhatsApp for assistance.
-          </div>
+        <div class="contact-detail-item">
+          <strong>Phone / WhatsApp</strong>
+          <a href="https://wa.me/919448735433"
+             target="_blank" rel="noopener">
+            +91 94487 35433
+          </a>
+        </div>
+
+        <div class="contact-detail-item">
+          <strong>E-mail</strong>
+          <a href="mailto:intelloelectric@gmail.com">
+            intelloelectric@gmail.com
+          </a>
+        </div>
+
+        <div class="contact-detail-item">
+          <strong>Address</strong>
+          Mangalore, Karnataka, India
+        </div>
+
+        <div class="contact-detail-item">
+          <strong>Business Hours</strong>
+          Please contact us by phone or WhatsApp for assistance.
         </div>
 
       </div>
     </div>
   </div>
-
+</div>
   <!-- CONTACT POPUP JAVASCRIPT -->
   <script>
     (function () {
@@ -1459,31 +1494,30 @@ document.addEventListener("error", function(event) {
     );
   }
 
-  // CONTACT POPUP DETAILS
+    // CONTACT POPUP DETAILS
   const contactItems = document.querySelectorAll(
     "#contactPopup .contact-detail-item"
   );
 
-  if (contactItems.length >= 5) {
+  if (contactItems.length >= 8) {
     contactItems[0].innerHTML =
       "<strong>Company</strong>" + brand;
 
-    contactItems[1].innerHTML =
+    contactItems[2].innerHTML =
       "<strong>Business</strong>" + tagline;
 
-    contactItems[2].innerHTML =
+    contactItems[4].innerHTML =
       '<strong>Phone / WhatsApp</strong><a href="' +
       whatsapp + '" target="_blank" rel="noopener">' +
       phone + "</a>";
 
-    contactItems[3].innerHTML =
+    contactItems[5].innerHTML =
       '<strong>E-mail</strong><a href="mailto:' +
       email + '">' + email + "</a>";
 
-    contactItems[4].innerHTML =
+    contactItems[6].innerHTML =
       "<strong>Address</strong>Mangalore, Karnataka, India";
   }
-
   const popupDescription = document.querySelector(
     "#contactPopup .contact-popup-header p"
   );
@@ -1535,7 +1569,25 @@ document.addEventListener("error", function(event) {
   position: relative !important;
   z-index: 0 !important;
 }
+.intello-location-map {
+  width: 100%;
+  margin-top: 15px;
+  overflow: hidden;
+  border-radius: 10px;
+}
 
+.intello-location-map iframe {
+  display: block;
+  width: 100%;
+  height: 300px;
+  border: 0;
+}
+
+@media (max-width: 600px) {
+  .intello-location-map iframe {
+    height: 250px;
+  }
+}
 </style>
 
 <style>
