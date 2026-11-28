@@ -1043,7 +1043,7 @@ function renderHeroSlider(items) {
 
       video.style.width = "100%";
       video.style.height = "100%";
-      video.style.objectFit = "cover";
+      video.style.objectFit = "contain";
       video.style.background = "#000";
 
       const poster = getImage(item);
@@ -1086,7 +1086,7 @@ function renderHeroSlider(items) {
       img.loading = index === 0 ? "eager" : "lazy";
       img.style.width = "100%";
       img.style.height = "100%";
-      img.style.objectFit = "cover";
+      img.style.objectFit = "contain";
       img.style.display = "block";
 
       img.addEventListener("error", () => {
