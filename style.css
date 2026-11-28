@@ -2119,31 +2119,34 @@ select:focus-visible {
     transform: translateX(0);
   }
 }
-/* =====================================
-   HOMEPAGE TOP HERO SLIDER FIX
-===================================== */
-
+/* TOP HERO SLIDER - FULL WIDTH */
 #heroMarketingSlider {
   width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
+  max-width: none !important;
+  height: 500px !important;
+  min-height: 500px !important;
   position: relative !important;
-  box-sizing: border-box !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 #heroMarketingSlider .hero-marketing-slide {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  overflow: hidden !important;
 }
 
-#heroMarketingSlider .hero-marketing-slide img,
-#heroMarketingSlider .hero-marketing-slide video {
+#heroMarketingSlider img,
+#heroMarketingSlider video {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  max-width: 100% !important;
+  max-width: none !important;
   object-fit: contain !important;
-  object-position: center center !important;
-  display: block !important;
-  background: #ffffff !important;
+  object-position: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
