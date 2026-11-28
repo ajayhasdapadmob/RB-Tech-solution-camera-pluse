@@ -2151,4 +2151,6 @@ select:focus-visible {
   transform: translateX(-50%) !important;
   padding: 0 !important;
   margin: 0 !important;
+   left: 50% !important;
+transform: translateX(-50%) !important;
 }
