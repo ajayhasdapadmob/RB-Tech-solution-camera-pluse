@@ -2142,7 +2142,7 @@ select:focus-visible {
 #heroMarketingSlider video {
   position: absolute !important;
   inset: 0 !important;
-  width: 140% !important;
+  width: 120% !important;
   height: 100% !important;
   max-width: none !important;
   object-fit: contain !important;
