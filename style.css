@@ -2119,3 +2119,31 @@ select:focus-visible {
     transform: translateX(0);
   }
 }
+/* =====================================
+   HOMEPAGE TOP HERO SLIDER FIX
+===================================== */
+
+#heroMarketingSlider {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+#heroMarketingSlider .hero-marketing-slide {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#heroMarketingSlider .hero-marketing-slide img,
+#heroMarketingSlider .hero-marketing-slide video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block !important;
+  background: #ffffff !important;
+}
