@@ -2141,12 +2141,14 @@ select:focus-visible {
 #heroMarketingSlider img,
 #heroMarketingSlider video {
   position: absolute !important;
-  inset: 0 !important;
+  top: 0 !important;
+  left: 50% !important;
   width: 120% !important;
   height: 100% !important;
   max-width: none !important;
   object-fit: contain !important;
   object-position: center !important;
+  transform: translateX(-50%) !important;
   padding: 0 !important;
   margin: 0 !important;
 }
