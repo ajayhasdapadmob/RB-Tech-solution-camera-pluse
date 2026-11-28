@@ -29,6 +29,7 @@ import {
 const TIGRIS_WORKER_URL =
   "https://rb-tech-media-api.ajayhasda623.workers.dev";
 
+
 const MARKETING_TYPES = {
   companyNews: {
     title: "Company News",
@@ -46,7 +47,7 @@ const MARKETING_TYPES = {
 
   videos: {
     title: "Videos",
-    accept: "video/mp4,video/webm,video/quicktime",
+    accept: "video/mp4,video/webm",
     resource: "video",
     multiple: true
   },
@@ -65,6 +66,7 @@ const MARKETING_TYPES = {
     multiple: true
   }
 };
+
 
 
 let marketingCustomer = null;
@@ -190,44 +192,67 @@ function marketingFileResource(type, file) {
    FILE VALIDATION
 ========================================== */
 
+
 function marketingValidateFile(type, file) {
   if (!file) {
     return "Please select a file.";
   }
 
-  const maxSize = file.type.startsWith("video/")
-    ? 100 * 1024 * 1024
-    : 20 * 1024 * 1024;
+  const mime = (file.type || "").toLowerCase();
 
-  if (file.size > maxSize) {
-    return file.type.startsWith("video/")
-      ? "Video size must be below 100 MB."
-      : "File size must be below 20 MB.";
-  }
+  const isImage = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ].includes(mime);
 
-  const allowed =
-    MARKETING_TYPES[type]?.accept?.split(",") || [];
+  const isPDF = mime === "application/pdf";
+
+  const isVideo = [
+    "video/mp4",
+    "video/webm"
+  ].includes(mime);
 
   if (type === "printPress") {
-    const valid =
-      file.type.startsWith("image/") ||
-      file.type.startsWith("video/") ||
-      file.type === "application/pdf";
-
-    if (!valid) {
-      return "Only image, video and PDF files are allowed.";
+    if (!isImage && !isPDF && !isVideo) {
+      return "Only JPG, PNG, WebP, PDF, MP4 and WEBM are allowed.";
     }
+  } else if (type === "videos") {
+    if (!isVideo) {
+      return "Only MP4 and WEBM videos are allowed.";
+    }
+  } else if (type === "brochures") {
+    if (!isPDF) {
+      return "Only PDF files are allowed.";
+    }
+  } else {
+    if (!isImage) {
+      return "Only JPG, PNG and WebP images are allowed.";
+    }
+  }
 
-  } else if (!allowed.includes(file.type)) {
-    return "Please select a supported file format.";
+  const maxSize = isImage
+    ? 5 * 1024 * 1024
+    : isPDF
+      ? 15 * 1024 * 1024
+      : 100 * 1024 * 1024;
+
+  if (file.size > maxSize) {
+    return isImage
+      ? "Image size must be 5 MB or less."
+      : isPDF
+        ? "PDF size must be 15 MB or less."
+        : "Video size must be 100 MB or less.";
   }
 
   return "";
 }
 
+
 /* ==========================================
    TIGRIS WORKER UPLOAD
 ========================================== */
+
 
 async function uploadMarketingFile(file, type) {
   if (!file) {
@@ -248,7 +273,7 @@ async function uploadMarketingFile(file, type) {
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      throw new Error("Image size must be below 5 MB.");
+      throw new Error("Image size must be 5 MB or less.");
     }
 
   } else if (
@@ -258,16 +283,23 @@ async function uploadMarketingFile(file, type) {
     kind = "pdf";
 
     if (file.size > 15 * 1024 * 1024) {
-      throw new Error("PDF size must be below 15 MB.");
+      throw new Error("PDF size must be 15 MB or less.");
     }
 
-  } else if (file.type.startsWith("video/")) {
-    throw new Error(
-      "Video upload is not enabled in the current Tigris Worker."
-    );
+  } else if (
+    file.type === "video/mp4" ||
+    file.type === "video/webm"
+  ) {
+    kind = "video";
+
+    if (file.size > 100 * 1024 * 1024) {
+      throw new Error("Video size must be 100 MB or less.");
+    }
 
   } else {
-    throw new Error("Unsupported file format.");
+    throw new Error(
+      "Unsupported file format. Use JPG, PNG, WEBP, PDF, MP4 or WEBM."
+    );
   }
 
   const user = auth.currentUser;
@@ -281,7 +313,10 @@ async function uploadMarketingFile(file, type) {
   );
 
   if (progress) {
-    progress.textContent = "Uploading file to secure storage...";
+    progress.textContent =
+      kind === "video"
+        ? "Uploading video to secure storage..."
+        : "Uploading file to secure storage...";
   }
 
   const idToken = await user.getIdToken();
@@ -309,14 +344,21 @@ async function uploadMarketingFile(file, type) {
     console.error("Tigris Marketing Upload Error:", result);
 
     throw new Error(
-      result.error || "Tigris upload failed."
+      result.error ||
+      result.details ||
+      result.tigrisMessage ||
+      "Tigris upload failed."
     );
   }
 
   return {
     url: result.url,
     publicId: "",
-    resourceType: kind === "pdf" ? "raw" : "image",
+    resourceType: kind === "video"
+      ? "video"
+      : kind === "pdf"
+        ? "raw"
+        : "image",
     format: file.name.split(".").pop().toLowerCase(),
     fileName: file.name,
     bytes: file.size
